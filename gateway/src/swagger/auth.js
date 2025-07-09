@@ -456,4 +456,99 @@
  *         description: Failed to send verification email
  */
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ForgotPassword:
+ *       type: object
+ *       required:
+ *         - email
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User email address to send password reset link
+ *     ResetPassword:
+ *       type: object
+ *       required:
+ *         - token
+ *         - new_password
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: Password reset token received via email
+ *         new_password:
+ *           type: string
+ *           minLength: 8
+ *           description: New password (min 8 characters)
+ *     PasswordResetResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: Whether the operation was successful
+ *         message:
+ *           type: string
+ *           description: Response message
+ */
+
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Request password reset
+ *     description: Send a password reset link to the user's email address
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ForgotPassword'
+ *     responses:
+ *       200:
+ *         description: Password reset email sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PasswordResetResponse'
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Failed to send password reset email
+ */
+
+/**
+ * @swagger
+ * /auth/reset-password:
+ *   post:
+ *     summary: Reset password with token
+ *     description: Reset user password using the token received via email
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ResetPassword'
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PasswordResetResponse'
+ *       400:
+ *         description: Validation error or invalid token
+ *       401:
+ *         description: Invalid or expired reset token
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Password reset failed
+ */
+
 export default {};
