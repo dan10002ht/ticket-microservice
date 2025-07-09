@@ -342,14 +342,88 @@
  *                 message:
  *                   type: string
  *                   example: "Email verified successfully"
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
  *       400:
  *         description: Validation error or invalid PIN code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "User ID and PIN code are required"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "MISSING_REQUIRED_FIELD"
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "User not found"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "USER_NOT_FOUND"
  *       409:
  *         description: Email already verified
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Email is already verified"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "EMAIL_ALREADY_VERIFIED"
  *       410:
  *         description: PIN code expired
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "PIN code has expired"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "PIN_CODE_EXPIRED"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Email verification failed"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "EMAIL_VERIFICATION_FAILED"
  */
 
 /**

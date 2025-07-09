@@ -125,7 +125,7 @@ function getGrpcErrorCode(errorCode) {
     [ERROR_CODES.INVALID_EMAIL_FORMAT]: 3,
     [ERROR_CODES.INVALID_PASSWORD_FORMAT]: 3,
     [ERROR_CODES.INVALID_PIN_CODE]: 3,
-    [ERROR_CODES.PIN_CODE_EXPIRED]: 3,
+    [ERROR_CODES.PIN_CODE_EXPIRED]: 9, // FAILED_PRECONDITION - PIN expired is a business logic issue
 
     // Authentication errors -> UNAUTHENTICATED (16)
     [ERROR_CODES.UNAUTHORIZED]: 16,

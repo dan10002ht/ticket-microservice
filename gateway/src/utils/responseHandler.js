@@ -99,16 +99,49 @@ export const handleGrpcError = (
   // Merge with custom mapping (custom mapping takes precedence)
   const mapping = { ...serviceErrorMapping, ...customErrorMapping };
 
+  // Clean gRPC error message - remove prefix like "9 FAILED_PRECONDITION: "
+  let errorMessage = error.message || '';
+  if (errorMessage.includes(': ')) {
+    errorMessage = errorMessage.split(': ').slice(1).join(': ');
+  }
+
+  // Handle specific error messages for auth service
+  if (serviceName.toLowerCase() === 'auth') {
+    if (errorMessage.includes('PIN code has expired')) {
+      return sendErrorResponse(res, 410, errorMessage, correlationId, null, 'PIN_CODE_EXPIRED');
+    }
+    if (errorMessage.includes('Email is already verified')) {
+      return sendErrorResponse(
+        res,
+        409,
+        errorMessage,
+        correlationId,
+        null,
+        'EMAIL_ALREADY_VERIFIED'
+      );
+    }
+    if (errorMessage.includes('User not found')) {
+      return sendErrorResponse(res, 404, errorMessage, correlationId, null, 'USER_NOT_FOUND');
+    }
+    if (errorMessage.includes('Invalid PIN code')) {
+      return sendErrorResponse(res, 400, errorMessage, correlationId, null, 'INVALID_PIN_CODE');
+    }
+  }
+
   const errorInfo = mapping[error.code] || {
     status: 500,
     message: 'Internal Server Error',
     code: 'INTERNAL_ERROR',
   };
 
-  // Use the actual error message from the service if available
-  const errorMessage = error.message || errorInfo.message;
-
-  sendErrorResponse(res, errorInfo.status, errorMessage, correlationId, null, errorInfo.code);
+  sendErrorResponse(
+    res,
+    errorInfo.status,
+    errorMessage || errorInfo.message,
+    correlationId,
+    null,
+    errorInfo.code
+  );
 };
 
 /**

@@ -107,7 +107,7 @@ export const AUTH_ERROR_MAPPING = {
     code: 'USER_EXISTS',
   },
   [GRPC_STATUS_CODES.FAILED_PRECONDITION]: {
-    status: 400,
+    status: 409,
     message: 'Email is already verified',
     code: 'EMAIL_ALREADY_VERIFIED',
   },
@@ -115,6 +115,12 @@ export const AUTH_ERROR_MAPPING = {
     status: 401,
     message: 'Invalid refresh token',
     code: 'INVALID_REFRESH_TOKEN',
+  },
+  // Custom mapping for PIN_CODE_EXPIRED (gRPC code 9 but different business meaning)
+  PIN_CODE_EXPIRED: {
+    status: 410,
+    message: 'PIN code has expired',
+    code: 'PIN_CODE_EXPIRED',
   },
 };
 
