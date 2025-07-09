@@ -3,6 +3,7 @@ import { sanitizeUserForResponse } from '../../utils/sanitizers.js';
 import { validatePinCodeFromRedis } from '../../background/jobs/emailVerificationJob.js';
 import { getBackgroundService } from '../../background/backgroundService.js';
 import { EMAIL_VERIFICATION_JOB, JOB_RETRY_CONFIGS } from '../../const/background.js';
+import { createAuthError, ERROR_CODES } from '../../utils/errorCodes.js';
 
 const userRepository = getUserRepository();
 
@@ -15,11 +16,11 @@ export async function sendVerificationEmailWithPin(email) {
   try {
     const user = await userRepository.findByEmail(email);
     if (!user) {
-      throw new Error('User not found');
+      throw createAuthError(ERROR_CODES.USER_NOT_FOUND);
     }
 
     if (user.is_verified) {
-      throw new Error('Email is already verified');
+      throw createAuthError(ERROR_CODES.EMAIL_ALREADY_VERIFIED);
     }
 
     // Enqueue background job to send email (PIN will be generated in background)
@@ -27,7 +28,7 @@ export async function sendVerificationEmailWithPin(email) {
     await backgroundService.enqueueJob(
       EMAIL_VERIFICATION_JOB,
       {
-        userId: user.id,
+        userId: user.public_id,
         userEmail: user.email,
         userName: user.first_name || user.email,
       },
@@ -41,7 +42,12 @@ export async function sendVerificationEmailWithPin(email) {
       userEmail: user.email,
     };
   } catch (error) {
-    throw new Error(`Failed to send verification email: ${error.message}`);
+    if (error.name === 'AuthError') {
+      throw error;
+    }
+
+    // Wrap other errors
+    throw createAuthError(ERROR_CODES.EMAIL_VERIFICATION_FAILED, error.message);
   }
 }
 
@@ -51,24 +57,28 @@ export async function sendVerificationEmailWithPin(email) {
 export async function verifyEmailWithPin(userId, inputPinCode) {
   try {
     // Get user
-    const user = await userRepository.findById(userId);
+    const user = await userRepository.findByPublicId(userId);
     if (!user) {
-      throw new Error('User not found');
+      throw createAuthError(ERROR_CODES.USER_NOT_FOUND);
     }
 
     if (user.is_verified) {
-      throw new Error('Email is already verified');
+      throw createAuthError(ERROR_CODES.EMAIL_ALREADY_VERIFIED);
     }
 
     // Check PIN code from Redis
     const validationResult = await validatePinCodeFromRedis(userId, inputPinCode);
 
     if (!validationResult.valid) {
-      throw new Error(validationResult.message);
+      // Map validation errors to appropriate error codes
+      if (validationResult.message.includes('expired')) {
+        throw createAuthError(ERROR_CODES.PIN_CODE_EXPIRED);
+      }
+      throw createAuthError(ERROR_CODES.INVALID_PIN_CODE, validationResult.message);
     }
 
     // Update user verification status
-    const updatedUser = await userRepository.updateUser(userId, {
+    const updatedUser = await userRepository.updateUser(user.id, {
       is_verified: true,
       email_verified_at: new Date(),
       updated_at: new Date(),
@@ -79,7 +89,13 @@ export async function verifyEmailWithPin(userId, inputPinCode) {
       user: sanitizeUserForResponse(updatedUser),
     };
   } catch (error) {
-    throw new Error(`Email verification failed: ${error.message}`);
+    // Re-throw AuthError as is
+    if (error.name === 'AuthError') {
+      throw error;
+    }
+
+    // Wrap other errors
+    throw createAuthError(ERROR_CODES.EMAIL_VERIFICATION_FAILED, error.message);
   }
 }
 
@@ -90,11 +106,11 @@ export async function resendVerificationEmail(email) {
   try {
     const user = await userRepository.findByEmail(email);
     if (!user) {
-      throw new Error('User not found');
+      throw createAuthError(ERROR_CODES.USER_NOT_FOUND);
     }
 
     if (user.is_verified) {
-      throw new Error('Email is already verified');
+      throw createAuthError(ERROR_CODES.EMAIL_ALREADY_VERIFIED);
     }
 
     // Enqueue background job to send email (new PIN will be generated in background)
@@ -102,7 +118,7 @@ export async function resendVerificationEmail(email) {
     await backgroundService.enqueueJob(
       EMAIL_VERIFICATION_JOB,
       {
-        userId: user.id,
+        userId: user.public_id,
         userEmail: user.email,
         userName: user.first_name || user.email,
         isResend: true,
@@ -116,6 +132,12 @@ export async function resendVerificationEmail(email) {
       userEmail: user.email,
     };
   } catch (error) {
-    throw new Error(`Failed to resend verification email: ${error.message}`);
+    // Re-throw AuthError as is
+    if (error.name === 'AuthError') {
+      throw error;
+    }
+
+    // Wrap other errors
+    throw createAuthError(ERROR_CODES.EMAIL_VERIFICATION_FAILED, error.message);
   }
 }

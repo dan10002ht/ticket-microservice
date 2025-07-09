@@ -81,33 +81,165 @@ INSERT INTO email_templates (id, name, subject, html_template, text_template, va
 <head>
     <meta charset="utf-8">
     <title>Email Verification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .title {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .pin-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+        }
+        .pin-code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #e74c3c;
+            letter-spacing: 5px;
+            font-family: "Courier New", monospace;
+        }
+        .pin-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+        .info {
+            background-color: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+        .warning {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to Booking System!</h1>
-    <p>Hi {{.Name}},</p>
-    <p>Your verification code is: <strong>{{.PinCode}}</strong></p>
-    <p>Please verify your email address by clicking the link below:</p>
-    <a href="{{.VerificationURL}}">Verify Email</a>
-    <p>This link will expire in {{.ExpiryMinutes}} minutes.</p>
-    <p>If you did not create an account, please ignore this email.</p>
-    <p>Best regards,<br>Booking System Team</p>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Booking System</div>
+            <h1 class="title">Email Verification</h1>
+        </div>
+
+        <p>Hello <strong>{{.Name}}</strong>,</p>
+
+        <p>Thank you for registering with Booking System. To complete your registration, please verify your email address using the verification code below:</p>
+
+        <div class="pin-container">
+            <div class="pin-code">{{.PinCode}}</div>
+            <div class="pin-label">Your verification code</div>
+        </div>
+
+        <div class="info">
+            <strong>How to verify:</strong>
+            <ul>
+                <li>Enter this code in the verification form on our website</li>
+                <li>Or click the verification link below</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center">
+            <a href="{{.VerificationURL}}" class="button">Verify Email Address</a>
+        </div>
+
+        <div class="warning">
+            <strong>Important:</strong>
+            <ul>
+                <li>This code will expire in <strong>{{.ExpiryMinutes}}</strong> minutes</li>
+                <li>If you did not create an account, please ignore this email</li>
+                <li>Never share this code with anyone</li>
+            </ul>
+        </div>
+
+        <p>If you have any questions, please contact our support team.</p>
+
+        <p>Best regards,<br><strong>Booking System Team</strong></p>
+
+        <div class="footer">
+            <p>This email was sent for email verification purposes.</p>
+            <p>&copy; 2024 Booking System. All rights reserved.</p>
+        </div>
+    </div>
 </body>
 </html>',
-    'Welcome to Booking System!
+    'Email Verification - Booking System
 
-Hi {{.Name}},
+Hello {{.Name}},
 
-Your verification code is: {{.PinCode}}
+Thank you for registering with Booking System. To complete your registration, please verify your email address using the verification code below:
 
-Please verify your email address by clicking the link below:
-{{.VerificationURL}}
+Your verification code: {{.PinCode}}
 
-This link will expire in {{.ExpiryMinutes}} minutes.
+How to verify:
+- Enter this code in the verification form on our website
+- Or visit: {{.VerificationURL}}
 
-If you did not create an account, please ignore this email.
+Important:
+- This code will expire in {{.ExpiryMinutes}} minutes
+- If you did not create an account, please ignore this email
+- Never share this code with anyone
+
+If you have any questions, please contact our support team.
 
 Best regards,
-Booking System Team',
+Booking System Team
+
+---
+This email was sent for email verification purposes.
+© 2024 Booking System. All rights reserved.',
     '{"Name": "string", "PinCode": "string", "VerificationURL": "string", "ExpiryMinutes": "number"}'
 ),
 (

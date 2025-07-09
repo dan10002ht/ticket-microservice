@@ -50,7 +50,7 @@ export async function handleEmailVerificationJob(jobData) {
       success: true,
       message: 'Email verification processed successfully',
       userId,
-      pinCode, // For testing only
+      pinCode,
     };
   } catch (error) {
     logger.error(`Email verification job failed for user ${userId}:`, error);

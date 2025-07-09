@@ -236,16 +236,16 @@
  *           type: string
  *           format: email
  *           description: User email address to send verification to
- *     VerifyEmailWithPin:
+ *     VerifyUserWithPin:
  *       type: object
  *       required:
- *         - email
+ *         - user_id
  *         - pin_code
  *       properties:
- *         email:
+ *         user_id:
  *           type: string
- *           format: email
- *           description: User email address
+ *           format: uuid
+ *           description: User ID to verify
  *         pin_code:
  *           type: string
  *           minLength: 6
@@ -317,9 +317,9 @@
 
 /**
  * @swagger
- * /auth/verify-email:
+ * /auth/verify-user:
  *   post:
- *     summary: Verify email with PIN code
+ *     summary: Verify user email with PIN code
  *     description: Verify user's email address using the PIN code sent to their email
  *     tags: [Auth]
  *     requestBody:
@@ -327,7 +327,7 @@
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/VerifyEmailWithPin'
+ *             $ref: '#/components/schemas/VerifyUserWithPin'
  *     responses:
  *       200:
  *         description: Email verified successfully

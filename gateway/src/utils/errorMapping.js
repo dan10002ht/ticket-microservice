@@ -92,14 +92,24 @@ export const DEFAULT_ERROR_MAPPING = {
 export const AUTH_ERROR_MAPPING = {
   ...DEFAULT_ERROR_MAPPING,
   [GRPC_STATUS_CODES.INVALID_ARGUMENT]: {
-    status: 401,
-    message: 'Invalid credentials',
-    code: 'INVALID_CREDENTIALS',
+    status: 400,
+    message: 'Invalid request data',
+    code: 'INVALID_ARGUMENT',
+  },
+  [GRPC_STATUS_CODES.NOT_FOUND]: {
+    status: 404,
+    message: 'User not found',
+    code: 'USER_NOT_FOUND',
   },
   [GRPC_STATUS_CODES.ALREADY_EXISTS]: {
     status: 409,
     message: 'User already exists',
     code: 'USER_EXISTS',
+  },
+  [GRPC_STATUS_CODES.FAILED_PRECONDITION]: {
+    status: 400,
+    message: 'Email is already verified',
+    code: 'EMAIL_ALREADY_VERIFIED',
   },
   [GRPC_STATUS_CODES.UNAUTHENTICATED]: {
     status: 401,

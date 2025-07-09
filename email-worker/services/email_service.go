@@ -236,8 +236,7 @@ func (s *EmailService) ProcessEmailJob(ctx context.Context, job *models.EmailJob
 		return fmt.Errorf("failed to render template: %w", err)
 	}
 
-	fmt.Println("Sending email", job.To, job.CC, job.BCC, subject, htmlBody, textBody)
-	fmt.Println("Email provider", s.emailProvider)
+	fmt.Println("htmlBody", htmlBody)
 	// Send email if provider is available
 	if s.emailProvider != nil {
 		_, err := s.emailProvider.Send(ctx, &providers.EmailRequest{

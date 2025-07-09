@@ -45,7 +45,7 @@ router.post(
   validateSendVerificationEmail,
   sendVerificationEmailHandler
 );
-router.post('/verify-email', validateVerifyEmailWithPin, verifyEmailWithPinHandler);
+router.post('/verify-user', validateVerifyEmailWithPin, verifyEmailWithPinHandler);
 router.post(
   '/resend-verification-email',
   validateResendVerificationEmail,

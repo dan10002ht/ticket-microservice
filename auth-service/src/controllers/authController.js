@@ -2,16 +2,14 @@ import * as authService from '../services/internal/authService.js';
 import * as userManagementService from '../services/internal/userManagementService.js';
 import * as adminService from '../services/internal/adminService.js';
 import * as passwordResetService from '../services/internal/passwordResetService.js';
-import { getUserRepository } from '../repositories/repositoryFactory.js';
-import { sanitizeUserForResponse } from '../utils/sanitizers.js';
-import { validatePinCodeFromRedis } from '../background/jobs/emailVerificationJob.js';
-import { getBackgroundService } from '../background/backgroundService.js';
+import * as pinCodeVerificationService from '../services/internal/pinCodeVerificationService.js';
 import { sanitizePagination, sanitizeFilters } from '../utils/sanitizers.js';
 import { verifyRefreshToken } from '../utils/tokenUtils.js';
 import { integrationService } from '../services/integration/integrationService.js';
 import logger from '../utils/logger.js';
 import { enhancedLogin as enhancedLoginService } from '../services/internal/authIntegrationService.js';
-import { EMAIL_VERIFICATION_JOB, JOB_RETRY_CONFIGS } from '../const/background.js';
+import { getGrpcErrorResponse, ERROR_CODES } from '../utils/errorCodes.js';
+import { createAuthError } from '../utils/errorCodes.js';
 
 /**
  * Register with email and password
@@ -717,52 +715,24 @@ export async function sendVerificationEmail(call, callback) {
     const { email } = call.request;
 
     if (!email) {
-      return callback({
-        code: 3,
-        message: 'Email is required',
-      });
+      return callback(
+        getGrpcErrorResponse(
+          createAuthError(ERROR_CODES.MISSING_REQUIRED_FIELD, 'Email is required')
+        )
+      );
     }
 
-    const userRepository = getUserRepository();
-    const user = await userRepository.findByEmail(email);
-
-    if (!user) {
-      return callback({
-        code: 5,
-        message: 'User not found',
-      });
-    }
-
-    if (user.is_verified) {
-      return callback({
-        code: 9,
-        message: 'Email is already verified',
-      });
-    }
-
-    const backgroundService = getBackgroundService();
-    await backgroundService.enqueueJob(
-      EMAIL_VERIFICATION_JOB,
-      {
-        userId: user.id,
-        userEmail: user.email,
-        userName: user.first_name || user.email,
-      },
-      JOB_RETRY_CONFIGS
-    );
+    const result = await pinCodeVerificationService.sendVerificationEmailWithPin(email);
 
     callback(null, {
       success: true,
-      message: 'Verification email queued successfully',
-      user_id: user.id,
-      user_email: user.email,
+      message: result.message,
+      user_id: result.userId,
+      user_email: result.userEmail,
     });
   } catch (error) {
-    console.error('Send verification email error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    console.error('Send verification email error:', error.message);
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -774,57 +744,23 @@ export async function verifyEmailWithPin(call, callback) {
     const { user_id, pin_code } = call.request;
 
     if (!user_id || !pin_code) {
-      return callback({
-        code: 3,
-        message: 'User ID and PIN code are required',
-      });
+      return callback(
+        getGrpcErrorResponse(
+          createAuthError(ERROR_CODES.MISSING_REQUIRED_FIELD, 'User ID and PIN code are required')
+        )
+      );
     }
 
-    const userRepository = getUserRepository();
-    const user = await userRepository.findById(user_id);
-
-    if (!user) {
-      return callback({
-        code: 5,
-        message: 'User not found',
-      });
-    }
-
-    if (user.is_verified) {
-      return callback({
-        code: 9,
-        message: 'Email is already verified',
-      });
-    }
-
-    // Check PIN code from Redis
-    const validationResult = await validatePinCodeFromRedis(user_id, pin_code);
-
-    if (!validationResult.valid) {
-      return callback({
-        code: 3,
-        message: validationResult.message,
-      });
-    }
-
-    // Update user verification status
-    const updatedUser = await userRepository.updateUser(user_id, {
-      is_verified: true,
-      email_verified_at: new Date(),
-      updated_at: new Date(),
-    });
+    const result = await pinCodeVerificationService.verifyEmailWithPin(user_id, pin_code);
 
     callback(null, {
       success: true,
-      message: 'Email verified successfully',
-      user: sanitizeUserForResponse(updatedUser),
+      message: result.message,
+      user: result.user,
     });
   } catch (error) {
     console.error('Verify email error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -836,53 +772,23 @@ export async function resendVerificationEmail(call, callback) {
     const { email } = call.request;
 
     if (!email) {
-      return callback({
-        code: 3,
-        message: 'Email is required',
-      });
+      return callback(
+        getGrpcErrorResponse(
+          createAuthError(ERROR_CODES.MISSING_REQUIRED_FIELD, 'Email is required')
+        )
+      );
     }
 
-    const userRepository = getUserRepository();
-    const user = await userRepository.findByEmail(email);
-
-    if (!user) {
-      return callback({
-        code: 5,
-        message: 'User not found',
-      });
-    }
-
-    if (user.is_verified) {
-      return callback({
-        code: 9,
-        message: 'Email is already verified',
-      });
-    }
-
-    // Enqueue background job to send email (new PIN will be generated in background)
-    const backgroundService = getBackgroundService();
-    await backgroundService.enqueueJob(
-      EMAIL_VERIFICATION_JOB,
-      {
-        userId: user.id,
-        userEmail: user.email,
-        userName: user.first_name || user.email,
-        isResend: true,
-      },
-      JOB_RETRY_CONFIGS
-    );
+    const result = await pinCodeVerificationService.resendVerificationEmail(email);
 
     callback(null, {
       success: true,
-      message: 'Verification email resent successfully',
-      user_id: user.id,
-      user_email: user.email,
+      message: result.message,
+      user_id: result.userId,
+      user_email: result.userEmail,
     });
   } catch (error) {
     console.error('Resend verification email error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }

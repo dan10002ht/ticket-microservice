@@ -146,7 +146,7 @@ export async function registerWithEmail(registerData) {
     backgroundService.enqueueJob(
       EMAIL_VERIFICATION_JOB,
       {
-        userId: newUser.id,
+        userId: newUser.public_id,
         userEmail: newUser.email,
         userName: newUser.first_name || newUser.email,
       },

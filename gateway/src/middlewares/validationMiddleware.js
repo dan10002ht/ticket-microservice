@@ -247,7 +247,11 @@ export const validateSendVerificationEmail = [
  * Validation middleware for email verification with PIN
  */
 export const validateVerifyEmailWithPin = [
-  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('user_id')
+    .notEmpty()
+    .withMessage('User ID is required')
+    .isUUID()
+    .withMessage('Invalid user ID format'),
   body('pin_code')
     .isLength({ min: 6, max: 6 })
     .withMessage('PIN code must be exactly 6 digits')

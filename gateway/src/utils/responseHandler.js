@@ -1,6 +1,6 @@
 import { validationResult } from 'express-validator';
 import logger from './logger.js';
-import { getErrorMapping, getErrorInfo } from './errorMapping.js';
+import { getErrorMapping } from './errorMapping.js';
 
 /**
  * Handle validation errors
@@ -105,7 +105,10 @@ export const handleGrpcError = (
     code: 'INTERNAL_ERROR',
   };
 
-  sendErrorResponse(res, errorInfo.status, errorInfo.message, correlationId, null, errorInfo.code);
+  // Use the actual error message from the service if available
+  const errorMessage = error.message || errorInfo.message;
+
+  sendErrorResponse(res, errorInfo.status, errorMessage, correlationId, null, errorInfo.code);
 };
 
 /**
@@ -127,7 +130,6 @@ export const createHandler = (handler, serviceName, methodName, customErrorMappi
       // Call the actual handler
       await handler(req, res);
     } catch (error) {
-      console.log('error', error);
       handleGrpcError(res, error, req.correlationId, serviceName, methodName, customErrorMapping);
     }
   };
