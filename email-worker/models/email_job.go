@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -39,27 +40,27 @@ const (
 
 // EmailJob represents an email job in the system
 type EmailJob struct {
-	ID             uuid.UUID     `db:"id" json:"id"`
-	To             StringArray   `db:"to_emails" json:"to"`
-	CC             StringArray   `db:"cc_emails" json:"cc"`
-	BCC            StringArray   `db:"bcc_emails" json:"bcc"`
-	TemplateName   string        `db:"template_name" json:"template_name"`
-	Variables      VariablesMap  `db:"variables" json:"variables"`
-	Status         JobStatus     `db:"status" json:"status"`
-	Priority       JobPriority   `db:"priority" json:"priority"`
-	RetryCount     int           `db:"retry_count" json:"retry_count"`
-	MaxRetries     int           `db:"max_retries" json:"max_retries"`
-	ErrorMessage   string        `db:"error_message" json:"error_message"`
-	ProcessedAt    *time.Time    `db:"processed_at" json:"processed_at"`
-	SentAt         *time.Time    `db:"sent_at" json:"sent_at"`
-	CreatedAt      time.Time     `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time     `db:"updated_at" json:"updated_at"`
+	ID           uuid.UUID    `db:"id" json:"id"`
+	To           StringArray  `db:"to_emails" json:"to"`
+	CC           StringArray  `db:"cc_emails" json:"cc"`
+	BCC          StringArray  `db:"bcc_emails" json:"bcc"`
+	TemplateName string       `db:"template_name" json:"template_name"`
+	Variables    VariablesMap `db:"variables" json:"variables"`
+	Status       JobStatus    `db:"status" json:"status"`
+	Priority     JobPriority  `db:"priority" json:"priority"`
+	RetryCount   int          `db:"retry_count" json:"retry_count"`
+	MaxRetries   int          `db:"max_retries" json:"max_retries"`
+	ErrorMessage string       `db:"error_message" json:"error_message"`
+	ProcessedAt  *time.Time   `db:"processed_at" json:"processed_at"`
+	SentAt       *time.Time   `db:"sent_at" json:"sent_at"`
+	CreatedAt    time.Time    `db:"created_at" json:"created_at"`
+	UpdatedAt    time.Time    `db:"updated_at" json:"updated_at"`
 
 	// Queue-specific fields
-	IsTracked      bool          `json:"is_tracked"`
-	QueueID        string        `json:"queue_id"`
-	ProcessingAt   *time.Time    `json:"processing_at"`
-	CompletedAt    *time.Time    `json:"completed_at"`
+	IsTracked    bool       `json:"is_tracked"`
+	QueueID      string     `json:"queue_id"`
+	ProcessingAt *time.Time `json:"processing_at"`
+	CompletedAt  *time.Time `json:"completed_at"`
 }
 
 // Value implements driver.Valuer for StringArray
@@ -67,7 +68,25 @@ func (s StringArray) Value() (driver.Value, error) {
 	if s == nil {
 		return nil, nil
 	}
-	return json.Marshal(s)
+
+	// Convert to PostgreSQL array format: {"item1","item2","item3"}
+	if len(s) == 0 {
+		return "{}", nil
+	}
+
+	// Escape quotes and format as PostgreSQL array
+	result := "{"
+	for i, item := range s {
+		if i > 0 {
+			result += ","
+		}
+		// Escape double quotes by doubling them
+		escaped := strings.ReplaceAll(item, `"`, `""`)
+		result += `"` + escaped + `"`
+	}
+	result += "}"
+
+	return result, nil
 }
 
 // Scan implements sql.Scanner for StringArray
@@ -77,12 +96,75 @@ func (s *StringArray) Scan(value any) error {
 		return nil
 	}
 
-	bytes, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
+	switch v := value.(type) {
+	case []byte:
+		// Handle PostgreSQL array format: {"item1","item2","item3"}
+		str := string(v)
+		if str == "{}" {
+			*s = StringArray{}
+			return nil
+		}
 
-	return json.Unmarshal(bytes, s)
+		// Remove outer braces
+		if len(str) < 2 || str[0] != '{' || str[len(str)-1] != '}' {
+			return errors.New("invalid PostgreSQL array format")
+		}
+		str = str[1 : len(str)-1]
+
+		if str == "" {
+			*s = StringArray{}
+			return nil
+		}
+
+		// Parse array elements
+		var result []string
+		var current strings.Builder
+		inQuotes := false
+		escapeNext := false
+
+		for i := 0; i < len(str); i++ {
+			char := str[i]
+
+			if escapeNext {
+				current.WriteByte(char)
+				escapeNext = false
+				continue
+			}
+
+			if char == '\\' {
+				escapeNext = true
+				continue
+			}
+
+			if char == '"' {
+				inQuotes = !inQuotes
+				continue
+			}
+
+			if char == ',' && !inQuotes {
+				result = append(result, current.String())
+				current.Reset()
+				continue
+			}
+
+			current.WriteByte(char)
+		}
+
+		// Add the last element
+		if current.Len() > 0 || len(result) > 0 {
+			result = append(result, current.String())
+		}
+
+		*s = StringArray(result)
+		return nil
+
+	case string:
+		// Handle string representation
+		return s.Scan([]byte(v))
+
+	default:
+		return errors.New("unsupported type for StringArray scan")
+	}
 }
 
 // Value implements driver.Valuer for VariablesMap
@@ -217,4 +299,4 @@ func (j *EmailJob) ShouldBeTracked() bool {
 		return true
 	}
 	return j.IsTracked
-} 
+}

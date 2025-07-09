@@ -113,105 +113,105 @@ cd ../email-worker
 echo "📦 Installing Go dependencies..."
 go mod tidy
 
-# Create .env file for local development
-echo "📝 Creating .env file for local development..."
-cat > .env << EOF
-# Application Configuration
-APP_NAME=email-worker
-APP_ENV=development
-LOG_LEVEL=debug
-SHUTDOWN_TIMEOUT=30s
+# # Create .env file for local development
+# echo "📝 Creating .env file for local development..."
+# cat > .env << EOF
+# # Application Configuration
+# APP_NAME=email-worker
+# APP_ENV=development
+# LOG_LEVEL=debug
+# SHUTDOWN_TIMEOUT=30s
 
-# Database Configuration - Master-Slave Setup
-# Master Database (for write operations)
-DB_MASTER_HOST=localhost
-DB_MASTER_PORT=55435
-DB_MASTER_NAME=booking_system
-DB_MASTER_USER=booking_user
-DB_MASTER_PASSWORD=booking_pass
+# # Database Configuration - Master-Slave Setup
+# # Master Database (for write operations)
+# DB_MASTER_HOST=localhost
+# DB_MASTER_PORT=55435
+# DB_MASTER_NAME=booking_system
+# DB_MASTER_USER=booking_user
+# DB_MASTER_PASSWORD=booking_pass
 
-# Slave Database (for read operations)
-DB_SLAVE_HOST=localhost
-DB_SLAVE_PORT=55436
-DB_SLAVE_NAME=booking_system
-DB_SLAVE_USER=booking_user
-DB_SLAVE_PASSWORD=booking_pass
+# # Slave Database (for read operations)
+# DB_SLAVE_HOST=localhost
+# DB_SLAVE_PORT=55436
+# DB_SLAVE_NAME=booking_system
+# DB_SLAVE_USER=booking_user
+# DB_SLAVE_PASSWORD=booking_pass
 
-# Common Database Settings
-DB_SSL_MODE=disable
-DB_MAX_OPEN_CONNS=25
-DB_MAX_IDLE_CONNS=5
-DB_CONN_MAX_LIFETIME=5m
+# # Common Database Settings
+# DB_SSL_MODE=disable
+# DB_MAX_OPEN_CONNS=25
+# DB_MAX_IDLE_CONNS=5
+# DB_CONN_MAX_LIFETIME=5m
 
-# Redis Configuration
-REDIS_HOST=localhost
-REDIS_PORT=56379
-REDIS_PASSWORD=
-REDIS_DB=0
-REDIS_POOL_SIZE=10
+# # Redis Configuration
+# REDIS_HOST=localhost
+# REDIS_PORT=56379
+# REDIS_PASSWORD=
+# REDIS_DB=0
+# REDIS_POOL_SIZE=10
 
-# Kafka Configuration
-KAFKA_BROKERS=localhost:59092
-KAFKA_GROUP_ID=email-worker
-KAFKA_TOPIC_EMAIL_JOBS=email-jobs
-KAFKA_TOPIC_EMAIL_EVENTS=email-events
-KAFKA_AUTO_OFFSET_RESET=earliest
+# # Kafka Configuration
+# KAFKA_BROKERS=localhost:59092
+# KAFKA_GROUP_ID=email-worker
+# KAFKA_TOPIC_EMAIL_JOBS=email-jobs
+# KAFKA_TOPIC_EMAIL_EVENTS=email-events
+# KAFKA_AUTO_OFFSET_RESET=earliest
 
-# gRPC Configuration
-GRPC_AUTH_SERVICE=localhost:50051
-GRPC_USER_SERVICE=localhost:50052
-GRPC_BOOKING_SERVICE=localhost:50053
-GRPC_TIMEOUT=30s
+# # gRPC Configuration
+# GRPC_AUTH_SERVICE=localhost:50051
+# GRPC_USER_SERVICE=localhost:50052
+# GRPC_BOOKING_SERVICE=localhost:50053
+# GRPC_TIMEOUT=30s
 
-# Email Provider Configuration
-EMAIL_PROVIDER=mock
-EMAIL_FROM=noreply@bookingsystem.com
-EMAIL_FROM_NAME=Booking System
+# # Email Provider Configuration
+# EMAIL_PROVIDER=smtp
+# EMAIL_FROM=noreply@bookingsystem.com
+# EMAIL_FROM_NAME=Booking System
 
-# SendGrid Configuration
-SENDGRID_API_KEY=your_sendgrid_api_key
+# # SendGrid Configuration
+# SENDGRID_API_KEY=your_sendgrid_api_key
 
-# AWS SES Configuration
-AWS_REGION=us-east-1
-AWS_ACCESS_KEY_ID=your_access_key
-AWS_SECRET_ACCESS_KEY=your_secret_key
+# # AWS SES Configuration
+# AWS_REGION=us-east-1
+# AWS_ACCESS_KEY_ID=your_access_key
+# AWS_SECRET_ACCESS_KEY=your_secret_key
 
-# SMTP Configuration
-SMTP_HOST=smtp.mailgun.org
-SMTP_PORT=465
-SMTP_USERNAME=your_smtp_username
-SMTP_PASSWORD=your_smtp_password
-SMTP_TLS=true
+# # SMTP Configuration
+# SMTP_HOST=smtp.mailgun.org
+# SMTP_PORT=465
+# SMTP_USERNAME=your_smtp_username
+# SMTP_PASSWORD=your_smtp_password
+# SMTP_TLS=true
 
-# Metrics Configuration
-METRICS_ENABLED=true
-METRICS_PORT=2112
+# # Metrics Configuration
+# METRICS_ENABLED=true
+# METRICS_PORT=2112
 
-# Retry Configuration
-MAX_RETRY_ATTEMPTS=3
-RETRY_DELAY=5s
-RETRY_BACKOFF_MULTIPLIER=2
+# # Retry Configuration
+# MAX_RETRY_ATTEMPTS=3
+# RETRY_DELAY=5s
+# RETRY_BACKOFF_MULTIPLIER=2
 
-# Batch Processing Configuration
-BATCH_SIZE=100
-BATCH_TIMEOUT=30s
-MAX_CONCURRENT_JOBS=10
+# # Batch Processing Configuration
+# BATCH_SIZE=100
+# BATCH_TIMEOUT=30s
+# MAX_CONCURRENT_JOBS=10
 
-# Worker Configuration
-WORKER_COUNT=2
-WORKER_BATCH_SIZE=5
-WORKER_POLL_INTERVAL=500ms
-WORKER_MAX_RETRIES=3
-WORKER_RETRY_DELAY=1s
-WORKER_PROCESS_TIMEOUT=30s
-WORKER_CLEANUP_INTERVAL=5m
+# # Worker Configuration
+# WORKER_COUNT=2
+# WORKER_BATCH_SIZE=5
+# WORKER_POLL_INTERVAL=500ms
+# WORKER_MAX_RETRIES=3
+# WORKER_RETRY_DELAY=1s
+# WORKER_PROCESS_TIMEOUT=30s
+# WORKER_CLEANUP_INTERVAL=5m
 
-# Server Configuration
-PORT=8080
-GRPC_PORT=50060
-EOF
+# # Server Configuration
+# PORT=8080
+# GRPC_PORT=50060
+# EOF
 
-echo "✅ .env file created"
+# echo "✅ .env file created"
 
 # Run database migrations if needed
 echo "🗄️ Checking database migrations..."

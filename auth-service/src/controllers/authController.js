@@ -11,6 +11,7 @@ import { verifyRefreshToken } from '../utils/tokenUtils.js';
 import { integrationService } from '../services/integration/integrationService.js';
 import logger from '../utils/logger.js';
 import { enhancedLogin as enhancedLoginService } from '../services/internal/authIntegrationService.js';
+import { EMAIL_VERIFICATION_JOB, JOB_RETRY_CONFIGS } from '../const/background.js';
 
 /**
  * Register with email and password
@@ -739,20 +740,15 @@ export async function sendVerificationEmail(call, callback) {
       });
     }
 
-    // Enqueue background job to send email (PIN will be generated in background)
     const backgroundService = getBackgroundService();
     await backgroundService.enqueueJob(
-      'email_verification',
+      EMAIL_VERIFICATION_JOB,
       {
         userId: user.id,
         userEmail: user.email,
         userName: user.first_name || user.email,
       },
-      {
-        priority: 'high',
-        maxRetries: 3,
-        timeout: 30000, // 30 seconds
-      }
+      JOB_RETRY_CONFIGS
     );
 
     callback(null, {
@@ -866,18 +862,14 @@ export async function resendVerificationEmail(call, callback) {
     // Enqueue background job to send email (new PIN will be generated in background)
     const backgroundService = getBackgroundService();
     await backgroundService.enqueueJob(
-      'email_verification',
+      EMAIL_VERIFICATION_JOB,
       {
         userId: user.id,
         userEmail: user.email,
         userName: user.first_name || user.email,
         isResend: true,
       },
-      {
-        priority: 'high',
-        maxRetries: 3,
-        timeout: 30000, // 30 seconds
-      }
+      JOB_RETRY_CONFIGS
     );
 
     callback(null, {

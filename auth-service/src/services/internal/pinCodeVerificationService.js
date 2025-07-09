@@ -2,6 +2,7 @@ import { getUserRepository } from '../../repositories/repositoryFactory.js';
 import { sanitizeUserForResponse } from '../../utils/sanitizers.js';
 import { validatePinCodeFromRedis } from '../../background/jobs/emailVerificationJob.js';
 import { getBackgroundService } from '../../background/backgroundService.js';
+import { EMAIL_VERIFICATION_JOB, JOB_RETRY_CONFIGS } from '../../const/background.js';
 
 const userRepository = getUserRepository();
 
@@ -24,17 +25,13 @@ export async function sendVerificationEmailWithPin(email) {
     // Enqueue background job to send email (PIN will be generated in background)
     const backgroundService = getBackgroundService();
     await backgroundService.enqueueJob(
-      'email_verification',
+      EMAIL_VERIFICATION_JOB,
       {
         userId: user.id,
         userEmail: user.email,
         userName: user.first_name || user.email,
       },
-      {
-        priority: 'high',
-        maxRetries: 3,
-        timeout: 30000, // 30 seconds
-      }
+      JOB_RETRY_CONFIGS.EMAIL_OPERATIONS
     );
 
     // Return data for background processing
@@ -103,18 +100,14 @@ export async function resendVerificationEmail(email) {
     // Enqueue background job to send email (new PIN will be generated in background)
     const backgroundService = getBackgroundService();
     await backgroundService.enqueueJob(
-      'email_verification',
+      EMAIL_VERIFICATION_JOB,
       {
         userId: user.id,
         userEmail: user.email,
         userName: user.first_name || user.email,
         isResend: true,
       },
-      {
-        priority: 'high',
-        maxRetries: 3,
-        timeout: 30000, // 30 seconds
-      }
+      JOB_RETRY_CONFIGS.EMAIL_OPERATIONS
     );
 
     return {

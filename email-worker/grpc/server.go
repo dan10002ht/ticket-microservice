@@ -7,30 +7,33 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
+	grpcserver "google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
 	"booking-system/email-worker/config"
 	"booking-system/email-worker/models"
 	"booking-system/email-worker/processor"
 	"booking-system/email-worker/protos"
+	"booking-system/email-worker/services"
 )
 
 // Server represents the gRPC server
 type Server struct {
 	protos.UnimplementedEmailServiceServer
-	processor *processor.Processor
-	logger    *zap.Logger
-	config    *config.Config
-	grpcServer *grpc.Server
+	processor    *processor.Processor
+	emailService *services.EmailService
+	logger       *zap.Logger
+	config       *config.Config
+	grpcServer   *grpcserver.Server
 }
 
 // NewServer creates a new gRPC server
-func NewServer(processor *processor.Processor, config *config.Config, logger *zap.Logger) *Server {
+func NewServer(processor *processor.Processor, emailService *services.EmailService, config *config.Config, logger *zap.Logger) *Server {
 	return &Server{
-		processor: processor,
-		logger:    logger,
-		config:    config,
+		processor:    processor,
+		emailService: emailService,
+		logger:       logger,
+		config:       config,
 	}
 }
 
@@ -41,9 +44,9 @@ func (s *Server) Start(port int) error {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
-	s.grpcServer = grpc.NewServer()
+	s.grpcServer = grpcserver.NewServer()
 	protos.RegisterEmailServiceServer(s.grpcServer, s)
-	
+
 	// Enable reflection for debugging
 	reflection.Register(s.grpcServer)
 
@@ -208,16 +211,25 @@ func (s *Server) SendVerificationEmail(ctx context.Context, req *protos.SendVeri
 		nil,                     // bcc
 		"email_verification",    // templateName
 		map[string]any{
-			"Name":             req.UserName,
-			"PinCode":          req.PinCode,
-			"VerificationURL":  req.VerificationUrl,
-			"ExpiryMinutes":    req.ExpiryTime,
+			"Name":            req.UserName,
+			"PinCode":         req.PinCode,
+			"VerificationURL": req.VerificationUrl,
+			"ExpiryMinutes":   req.ExpiryTime,
 		},
 		models.JobPriorityNormal,
 	)
 	job.SetMaxRetries(3)
 
-	// Publish to queue
+	// Save job to database FIRST for tracking
+	if err := s.emailService.CreateTrackedEmailJob(ctx, job); err != nil {
+		s.logger.Error("Failed to save verification email job to database", zap.Error(err))
+		return &protos.SendVerificationEmailResponse{
+			Success: false,
+			Message: fmt.Sprintf("Failed to save verification email job: %v", err),
+		}, nil
+	}
+
+	// Then publish to queue
 	err := s.processor.PublishJob(ctx, job)
 	if err != nil {
 		s.logger.Error("Failed to publish verification email job", zap.Error(err))
@@ -244,9 +256,9 @@ func (s *Server) SendVerificationReminder(ctx context.Context, req *protos.SendV
 
 	// Create email job for verification reminder
 	job := models.NewEmailJob(
-		[]string{req.UserEmail}, // to
-		nil,                     // cc
-		nil,                     // bcc
+		[]string{req.UserEmail},       // to
+		nil,                           // cc
+		nil,                           // bcc
 		"email_verification_reminder", // templateName
 		map[string]any{
 			"user_name":        req.UserName,
@@ -366,4 +378,4 @@ func (s *Server) createEmailJobFromRequest(req *protos.CreateEmailJobRequest) *m
 	}
 
 	return job
-} 
+}

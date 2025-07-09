@@ -22,12 +22,12 @@ import (
 
 // App represents the main application
 type App struct {
-	logger          *zap.Logger
-	config          *config.Config
-	db              *database.DB
-	emailProcessor  *processor.Processor
-	emailService    *services.EmailService
-	queueInstance   queue.Queue
+	logger         *zap.Logger
+	config         *config.Config
+	db             *database.DB
+	emailProcessor *processor.Processor
+	emailService   *services.EmailService
+	queueInstance  queue.Queue
 }
 
 // NewApp creates a new application instance
@@ -69,18 +69,20 @@ func (a *App) Initialize() error {
 	providerConfig := make(map[string]any)
 	for name, config := range a.config.Email.Providers {
 		providerConfig[name] = map[string]any{
-			"api_key":     config.APIKey,
-			"region":      config.Region,
-			"access_key":  config.AccessKey,
-			"secret_key":  config.SecretKey,
-			"host":        config.Host,
-			"port":        config.Port,
-			"username":    config.Username,
-			"password":    config.Password,
-			"use_tls":     config.UseTLS,
+			"api_key":    config.APIKey,
+			"region":     config.Region,
+			"access_key": config.AccessKey,
+			"secret_key": config.SecretKey,
+			"host":       config.Host,
+			"port":       config.Port,
+			"username":   config.Username,
+			"password":   config.Password,
+			"tls":        config.UseTLS,
+			"from":       config.FromEmail,
+			"from_name":  config.FromName,
 		}
 	}
-	
+
 	providerFactory := providers.NewProviderFactory(providerConfig)
 	emailProvider, err := providerFactory.CreateProvider(providers.ProviderType(a.config.Email.DefaultProvider))
 	if err != nil {
@@ -170,7 +172,12 @@ func (a *App) GetEmailProcessor() *processor.Processor {
 	return a.emailProcessor
 }
 
+// GetEmailService returns the email service instance
+func (a *App) GetEmailService() *services.EmailService {
+	return a.emailService
+}
+
 // GetLogger returns the logger instance
 func (a *App) GetLogger() *zap.Logger {
 	return a.logger
-} 
+}

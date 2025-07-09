@@ -32,26 +32,26 @@ type QueueConfig struct {
 // DatabaseConfig holds database configuration
 type DatabaseConfig struct {
 	// Master database configuration
-	MasterHost     string        `mapstructure:"master_host"`
-	MasterPort     int           `mapstructure:"master_port"`
-	MasterName     string        `mapstructure:"master_name"`
-	MasterUser     string        `mapstructure:"master_user"`
-	MasterPassword string        `mapstructure:"master_password"`
-	
+	MasterHost     string `mapstructure:"master_host"`
+	MasterPort     int    `mapstructure:"master_port"`
+	MasterName     string `mapstructure:"master_name"`
+	MasterUser     string `mapstructure:"master_user"`
+	MasterPassword string `mapstructure:"master_password"`
+
 	// Slave database configuration (for read operations)
-	SlaveHost      string        `mapstructure:"slave_host"`
-	SlavePort      int           `mapstructure:"slave_port"`
-	SlaveName      string        `mapstructure:"slave_name"`
-	SlaveUser      string        `mapstructure:"slave_user"`
-	SlavePassword  string        `mapstructure:"slave_password"`
-	
+	SlaveHost     string `mapstructure:"slave_host"`
+	SlavePort     int    `mapstructure:"slave_port"`
+	SlaveName     string `mapstructure:"slave_name"`
+	SlaveUser     string `mapstructure:"slave_user"`
+	SlavePassword string `mapstructure:"slave_password"`
+
 	// Legacy single database configuration (for backward compatibility)
-	Host            string        `mapstructure:"host"`
-	Port            int           `mapstructure:"port"`
-	Name            string        `mapstructure:"name"`
-	User            string        `mapstructure:"user"`
-	Password        string        `mapstructure:"password"`
-	
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	Name     string `mapstructure:"name"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+
 	// Common configuration
 	SSLMode         string        `mapstructure:"ssl_mode"`
 	MaxOpenConns    int           `mapstructure:"max_open_conns"`
@@ -86,14 +86,14 @@ type EmailConfig struct {
 type ProviderConfig struct {
 	// SendGrid
 	APIKey string `mapstructure:"api_key"`
-	
+
 	// AWS SES
-	Region      string `mapstructure:"region"`
-	AccessKey   string `mapstructure:"access_key"`
-	SecretKey   string `mapstructure:"secret_key"`
-	FromEmail   string `mapstructure:"from_email"`
-	FromName    string `mapstructure:"from_name"`
-	
+	Region    string `mapstructure:"region"`
+	AccessKey string `mapstructure:"access_key"`
+	SecretKey string `mapstructure:"secret_key"`
+	FromEmail string `mapstructure:"from_email"`
+	FromName  string `mapstructure:"from_name"`
+
 	// SMTP
 	Host     string `mapstructure:"host"`
 	Port     int    `mapstructure:"port"`
@@ -187,7 +187,7 @@ func setDefaults() {
 	viper.SetDefault("grpc.timeout", "30s")
 
 	// Email defaults
-	viper.SetDefault("email.default_provider", "sendgrid")
+	viper.SetDefault("email.default_provider", "smtp")
 
 	// Metrics defaults
 	viper.SetDefault("metrics.enabled", true)
@@ -212,14 +212,14 @@ func bindEnvVars() {
 	viper.BindEnv("database.master_name", "DB_MASTER_NAME")
 	viper.BindEnv("database.master_user", "DB_MASTER_USER")
 	viper.BindEnv("database.master_password", "DB_MASTER_PASSWORD")
-	
+
 	// Slave database
 	viper.BindEnv("database.slave_host", "DB_SLAVE_HOST")
 	viper.BindEnv("database.slave_port", "DB_SLAVE_PORT")
 	viper.BindEnv("database.slave_name", "DB_SLAVE_NAME")
 	viper.BindEnv("database.slave_user", "DB_SLAVE_USER")
 	viper.BindEnv("database.slave_password", "DB_SLAVE_PASSWORD")
-	
+
 	// Legacy database (for backward compatibility)
 	viper.BindEnv("database.host", "DB_HOST")
 	viper.BindEnv("database.port", "DB_PORT")
@@ -227,28 +227,28 @@ func bindEnvVars() {
 	viper.BindEnv("database.user", "DB_USER")
 	viper.BindEnv("database.password", "DB_PASSWORD")
 	viper.BindEnv("database.ssl_mode", "DB_SSL_MODE")
-	
+
 	// Common database settings
 	viper.BindEnv("database.max_open_conns", "DB_MAX_OPEN_CONNS")
 	viper.BindEnv("database.max_idle_conns", "DB_MAX_IDLE_CONNS")
 	viper.BindEnv("database.conn_max_lifetime", "DB_CONN_MAX_LIFETIME")
-	
+
 	// Queue settings
 	viper.BindEnv("queue.host", "REDIS_HOST")
 	viper.BindEnv("queue.port", "REDIS_PORT")
 	viper.BindEnv("queue.password", "REDIS_PASSWORD")
 	viper.BindEnv("queue.database", "REDIS_DB")
 	viper.BindEnv("queue.queue_name", "QUEUE_NAME")
-	
+
 	// Server settings
 	viper.BindEnv("server.port", "PORT")
 	viper.BindEnv("server.grpc_port", "GRPC_PORT")
-	
+
 	// Email settings
 	viper.BindEnv("email.default_provider", "EMAIL_PROVIDER")
 	viper.BindEnv("email.providers.sendgrid.api_key", "EMAIL_API_KEY")
 	viper.BindEnv("email.providers.sendgrid.from_email", "EMAIL_FROM")
-	
+
 	// Worker settings
 	viper.BindEnv("worker.worker_count", "WORKER_COUNT")
 	viper.BindEnv("worker.batch_size", "BATCH_SIZE")
@@ -280,4 +280,4 @@ func validateConfig(config *Config) error {
 	}
 
 	return nil
-} 
+}

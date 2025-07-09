@@ -50,7 +50,7 @@ func main() {
 	}()
 
 	// Initialize and start gRPC server
-	grpcServer := grpc.NewServer(appInstance.GetEmailProcessor(), cfg, loggerInstance)
+	grpcServer := grpc.NewServer(appInstance.GetEmailProcessor(), appInstance.GetEmailService(), cfg, loggerInstance)
 	go func() {
 		if err := grpcServer.Start(cfg.Server.GRPCPort); err != nil {
 			loggerInstance.Fatal("Failed to start gRPC server", zap.Error(err))
@@ -69,4 +69,4 @@ func main() {
 	if err := appInstance.Run(); err != nil {
 		loggerInstance.Fatal("Application error", zap.Error(err))
 	}
-} 
+}

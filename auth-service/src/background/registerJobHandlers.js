@@ -6,6 +6,12 @@ import {
   handleCacheUserDataJob,
 } from './jobs/cacheJob.js';
 import logger from './logger.js';
+import {
+  EMAIL_VERIFICATION_JOB,
+  CACHE_USER_DATA_JOB,
+  CACHE_USER_PROFILE_JOB,
+  CACHE_USER_ROLES_JOB,
+} from '../const/background.js';
 
 /**
  * Register all job handlers for the background service
@@ -15,13 +21,13 @@ export async function registerJobHandlers() {
     const backgroundService = getBackgroundService();
 
     // Register email verification job handler
-    backgroundService.registerHandler('email_verification', handleEmailVerificationJob);
+    backgroundService.registerHandler(EMAIL_VERIFICATION_JOB, handleEmailVerificationJob);
     logger.info('Registered email_verification job handler');
 
     // Register cache job handlers
-    backgroundService.registerHandler('cache_user_profile', handleCacheUserProfileJob);
-    backgroundService.registerHandler('cache_user_roles', handleCacheUserRolesJob);
-    backgroundService.registerHandler('cache_user_data', handleCacheUserDataJob);
+    backgroundService.registerHandler(CACHE_USER_PROFILE_JOB, handleCacheUserProfileJob);
+    backgroundService.registerHandler(CACHE_USER_ROLES_JOB, handleCacheUserRolesJob);
+    backgroundService.registerHandler(CACHE_USER_DATA_JOB, handleCacheUserDataJob);
     logger.info('Registered cache job handlers');
 
     // Register other job handlers here as needed

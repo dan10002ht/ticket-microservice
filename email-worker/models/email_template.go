@@ -7,15 +7,15 @@ import (
 
 // EmailTemplate represents an email template in the system
 type EmailTemplate struct {
-	ID           string            `db:"id" json:"id"`
-	Name         string            `db:"name" json:"name"`
-	Subject      *string           `db:"subject" json:"subject"`
-	HTMLTemplate *string           `db:"html_template" json:"html_template"`
-	TextTemplate *string           `db:"text_template" json:"text_template"`
-	Variables    *map[string]string `db:"variables" json:"variables"`
-	IsActive     bool              `db:"is_active" json:"is_active"`
-	CreatedAt    time.Time         `db:"created_at" json:"created_at"`
-	UpdatedAt    time.Time         `db:"updated_at" json:"updated_at"`
+	ID           string       `db:"id" json:"id"`
+	Name         string       `db:"name" json:"name"`
+	Subject      *string      `db:"subject" json:"subject"`
+	HTMLTemplate *string      `db:"html_template" json:"html_template"`
+	TextTemplate *string      `db:"text_template" json:"text_template"`
+	Variables    VariablesMap `db:"variables" json:"variables"`
+	IsActive     bool         `db:"is_active" json:"is_active"`
+	CreatedAt    time.Time    `db:"created_at" json:"created_at"`
+	UpdatedAt    time.Time    `db:"updated_at" json:"updated_at"`
 }
 
 // NewEmailTemplate creates a new EmailTemplate
@@ -49,7 +49,12 @@ func (t *EmailTemplate) SetTextTemplate(textTemplate string) {
 
 // SetVariables sets the template variables
 func (t *EmailTemplate) SetVariables(variables map[string]string) {
-	t.Variables = &variables
+	// Convert map[string]string to VariablesMap
+	variablesMap := make(VariablesMap)
+	for k, v := range variables {
+		variablesMap[k] = v
+	}
+	t.Variables = variablesMap
 	t.UpdatedAt = time.Now()
 }
 
@@ -74,8 +79,15 @@ func (t *EmailTemplate) GetVariable(key string) (string, bool) {
 	if t.Variables == nil {
 		return "", false
 	}
-	value, exists := (*t.Variables)[key]
-	return value, exists
+	value, exists := t.Variables[key]
+	if !exists {
+		return "", false
+	}
+	// Type assertion for string
+	if strValue, ok := value.(string); ok {
+		return strValue, true
+	}
+	return "", false
 }
 
 // Validate checks if the template is valid
@@ -90,4 +102,4 @@ func (t *EmailTemplate) Validate() error {
 		return fmt.Errorf("template must have either HTML or text content")
 	}
 	return nil
-} 
+}

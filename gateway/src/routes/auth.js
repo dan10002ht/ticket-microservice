@@ -7,6 +7,9 @@ import {
   logoutHandler,
   forgotPasswordHandler,
   resetPasswordHandler,
+  sendVerificationEmailHandler,
+  verifyEmailWithPinHandler,
+  resendVerificationEmailHandler,
 } from '../handlers/index.js';
 import {
   validateRegistration,
@@ -15,6 +18,9 @@ import {
   validateOAuthRegistration,
   validateForgotPassword,
   validateResetPassword,
+  validateSendVerificationEmail,
+  validateVerifyEmailWithPin,
+  validateResendVerificationEmail,
 } from '../middlewares/index.js';
 
 const router = express.Router();
@@ -32,6 +38,19 @@ router.post('/login', validateLogin, loginHandler);
 // Password management
 router.post('/forgot-password', validateForgotPassword, forgotPasswordHandler);
 router.post('/reset-password', validateResetPassword, resetPasswordHandler);
+
+// Email verification endpoints
+router.post(
+  '/send-verification-email',
+  validateSendVerificationEmail,
+  sendVerificationEmailHandler
+);
+router.post('/verify-email', validateVerifyEmailWithPin, verifyEmailWithPinHandler);
+router.post(
+  '/resend-verification-email',
+  validateResendVerificationEmail,
+  resendVerificationEmailHandler
+);
 
 // Token management
 router.post('/refresh', validateRefreshToken, refreshTokenHandler);

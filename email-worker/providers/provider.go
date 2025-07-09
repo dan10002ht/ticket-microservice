@@ -2,6 +2,7 @@ package providers
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -29,11 +30,11 @@ type Attachment struct {
 
 // EmailResponse represents the response from sending an email
 type EmailResponse struct {
-	MessageID   string    `json:"message_id"`
-	Status      string    `json:"status"`
-	SentAt      time.Time `json:"sent_at"`
-	Provider    string    `json:"provider"`
-	Error       string    `json:"error,omitempty"`
+	MessageID string    `json:"message_id"`
+	Status    string    `json:"status"`
+	SentAt    time.Time `json:"sent_at"`
+	Provider  string    `json:"provider"`
+	Error     string    `json:"error,omitempty"`
 }
 
 // Provider defines the interface for email providers
@@ -75,13 +76,19 @@ func NewProviderFactory(config map[string]any) *ProviderFactory {
 
 // CreateProvider creates a provider based on type
 func (f *ProviderFactory) CreateProvider(providerType ProviderType) (Provider, error) {
+	// Get the specific provider config
+	providerConfig, ok := f.config[string(providerType)].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("%w: no configuration found for provider %s", ErrInvalidConfig, providerType)
+	}
+
 	switch providerType {
 	case ProviderTypeSendGrid:
-		return NewSendGridProvider(f.config)
+		return NewSendGridProvider(providerConfig)
 	case ProviderTypeSES:
-		return NewSESProvider(f.config)
+		return NewSESProvider(providerConfig)
 	case ProviderTypeSMTP:
-		return NewSMTPProvider(f.config)
+		return NewSMTPProvider(providerConfig)
 	default:
 		return nil, ErrUnsupportedProvider
 	}
@@ -110,4 +117,4 @@ func (e *ProviderError) Error() string {
 
 func (e *ProviderError) Unwrap() error {
 	return e.Err
-} 
+}

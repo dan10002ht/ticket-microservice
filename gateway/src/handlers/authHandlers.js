@@ -93,6 +93,48 @@ const resetPassword = async (req, res) => {
   sendSuccessResponse(res, 200, result, req.correlationId);
 };
 
+/**
+ * Send verification email with PIN code
+ */
+const sendVerificationEmail = async (req, res) => {
+  const requestData = {
+    ...req.body,
+    ip_address: req.ip || req.connection.remoteAddress,
+    user_agent: req.get('User-Agent'),
+  };
+
+  const result = await grpcClients.authService.sendVerificationEmail(requestData);
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+/**
+ * Verify email with PIN code
+ */
+const verifyEmailWithPin = async (req, res) => {
+  const requestData = {
+    ...req.body,
+    ip_address: req.ip || req.connection.remoteAddress,
+    user_agent: req.get('User-Agent'),
+  };
+
+  const result = await grpcClients.authService.verifyEmailWithPin(requestData);
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+/**
+ * Resend verification email
+ */
+const resendVerificationEmail = async (req, res) => {
+  const requestData = {
+    ...req.body,
+    ip_address: req.ip || req.connection.remoteAddress,
+    user_agent: req.get('User-Agent'),
+  };
+
+  const result = await grpcClients.authService.resendVerificationEmail(requestData);
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
 // Export wrapped handlers
 export const registerWithEmailHandler = createHandler(
   registerUserWithEmail,
@@ -109,3 +151,18 @@ export const refreshTokenHandler = createHandler(refreshUserToken, 'auth', 'refr
 export const logoutHandler = createSimpleHandler(logoutUser, 'auth', 'logout');
 export const forgotPasswordHandler = createHandler(forgotPassword, 'auth', 'forgotPassword');
 export const resetPasswordHandler = createHandler(resetPassword, 'auth', 'resetPassword');
+export const sendVerificationEmailHandler = createHandler(
+  sendVerificationEmail,
+  'auth',
+  'sendVerificationEmail'
+);
+export const verifyEmailWithPinHandler = createHandler(
+  verifyEmailWithPin,
+  'auth',
+  'verifyEmailWithPin'
+);
+export const resendVerificationEmailHandler = createHandler(
+  resendVerificationEmail,
+  'auth',
+  'resendVerificationEmail'
+);

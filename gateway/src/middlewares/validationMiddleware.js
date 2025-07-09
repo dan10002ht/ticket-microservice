@@ -204,6 +204,11 @@ export const validateUserAddress = [
  * Validation middleware for user address update
  */
 export const validateUserAddressUpdate = [
+  body('address_id')
+    .notEmpty()
+    .withMessage('Address ID is required')
+    .isUUID()
+    .withMessage('Invalid address ID format'),
   body('street')
     .optional()
     .trim()
@@ -229,6 +234,32 @@ export const validateUserAddressUpdate = [
     .trim()
     .isLength({ max: 100 })
     .withMessage('Country must not exceed 100 characters'),
+];
+
+/**
+ * Validation middleware for sending verification email
+ */
+export const validateSendVerificationEmail = [
+  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+];
+
+/**
+ * Validation middleware for email verification with PIN
+ */
+export const validateVerifyEmailWithPin = [
+  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
+  body('pin_code')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('PIN code must be exactly 6 digits')
+    .isNumeric()
+    .withMessage('PIN code must contain only numbers'),
+];
+
+/**
+ * Validation middleware for resending verification email
+ */
+export const validateResendVerificationEmail = [
+  body('email').isEmail().withMessage('Please provide a valid email address').normalizeEmail(),
 ];
 
 /**

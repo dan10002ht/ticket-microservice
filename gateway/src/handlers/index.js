@@ -7,6 +7,9 @@ export {
   logoutHandler,
   forgotPasswordHandler,
   resetPasswordHandler,
+  sendVerificationEmailHandler,
+  verifyEmailWithPinHandler,
+  resendVerificationEmailHandler,
 } from './authHandlers.js';
 
 // User handlers

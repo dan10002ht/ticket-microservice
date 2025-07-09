@@ -130,10 +130,10 @@ func (p *SMTPProvider) Send(ctx context.Context, req *EmailRequest) (*EmailRespo
 	// Send email
 	if err := dialer.DialAndSend(m); err != nil {
 		return &EmailResponse{
-			Status:    "failed",
-			Provider:  p.Name(),
-			Error:     err.Error(),
-			SentAt:    time.Now(),
+			Status:   "failed",
+			Provider: p.Name(),
+			Error:    err.Error(),
+			SentAt:   time.Now(),
 		}, fmt.Errorf("%w: %v", ErrSendFailed, err)
 	}
 
@@ -195,4 +195,4 @@ func (p *SMTPProvider) Health(ctx context.Context) error {
 func (p *SMTPProvider) Close() error {
 	// SMTP provider doesn't need explicit cleanup
 	return nil
-} 
+}

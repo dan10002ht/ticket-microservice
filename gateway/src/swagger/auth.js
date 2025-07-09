@@ -223,4 +223,163 @@
  *               example: "Hello World"
  */
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     SendVerificationEmail:
+ *       type: object
+ *       required:
+ *         - email
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User email address to send verification to
+ *     VerifyEmailWithPin:
+ *       type: object
+ *       required:
+ *         - email
+ *         - pin_code
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User email address
+ *         pin_code:
+ *           type: string
+ *           minLength: 6
+ *           maxLength: 6
+ *           pattern: '^[0-9]{6}$'
+ *           description: 6-digit PIN code sent to email
+ *     ResendVerificationEmail:
+ *       type: object
+ *       required:
+ *         - email
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User email address to resend verification to
+ *     EmailVerificationResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *           description: Whether the operation was successful
+ *         message:
+ *           type: string
+ *           description: Response message
+ *         user_id:
+ *           type: string
+ *           description: User ID (for send/resend operations)
+ *         user_email:
+ *           type: string
+ *           description: User email address
+ *         pin_code:
+ *           type: string
+ *           description: Generated PIN code (only in development mode)
+ *         expires_at:
+ *           type: string
+ *           format: date-time
+ *           description: PIN code expiration time
+ */
+
+/**
+ * @swagger
+ * /auth/send-verification-email:
+ *   post:
+ *     summary: Send verification email
+ *     description: Send a verification email with PIN code to the user's email address
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SendVerificationEmail'
+ *     responses:
+ *       200:
+ *         description: Verification email sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EmailVerificationResponse'
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: User not found
+ *       409:
+ *         description: Email already verified
+ *       500:
+ *         description: Failed to send verification email
+ */
+
+/**
+ * @swagger
+ * /auth/verify-email:
+ *   post:
+ *     summary: Verify email with PIN code
+ *     description: Verify user's email address using the PIN code sent to their email
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/VerifyEmailWithPin'
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Email verified successfully"
+ *       400:
+ *         description: Validation error or invalid PIN code
+ *       404:
+ *         description: User not found
+ *       409:
+ *         description: Email already verified
+ *       410:
+ *         description: PIN code expired
+ */
+
+/**
+ * @swagger
+ * /auth/resend-verification-email:
+ *   post:
+ *     summary: Resend verification email
+ *     description: Resend a verification email with new PIN code to the user's email address
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ResendVerificationEmail'
+ *     responses:
+ *       200:
+ *         description: Verification email resent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/EmailVerificationResponse'
+ *       400:
+ *         description: Validation error
+ *       404:
+ *         description: User not found
+ *       409:
+ *         description: Email already verified
+ *       500:
+ *         description: Failed to send verification email
+ */
+
 export default {};

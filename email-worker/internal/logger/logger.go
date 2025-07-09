@@ -9,8 +9,8 @@ import (
 
 // InitLogger initializes the logger
 func InitLogger() (*zap.Logger, error) {
-	config := zap.NewProductionConfig()
-	
+	config := zap.NewDevelopmentConfig()
+
 	// Set log level from environment
 	logLevel := os.Getenv("LOG_LEVEL")
 	if logLevel != "" {
@@ -27,4 +27,4 @@ func InitLogger() (*zap.Logger, error) {
 	}
 
 	return config.Build()
-} 
+}

@@ -17,6 +17,9 @@ func LoadConfig() (*config.Config, error) {
 		fmt.Printf("Warning: .env file not found: %v\n", err)
 	}
 
+	// Enable viper to read environment variables
+	viper.AutomaticEnv()
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
@@ -25,15 +28,15 @@ func LoadConfig() (*config.Config, error) {
 	// Set defaults
 	setDefaults()
 
+	// Bind environment variables
+	bindEnvVars()
+
 	// Read config file if it exists
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return nil, fmt.Errorf("failed to read config file: %w", err)
 		}
 	}
-
-	// Bind environment variables
-	bindEnvVars()
 
 	var cfg config.Config
 	if err := viper.Unmarshal(&cfg); err != nil {
@@ -65,7 +68,7 @@ func setDefaults() {
 	viper.SetDefault("database.slave_name", "booking_system")
 	viper.SetDefault("database.slave_user", "booking_user")
 	viper.SetDefault("database.slave_password", "booking_pass")
-	
+
 	// Legacy database defaults (for backward compatibility)
 	viper.SetDefault("database.host", "localhost")
 	viper.SetDefault("database.port", 55435)
@@ -109,14 +112,14 @@ func bindEnvVars() {
 	viper.BindEnv("database.master_name", "DB_MASTER_NAME")
 	viper.BindEnv("database.master_user", "DB_MASTER_USER")
 	viper.BindEnv("database.master_password", "DB_MASTER_PASSWORD")
-	
+
 	// Slave database
 	viper.BindEnv("database.slave_host", "DB_SLAVE_HOST")
 	viper.BindEnv("database.slave_port", "DB_SLAVE_PORT")
 	viper.BindEnv("database.slave_name", "DB_SLAVE_NAME")
 	viper.BindEnv("database.slave_user", "DB_SLAVE_USER")
 	viper.BindEnv("database.slave_password", "DB_SLAVE_PASSWORD")
-	
+
 	// Legacy database (for backward compatibility)
 	viper.BindEnv("database.host", "DB_HOST")
 	viper.BindEnv("database.port", "DB_PORT")
@@ -148,4 +151,7 @@ func bindEnvVars() {
 	viper.BindEnv("email.providers.smtp.port", "SMTP_PORT")
 	viper.BindEnv("email.providers.smtp.username", "SMTP_USERNAME")
 	viper.BindEnv("email.providers.smtp.password", "SMTP_PASSWORD")
-} 
+	viper.BindEnv("email.providers.smtp.use_tls", "SMTP_TLS")
+	viper.BindEnv("email.providers.smtp.from_email", "EMAIL_FROM")
+	viper.BindEnv("email.providers.smtp.from_name", "EMAIL_FROM_NAME")
+}

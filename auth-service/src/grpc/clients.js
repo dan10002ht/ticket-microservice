@@ -128,9 +128,6 @@ const createClient = (serviceUrl, serviceName, packageName) => {
 // Initialize gRPC clients
 const grpcClients = {
   emailService: createClient(process.env.EMAIL_WORKER_URL || 'localhost:50060', 'email', 'email'),
-  // Add other services as needed
-  // userService: createClient(process.env.USER_SERVICE_URL || 'localhost:50052', 'user', 'user'),
-  // notificationService: createClient(process.env.NOTIFICATION_SERVICE_URL || 'localhost:50053', 'notification', 'notification'),
 };
 
 // Health check for all clients

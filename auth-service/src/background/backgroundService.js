@@ -1,6 +1,7 @@
 import Redis from 'ioredis';
 import { v4 as uuidv4 } from 'uuid';
 import logger from './logger.js';
+import { JOB_PRIORITIES, JOB_TIMEOUTS } from '../const/background.js';
 
 /**
  * Background Service Template - Best Practices Structure
@@ -34,11 +35,11 @@ class BackgroundService {
       },
       job: {
         defaultRetries: 3,
-        defaultTimeout: 30000, // 30 seconds
+        defaultTimeout: JOB_TIMEOUTS.EMAIL_OPERATIONS, // 30 seconds
         retryDelay: 5000, // 5 seconds
         maxRetryDelay: 300000, // 5 minutes
         deadLetterQueue: 'dead-letter-queue',
-        priorityQueues: ['high', 'normal', 'low'],
+        priorityQueues: [JOB_PRIORITIES.HIGH, JOB_PRIORITIES.NORMAL, JOB_PRIORITIES.LOW],
       },
       circuitBreaker: {
         failureThreshold: 5,
@@ -140,7 +141,8 @@ class BackgroundService {
     };
 
     // Start multiple workers per priority
-    const workerCount = priority === 'high' ? 3 : priority === 'normal' ? 2 : 1;
+    const workerCount =
+      priority === JOB_PRIORITIES.HIGH ? 3 : priority === JOB_PRIORITIES.NORMAL ? 2 : 1;
     for (let i = 0; i < workerCount; i++) {
       setImmediate(worker);
     }
@@ -221,7 +223,7 @@ class BackgroundService {
       type: 'fire-and-forget',
       operation: operation.name || 'anonymous',
       data,
-      priority: options.priority || 'low',
+      priority: options.priority || JOB_PRIORITIES.NORMAL,
       retries: 0,
       maxRetries: options.maxRetries || 0,
       timeout: options.timeout || this.config.job.defaultTimeout,
@@ -251,7 +253,7 @@ class BackgroundService {
         id: jobId,
         type: jobType,
         data,
-        priority: options.priority || 'normal',
+        priority: options.priority || JOB_PRIORITIES.NORMAL,
         retries: 0,
         maxRetries: options.maxRetries || this.config.job.defaultRetries,
         timeout: options.timeout || this.config.job.defaultTimeout,

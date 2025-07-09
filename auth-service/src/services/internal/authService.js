@@ -19,6 +19,11 @@ import * as organizationManagementService from './organizationManagementService.
 import * as oauthService from './oauthService.js';
 import cacheService from './cacheService.js';
 import { getBackgroundService } from '../../background/backgroundService.js';
+import {
+  CACHE_USER_DATA_JOB,
+  EMAIL_VERIFICATION_JOB,
+  JOB_RETRY_CONFIGS,
+} from '../../const/background.js';
 // import * as auditService from './auditService.js'; // TODO: Implement audit service
 
 // Get repository instances from factory
@@ -128,32 +133,24 @@ export async function registerWithEmail(registerData) {
     // Đưa cache operations và email verification sang background
     // Cache operations
     backgroundService.enqueueJob(
-      'cache_user_data',
+      CACHE_USER_DATA_JOB,
       {
         userId: newUser.public_id,
         userProfile: userProfile,
         userRoles: userWithRoles.roles || [],
       },
-      {
-        priority: 'normal',
-        maxRetries: 2,
-        timeout: 15000,
-      }
+      JOB_RETRY_CONFIGS.CACHE_OPERATIONS
     );
 
     // Email verification
     backgroundService.enqueueJob(
-      'email_verification',
+      EMAIL_VERIFICATION_JOB,
       {
         userId: newUser.id,
         userEmail: newUser.email,
         userName: newUser.first_name || newUser.email,
       },
-      {
-        priority: 'high',
-        maxRetries: 3,
-        timeout: 30000,
-      }
+      JOB_RETRY_CONFIGS.EMAIL_OPERATIONS
     );
 
     return {

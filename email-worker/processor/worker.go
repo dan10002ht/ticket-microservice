@@ -25,10 +25,10 @@ type Worker struct {
 
 // WorkerConfig holds worker configuration
 type WorkerConfig struct {
-	BatchSize     int           `mapstructure:"batch_size"`
-	PollInterval  time.Duration `mapstructure:"poll_interval"`
-	MaxRetries    int           `mapstructure:"max_retries"`
-	RetryDelay    time.Duration `mapstructure:"retry_delay"`
+	BatchSize      int           `mapstructure:"batch_size"`
+	PollInterval   time.Duration `mapstructure:"poll_interval"`
+	MaxRetries     int           `mapstructure:"max_retries"`
+	RetryDelay     time.Duration `mapstructure:"retry_delay"`
 	ProcessTimeout time.Duration `mapstructure:"process_timeout"`
 }
 
@@ -114,25 +114,26 @@ func (w *Worker) processJobs() {
 // processJob processes a single email job
 func (w *Worker) processJob(ctx context.Context, job *models.EmailJob) {
 	startTime := time.Now()
-	
+
 	w.logger.Info("Processing email job",
 		zap.String("job_id", job.ID.String()),
 		zap.String("template", job.TemplateName),
 		zap.Strings("recipients", job.To),
 	)
 
-	// Update job status
+	// Update job status (ignore if job not found in DB)
 	job.MarkAsProcessing()
 	updateErr := w.emailService.UpdateJobStatus(ctx, job.ID.String(), string(job.Status))
 	if updateErr != nil {
-		w.logger.Error("Failed to update job status", 
+		// Log as warning instead of error for job not found
+		w.logger.Warn("Could not update job status in database (job may not be tracked)",
 			zap.String("job_id", job.ID.String()),
 			zap.Error(updateErr))
 	}
 
 	// Process the email
 	err := w.emailService.ProcessEmailJob(ctx, job)
-	
+
 	processingTime := time.Since(startTime)
 
 	if err != nil {
@@ -148,11 +149,12 @@ func (w *Worker) processJob(ctx context.Context, job *models.EmailJob) {
 		return
 	}
 
-	// Mark job as completed
+	// Mark job as completed (ignore if job not found in DB)
 	job.MarkAsCompleted()
 	completeErr := w.emailService.UpdateJobStatus(ctx, job.ID.String(), string(job.Status))
 	if completeErr != nil {
-		w.logger.Error("Failed to update job status to completed", 
+		// Log as warning instead of error for job not found
+		w.logger.Warn("Could not update job status to completed in database (job may not be tracked)",
 			zap.String("job_id", job.ID.String()),
 			zap.Error(completeErr))
 	}
@@ -171,7 +173,8 @@ func (w *Worker) handleJobFailure(ctx context.Context, job *models.EmailJob, err
 		job.MarkAsFailed()
 		updateErr := w.emailService.UpdateJobStatus(ctx, job.ID.String(), string(job.Status))
 		if updateErr != nil {
-			w.logger.Error("Failed to update job status to failed", 
+			// Log as warning instead of error for job not found
+			w.logger.Warn("Could not update job status to failed in database (job may not be tracked)",
 				zap.String("job_id", job.ID.String()),
 				zap.Error(updateErr))
 		}
@@ -187,11 +190,12 @@ func (w *Worker) handleJobFailure(ctx context.Context, job *models.EmailJob, err
 
 	// Increment retry count
 	job.IncrementRetry()
-	
+
 	job.MarkAsRetrying()
 	updateErr := w.emailService.UpdateJobStatus(ctx, job.ID.String(), string(job.Status))
 	if updateErr != nil {
-		w.logger.Error("Failed to update job status to retrying", 
+		// Log as warning instead of error for job not found
+		w.logger.Warn("Could not update job status to retrying in database (job may not be tracked)",
 			zap.String("job_id", job.ID.String()),
 			zap.Error(updateErr))
 	}
@@ -210,7 +214,7 @@ func (w *Worker) handleJobFailure(ctx context.Context, job *models.EmailJob, err
 	// Schedule retry
 	go func() {
 		time.Sleep(retryDelay)
-		
+
 		// Re-queue the job
 		requeueErr := w.queue.Publish(context.Background(), job)
 		if requeueErr != nil {
@@ -225,13 +229,13 @@ func (w *Worker) handleJobFailure(ctx context.Context, job *models.EmailJob, err
 func (w *Worker) calculateRetryDelay(retryCount int) time.Duration {
 	// Base delay with exponential backoff
 	delay := w.config.RetryDelay * time.Duration(1<<retryCount)
-	
+
 	// Cap the delay at 1 hour
 	maxDelay := time.Hour
 	if delay > maxDelay {
 		delay = maxDelay
 	}
-	
+
 	return delay
 }
 
@@ -248,4 +252,4 @@ func (w *Worker) GetStats() map[string]any {
 		"queue_size": queueSize,
 		"status":     "running",
 	}
-} 
+}

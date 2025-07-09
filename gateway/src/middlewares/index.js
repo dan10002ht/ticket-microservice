@@ -21,4 +21,7 @@ export {
   validateUserProfileUpdate,
   validateUserAddress,
   validateUserAddressUpdate,
+  validateSendVerificationEmail,
+  validateVerifyEmailWithPin,
+  validateResendVerificationEmail,
 } from './validationMiddleware.js';
