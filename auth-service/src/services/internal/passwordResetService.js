@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import { generateSecureToken, hashToken } from '../../helpers/tokenHelper.js';
 import {
   getUserRepository,
   getPasswordResetTokenRepository,
@@ -16,24 +16,27 @@ const userSessionRepository = getUserSessionRepository();
  */
 export async function forgotPassword(email) {
   try {
+    console.log('🔍 Looking for user with email:', email);
     const user = await userRepository.findByEmail(email);
+    console.log('👤 User found:', user ? 'Yes' : 'No');
+
     if (!user) {
-      // Don't reveal if user exists or not
       return {
         message: 'If the email exists, a password reset link has been sent',
       };
     }
 
-    // Generate reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const tokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+    console.log('🔑 Generating secure token...');
+    const { token: resetToken, tokenHash } = generateSecureToken('reset');
+    console.log('✅ Token generated successfully');
 
-    // Create password reset token record
+    console.log('💾 Creating password reset token in database...');
     await passwordResetTokenRepository.createPasswordResetToken({
       user_id: user.id,
       token_hash: tokenHash,
       expires_at: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour
     });
+    console.log('✅ Password reset token created');
 
     // TODO: Send email via email service
     // await emailService.sendPasswordResetEmail(user.email, resetToken);
@@ -43,6 +46,7 @@ export async function forgotPassword(email) {
       reset_token: resetToken, // For testing only
     };
   } catch (error) {
+    console.error('❌ Error in forgotPassword:', error);
     throw new Error(`Failed to send password reset email: ${error.message}`);
   }
 }
@@ -52,7 +56,7 @@ export async function forgotPassword(email) {
  */
 export async function resetPassword(token, newPassword) {
   try {
-    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const tokenHash = hashToken(token);
 
     // Find valid reset token
     const resetToken = await passwordResetTokenRepository

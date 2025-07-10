@@ -57,6 +57,7 @@ server.addService(authProto.AuthService.service, {
   validateToken: authController.validateToken,
 
   // Password Management
+  forgotPassword: authController.forgotPassword,
   changePassword: authController.changePassword,
   resetPassword: authController.resetPassword,
 
