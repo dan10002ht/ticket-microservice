@@ -1,14 +1,10 @@
-import Redis from 'ioredis';
 import logger from '../../utils/logger.js';
 import { grpcClients } from '../../grpc/clients.js';
-
-// Initialize Redis client for PIN code storage
-const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
-  password: process.env.REDIS_PASSWORD,
-  db: process.env.REDIS_PIN_DB || 7, // Use separate DB for PIN codes
-});
+import {
+  setEmailVerificationPin,
+  getEmailVerificationPin,
+  deleteEmailVerificationPin,
+} from '../../services/redis/redisService.js';
 
 /**
  * Email Verification Job Handler
@@ -29,11 +25,8 @@ export async function handleEmailVerificationJob(jobData) {
     const pinCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     // 2. Store PIN code in Redis with TTL (15 minutes)
-    const redisKey = `email_verification:${userId}`;
-    const ttlSeconds = 15 * 60; // 15 minutes
-
-    await redis.setex(redisKey, ttlSeconds, pinCode);
-    logger.info(`PIN code stored in Redis for user: ${userId}, TTL: ${ttlSeconds}s`);
+    await setEmailVerificationPin(userId, pinCode);
+    logger.info(`PIN code stored in Redis for user: ${userId}`);
 
     // 3. Send verification email via gRPC to email-worker
     await sendVerificationEmailViaGrpc({
@@ -57,7 +50,7 @@ export async function handleEmailVerificationJob(jobData) {
 
     // Remove PIN code from Redis if email sending failed
     try {
-      await redis.del(`email_verification:${userId}`);
+      await deleteEmailVerificationPin(userId);
     } catch (redisError) {
       logger.error(`Failed to remove PIN code from Redis:`, redisError);
     }
@@ -95,8 +88,7 @@ async function sendVerificationEmailViaGrpc(data) {
  */
 export async function validatePinCodeFromRedis(userId, inputPinCode) {
   try {
-    const redisKey = `email_verification:${userId}`;
-    const storedPinCode = await redis.get(redisKey);
+    const storedPinCode = await getEmailVerificationPin(userId);
 
     if (!storedPinCode) {
       return {
@@ -115,7 +107,7 @@ export async function validatePinCodeFromRedis(userId, inputPinCode) {
     }
 
     // PIN code is valid, remove it from Redis
-    await redis.del(redisKey);
+    await deleteEmailVerificationPin(userId);
 
     return {
       valid: true,

@@ -12,6 +12,9 @@ export const CACHE_USER_PROFILE_JOB = 'cache_user_profile';
 export const CACHE_USER_ROLES_JOB = 'cache_user_roles';
 export const EMAIL_VERIFICATION_JOB = 'email_verification';
 
+// ========== PASSWORD RESET JOBS ==========
+export const EMAIL_RESET_PASSWORD_JOB = 'email_reset_password';
+
 // ========== SESSION MANAGEMENT JOBS ==========
 export const CLEANUP_EXPIRED_SESSIONS_JOB = 'cleanup_expired_sessions';
 export const CLEANUP_EXPIRED_TOKENS_JOB = 'cleanup_expired_tokens';
@@ -63,4 +66,9 @@ export const JOB_RETRY_CONFIGS = {
     timeout: JOB_TIMEOUTS.CLEANUP_OPERATIONS,
     priority: JOB_PRIORITIES.LOW,
   },
+};
+
+// Configuration
+export const PASSWORD_RESET_CONFIG = {
+  MAX_ATTEMPTS: 3,
 };

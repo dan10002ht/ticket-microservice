@@ -5,7 +5,6 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import logger from './utils/logger.js';
 import { closeConnections } from './config/databaseConfig.js';
-import cacheService from './services/internal/cacheService.js';
 
 // Import functional controllers
 import * as authController from './controllers/authController.js';
@@ -95,7 +94,7 @@ const gracefulShutdown = async (signal) => {
     logger.info('✅ Database connections closed');
 
     // Close cache connection
-    await cacheService.close();
+    // Cache service cleanup is handled by Redis service
     logger.info('✅ Cache connection closed');
 
     logger.info('✅ Graceful shutdown completed');

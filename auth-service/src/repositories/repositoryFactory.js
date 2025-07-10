@@ -3,7 +3,7 @@ import RoleRepository from './roleRepository.js';
 import UserRoleRepository from './userRoleRepository.js';
 import PermissionRepository from './permissionRepository.js';
 import RefreshTokenRepository from './refreshTokenRepository.js';
-import PasswordResetTokenRepository from './passwordResetTokenRepository.js';
+
 import EmailVerificationTokenRepository from './emailVerificationTokenRepository.js';
 import UserSessionRepository from './userSessionRepository.js';
 import UserProfileRepository from './userProfileRepository.js';
@@ -16,7 +16,7 @@ let roleRepositoryInstance = null;
 let userRoleRepositoryInstance = null;
 let permissionRepositoryInstance = null;
 let refreshTokenRepositoryInstance = null;
-let passwordResetTokenRepositoryInstance = null;
+
 let emailVerificationTokenRepositoryInstance = null;
 let userSessionRepositoryInstance = null;
 let userProfileRepositoryInstance = null;
@@ -71,16 +71,6 @@ export function getRefreshTokenRepository() {
     refreshTokenRepositoryInstance = new RefreshTokenRepository();
   }
   return refreshTokenRepositoryInstance;
-}
-
-/**
- * Get PasswordResetTokenRepository singleton instance
- */
-export function getPasswordResetTokenRepository() {
-  if (!passwordResetTokenRepositoryInstance) {
-    passwordResetTokenRepositoryInstance = new PasswordResetTokenRepository();
-  }
-  return passwordResetTokenRepositoryInstance;
 }
 
 /**
@@ -142,7 +132,6 @@ export function resetRepositories() {
   userRoleRepositoryInstance = null;
   permissionRepositoryInstance = null;
   refreshTokenRepositoryInstance = null;
-  passwordResetTokenRepositoryInstance = null;
   emailVerificationTokenRepositoryInstance = null;
   userSessionRepositoryInstance = null;
   userProfileRepositoryInstance = null;
@@ -160,7 +149,6 @@ export function getAllRepositories() {
     userRole: getUserRoleRepository(),
     permission: getPermissionRepository(),
     refreshToken: getRefreshTokenRepository(),
-    passwordResetToken: getPasswordResetTokenRepository(),
     emailVerificationToken: getEmailVerificationTokenRepository(),
     userSession: getUserSessionRepository(),
     userProfile: getUserProfileRepository(),

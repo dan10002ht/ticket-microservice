@@ -1,4 +1,4 @@
-import cacheService from '../../services/internal/cacheService.js';
+import { cacheUserProfile, cacheUserRoles } from '../../services/internal/cacheService.js';
 import logger from '../logger.js';
 
 /**
@@ -15,7 +15,7 @@ export async function handleCacheUserProfileJob(data) {
   try {
     logger.info(`Processing cache user profile job for user: ${userId}`);
 
-    await cacheService.cacheUserProfile(userId, userProfile);
+    await cacheUserProfile(userId, userProfile);
 
     logger.info(`User profile cached successfully for userId: ${userId}`);
 
@@ -44,7 +44,7 @@ export async function handleCacheUserRolesJob(data) {
   try {
     logger.info(`Processing cache user roles job for user: ${userId}`);
 
-    await cacheService.cacheUserRoles(userId, roles || []);
+    await cacheUserRoles(userId, roles || []);
 
     logger.info(`User roles cached successfully for userId: ${userId}`);
 
@@ -76,8 +76,8 @@ export async function handleCacheUserDataJob(data) {
 
     // Cache both profile and roles in parallel for better performance
     await Promise.all([
-      cacheService.cacheUserProfile(userId, userProfile),
-      cacheService.cacheUserRoles(userId, userRoles || []),
+      cacheUserProfile(userId, userProfile),
+      cacheUserRoles(userId, userRoles || []),
     ]);
 
     logger.info(`User data (profile + roles) cached successfully for userId: ${userId}`);

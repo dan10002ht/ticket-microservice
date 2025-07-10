@@ -61,9 +61,6 @@ export async function hardDeleteUser(userId) {
     // Xóa refresh tokens
     await trx('refresh_tokens').where('user_id', user.id).del();
 
-    // Xóa password reset tokens
-    await trx('password_reset_tokens').where('user_id', user.id).del();
-
     // Xóa email verification tokens
     await trx('email_verification_tokens').where('user_id', user.id).del();
 
@@ -103,9 +100,6 @@ export async function bulkDeleteUsers(userIds) {
 
     // Xóa refresh tokens
     await trx('refresh_tokens').whereIn('user_id', internalIds).del();
-
-    // Xóa password reset tokens
-    await trx('password_reset_tokens').whereIn('user_id', internalIds).del();
 
     // Xóa email verification tokens
     await trx('email_verification_tokens').whereIn('user_id', internalIds).del();

@@ -440,13 +440,6 @@ export async function forgotPassword(call, callback) {
   try {
     const { email } = call.request;
 
-    if (!email) {
-      return callback({
-        code: 3,
-        message: 'Email is required',
-      });
-    }
-
     const result = await passwordResetService.forgotPassword(email);
 
     callback(null, {

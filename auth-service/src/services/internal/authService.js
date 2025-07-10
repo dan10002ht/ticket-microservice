@@ -17,7 +17,15 @@ import {
 } from '../../utils/sanitizers.js';
 import * as organizationManagementService from './organizationManagementService.js';
 import * as oauthService from './oauthService.js';
-import cacheService from './cacheService.js';
+import {
+  cacheUserProfile,
+  cacheUserRoles,
+  invalidateUserCache,
+  getCachedTokenValidation,
+  cacheTokenValidation,
+  cacheHealthCheck,
+} from './cacheService.js';
+import * as redisPasswordResetService from './redisPasswordResetService.js';
 import { getBackgroundService } from '../../background/backgroundService.js';
 import {
   CACHE_USER_DATA_JOB,
@@ -209,8 +217,8 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
 
       // Cache user profile and roles
       const userProfile = sanitizeUserForResponse({ ...existingUser, role: primaryRole.name });
-      await cacheService.cacheUserProfile(existingUser.public_id, userProfile);
-      await cacheService.cacheUserRoles(existingUser.public_id, userWithRoles.roles || []);
+      await cacheUserProfile(existingUser.public_id, userProfile);
+      await cacheUserRoles(existingUser.public_id, userWithRoles.roles || []);
 
       // Generate tokens and create session
       const tokens = generateTokens(existingUser.public_id, {
@@ -222,8 +230,8 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
 
       // Save refresh token to refresh_tokens table
       await Promise.all([
-        cacheService.cacheUserProfile(existingUser.public_id, userProfile),
-        cacheService.cacheUserRoles(existingUser.public_id, userWithRoles.roles || []),
+        cacheUserProfile(existingUser.public_id, userProfile),
+        cacheUserRoles(existingUser.public_id, userWithRoles.roles || []),
       ]);
 
       await createUserSessionAndRefreshToken(
@@ -280,8 +288,8 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
         ...existingUserByEmail,
         role: primaryRole.name,
       });
-      await cacheService.cacheUserProfile(existingUserByEmail.public_id, userProfile);
-      await cacheService.cacheUserRoles(existingUserByEmail.public_id, userWithRoles.roles || []);
+      await cacheUserProfile(existingUserByEmail.public_id, userProfile);
+      await cacheUserRoles(existingUserByEmail.public_id, userWithRoles.roles || []);
 
       // Generate tokens and create session
       const tokens = generateTokens(existingUserByEmail.public_id, {
@@ -293,8 +301,8 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
 
       // Save refresh token to refresh_tokens table
       await Promise.all([
-        cacheService.cacheUserProfile(existingUserByEmail.public_id, userProfile),
-        cacheService.cacheUserRoles(existingUserByEmail.public_id, userWithRoles.roles || []),
+        cacheUserProfile(existingUserByEmail.public_id, userProfile),
+        cacheUserRoles(existingUserByEmail.public_id, userWithRoles.roles || []),
       ]);
 
       await createUserSessionAndRefreshToken(
@@ -353,8 +361,8 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
 
     // Cache user profile and roles
     const userProfile = sanitizeUserForResponse({ ...newUser, role: 'individual' });
-    await cacheService.cacheUserProfile(newUser.public_id, userProfile);
-    await cacheService.cacheUserRoles(newUser.public_id, []);
+    await cacheUserProfile(newUser.public_id, userProfile);
+    await cacheUserRoles(newUser.public_id, []);
 
     // Generate tokens and create session
     const tokens = generateTokens(newUser.public_id, {
@@ -366,8 +374,8 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
 
     // Save refresh token to refresh_tokens table
     await Promise.all([
-      cacheService.cacheUserProfile(newUser.public_id, userProfile),
-      cacheService.cacheUserRoles(newUser.public_id, []),
+      cacheUserProfile(newUser.public_id, userProfile),
+      cacheUserRoles(newUser.public_id, []),
     ]);
 
     await createUserSessionAndRefreshToken(
@@ -456,8 +464,8 @@ export async function login(email, password, sessionData = {}) {
 
     // Song song hóa các thao tác cache/token/session
     await Promise.all([
-      cacheService.cacheUserProfile(user.public_id, userProfile),
-      cacheService.cacheUserRoles(user.public_id, userWithRoles.roles || []),
+      cacheUserProfile(user.public_id, userProfile),
+      cacheUserRoles(user.public_id, userWithRoles.roles || []),
     ]);
 
     await createUserSessionAndRefreshToken(user.id, sessionInfo, refreshTokenData);
@@ -515,7 +523,7 @@ export async function logout(userId, sessionId = null, requestInfo = {}) {
     }
 
     // Invalidate user cache
-    operations.push(cacheService.invalidateUserCache(userId));
+    operations.push(invalidateUserCache(userId));
 
     // Execute all operations in parallel for better performance
     await Promise.all(operations);
@@ -626,7 +634,7 @@ export async function refreshToken(refreshToken) {
 export async function verifyToken(token) {
   try {
     // Check cache first
-    const cachedValidation = await cacheService.getCachedTokenValidation(token);
+    const cachedValidation = await getCachedTokenValidation(token);
     if (cachedValidation) {
       return cachedValidation;
     }
@@ -654,7 +662,7 @@ export async function verifyToken(token) {
     };
 
     // Cache the validation result (fire-and-forget)
-    cacheService.cacheTokenValidation(token, validationData).catch(() => {});
+    cacheTokenValidation(token, validationData).catch(() => {});
 
     return validationData;
   } catch (error) {
@@ -687,7 +695,7 @@ export async function changePassword(userId, currentPassword, newPassword) {
     // Execute cleanup operations in parallel
     await Promise.all([
       userSessionRepository.deleteAllUserSessions(userId),
-      cacheService.invalidateUserCache(userId),
+      invalidateUserCache(userId),
     ]);
 
     return { message: 'Password changed successfully' };
@@ -704,13 +712,15 @@ export async function changePassword(userId, currentPassword, newPassword) {
 export async function healthCheck() {
   try {
     const dbHealth = await checkDatabaseHealth();
-    const cacheHealth = await cacheService.healthCheck();
+    const cacheHealth = await cacheHealthCheck();
+    const redisPasswordResetHealth = await redisPasswordResetService.getRedisHealth();
 
     return {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       database: dbHealth,
       cache: cacheHealth,
+      redisPasswordReset: redisPasswordResetHealth,
       service: 'auth-service',
     };
   } catch (error) {

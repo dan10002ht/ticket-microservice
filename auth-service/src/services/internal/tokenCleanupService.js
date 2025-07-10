@@ -1,6 +1,5 @@
 import {
   getRefreshTokenRepository,
-  getPasswordResetTokenRepository,
   getEmailVerificationTokenRepository,
 } from '../../repositories/repositoryFactory.js';
 
@@ -11,7 +10,6 @@ import {
 class TokenCleanupService {
   constructor() {
     this.refreshTokenRepo = getRefreshTokenRepository();
-    this.passwordResetTokenRepo = getPasswordResetTokenRepository();
     this.emailVerificationTokenRepo = getEmailVerificationTokenRepository();
   }
 
@@ -22,14 +20,12 @@ class TokenCleanupService {
     try {
       const results = await Promise.all([
         this.refreshTokenRepo.deleteExpired(),
-        this.passwordResetTokenRepo.deleteExpired(),
         this.emailVerificationTokenRepo.deleteExpired(),
       ]);
 
       return {
         refreshTokens: results[0],
-        passwordResetTokens: results[1],
-        emailVerificationTokens: results[2],
+        emailVerificationTokens: results[1],
         totalDeleted: results.reduce((sum, count) => sum + count, 0),
       };
     } catch (error) {
@@ -46,18 +42,6 @@ class TokenCleanupService {
       return await this.refreshTokenRepo.deleteExpired();
     } catch (error) {
       console.error('Error cleaning up expired refresh tokens:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Cleanup chỉ password reset tokens
-   */
-  async cleanupExpiredPasswordResetTokens() {
-    try {
-      return await this.passwordResetTokenRepo.deleteExpired();
-    } catch (error) {
-      console.error('Error cleaning up expired password reset tokens:', error);
       throw error;
     }
   }
