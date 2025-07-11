@@ -37,6 +37,7 @@ const (
 	EmailService_DeleteEmailTemplate_FullMethodName      = "/email.EmailService/DeleteEmailTemplate"
 	EmailService_GetEmailTracking_FullMethodName         = "/email.EmailService/GetEmailTracking"
 	EmailService_UpdateEmailTracking_FullMethodName      = "/email.EmailService/UpdateEmailTracking"
+	EmailService_SendPasswordResetEmail_FullMethodName   = "/email.EmailService/SendPasswordResetEmail"
 	EmailService_Health_FullMethodName                   = "/email.EmailService/Health"
 )
 
@@ -69,6 +70,8 @@ type EmailServiceClient interface {
 	// Email Tracking
 	GetEmailTracking(ctx context.Context, in *GetEmailTrackingRequest, opts ...grpc.CallOption) (*GetEmailTrackingResponse, error)
 	UpdateEmailTracking(ctx context.Context, in *UpdateEmailTrackingRequest, opts ...grpc.CallOption) (*UpdateEmailTrackingResponse, error)
+	// Email forgot password
+	SendPasswordResetEmail(ctx context.Context, in *SendPasswordResetEmailRequest, opts ...grpc.CallOption) (*SendPasswordResetEmailResponse, error)
 	// Health & Monitoring (Single health endpoint)
 	Health(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error)
 }
@@ -261,6 +264,16 @@ func (c *emailServiceClient) UpdateEmailTracking(ctx context.Context, in *Update
 	return out, nil
 }
 
+func (c *emailServiceClient) SendPasswordResetEmail(ctx context.Context, in *SendPasswordResetEmailRequest, opts ...grpc.CallOption) (*SendPasswordResetEmailResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendPasswordResetEmailResponse)
+	err := c.cc.Invoke(ctx, EmailService_SendPasswordResetEmail_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *emailServiceClient) Health(ctx context.Context, in *HealthRequest, opts ...grpc.CallOption) (*HealthResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HealthResponse)
@@ -300,6 +313,8 @@ type EmailServiceServer interface {
 	// Email Tracking
 	GetEmailTracking(context.Context, *GetEmailTrackingRequest) (*GetEmailTrackingResponse, error)
 	UpdateEmailTracking(context.Context, *UpdateEmailTrackingRequest) (*UpdateEmailTrackingResponse, error)
+	// Email forgot password
+	SendPasswordResetEmail(context.Context, *SendPasswordResetEmailRequest) (*SendPasswordResetEmailResponse, error)
 	// Health & Monitoring (Single health endpoint)
 	Health(context.Context, *HealthRequest) (*HealthResponse, error)
 	mustEmbedUnimplementedEmailServiceServer()
@@ -365,6 +380,9 @@ func (UnimplementedEmailServiceServer) GetEmailTracking(context.Context, *GetEma
 }
 func (UnimplementedEmailServiceServer) UpdateEmailTracking(context.Context, *UpdateEmailTrackingRequest) (*UpdateEmailTrackingResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateEmailTracking not implemented")
+}
+func (UnimplementedEmailServiceServer) SendPasswordResetEmail(context.Context, *SendPasswordResetEmailRequest) (*SendPasswordResetEmailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendPasswordResetEmail not implemented")
 }
 func (UnimplementedEmailServiceServer) Health(context.Context, *HealthRequest) (*HealthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Health not implemented")
@@ -714,6 +732,24 @@ func _EmailService_UpdateEmailTracking_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _EmailService_SendPasswordResetEmail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendPasswordResetEmailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EmailServiceServer).SendPasswordResetEmail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: EmailService_SendPasswordResetEmail_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EmailServiceServer).SendPasswordResetEmail(ctx, req.(*SendPasswordResetEmailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _EmailService_Health_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HealthRequest)
 	if err := dec(in); err != nil {
@@ -810,6 +846,10 @@ var EmailService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateEmailTracking",
 			Handler:    _EmailService_UpdateEmailTracking_Handler,
+		},
+		{
+			MethodName: "SendPasswordResetEmail",
+			Handler:    _EmailService_SendPasswordResetEmail_Handler,
 		},
 		{
 			MethodName: "Health",

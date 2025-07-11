@@ -254,28 +254,28 @@ This email was sent for email verification purposes.
 </head>
 <body>
     <h1>Password Reset Request</h1>
-    <p>Hi {{.Name}},</p>
+    <p>Hi {{.Email}},</p>
     <p>You requested a password reset. Click the link below to reset your password:</p>
     <a href="{{.ResetURL}}">Reset Password</a>
-    <p>This link will expire in {{.ExpiryHours}} hours.</p>
+    <p>This link will expire in 15 minutes.</p>
     <p>If you did not request this, please ignore this email.</p>
     <p>Best regards,<br>Booking System Team</p>
 </body>
 </html>',
     'Password Reset Request
 
-Hi {{.Name}},
+Hi {{.Email}},
 
 You requested a password reset. Click the link below to reset your password:
 {{.ResetURL}}
 
-This link will expire in {{.ExpiryHours}} hours.
+This link will expire in 15 minutes.
 
 If you did not request this, please ignore this email.
 
 Best regards,
 Booking System Team',
-    '{"Name": "string", "ResetURL": "string", "ExpiryHours": "number"}'
+    '{"Email": "string", "ResetURL": "string"}'
 ),
 (
     'welcome_email',

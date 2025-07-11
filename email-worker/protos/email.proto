@@ -35,6 +35,9 @@ service EmailService {
   rpc GetEmailTracking(GetEmailTrackingRequest) returns (GetEmailTrackingResponse);
   rpc UpdateEmailTracking(UpdateEmailTrackingRequest) returns (UpdateEmailTrackingResponse);
   
+  // Email forgot password
+  rpc SendPasswordResetEmail(SendPasswordResetEmailRequest) returns (SendPasswordResetEmailResponse);
+
   // Health & Monitoring (Single health endpoint)
   rpc Health(HealthRequest) returns (HealthResponse);
 }
@@ -308,6 +311,18 @@ message ResendVerificationEmailResponse {
   string job_id = 3;
   string pin_code = 4;  // New PIN code
   int64 expiry_timestamp = 5;
+}
+
+message SendPasswordResetEmailRequest {
+  string email = 1;
+  string user_id = 2;
+  string forgot_password_url = 3;
+}
+
+message SendPasswordResetEmailResponse {
+  bool success = 1;
+  string message = 2;
+  string job_id = 3;
 }
 
 // Data structures

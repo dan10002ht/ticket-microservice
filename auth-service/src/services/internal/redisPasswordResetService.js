@@ -1,14 +1,11 @@
-import { generateSecureToken, hashToken } from '../../helpers/tokenHelper.js';
+import { hashToken } from '../../helpers/tokenHelper.js';
 import {
   getUserRepository,
   getUserSessionRepository,
 } from '../../repositories/repositoryFactory.js';
 import {
-  setPasswordResetToken,
   getPasswordResetToken,
   deletePasswordResetToken,
-  incrementPasswordResetAttempts,
-  getPasswordResetAttempts,
   clearPasswordResetAttempts,
   getKeys,
   healthCheck as redisHealthCheck,

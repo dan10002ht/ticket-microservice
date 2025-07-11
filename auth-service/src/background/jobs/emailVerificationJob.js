@@ -71,7 +71,6 @@ async function sendVerificationEmailViaGrpc(data) {
       user_name: data.userName,
       pin_code: data.pinCode,
       is_resend: data.isResend,
-      expiry_minutes: 15,
       verification_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?user_id=${data.userId}&code=${data.pinCode}`,
     };
 

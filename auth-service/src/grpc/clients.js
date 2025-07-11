@@ -29,8 +29,6 @@ const loadProto = (protoFile) => {
 
 const createClient = (serviceUrl, serviceName, packageName) => {
   try {
-    logger.info(`🔧 Creating gRPC client for ${serviceName} at ${serviceUrl}`);
-
     const proto = loadProto(`${serviceName}.proto`);
 
     const serviceClassName = `${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)}Service`;
@@ -43,15 +41,11 @@ const createClient = (serviceUrl, serviceName, packageName) => {
       throw new Error(`Service '${serviceClassName}' not found in package '${packageName}'`);
     }
 
-    logger.info(`✅ Proto loaded successfully for ${serviceName}`);
-
     const client = new proto[packageName][serviceClassName](
       serviceUrl,
       grpc.credentials.createInsecure(),
       clientOptions
     );
-
-    logger.info(`✅ gRPC client created for ${serviceName}`);
 
     const wrappedClient = {};
     // Lấy đủ method từ cả instance và prototype
@@ -100,10 +94,6 @@ const createClient = (serviceUrl, serviceName, packageName) => {
         };
       }
     });
-
-    logger.info(
-      `Successfully created gRPC client for ${serviceName} with ${Object.keys(wrappedClient).length} methods`
-    );
 
     return wrappedClient;
   } catch (error) {

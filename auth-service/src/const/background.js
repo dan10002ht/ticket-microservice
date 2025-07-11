@@ -71,4 +71,5 @@ export const JOB_RETRY_CONFIGS = {
 // Configuration
 export const PASSWORD_RESET_CONFIG = {
   MAX_ATTEMPTS: 3,
+  TTL: 15,
 };

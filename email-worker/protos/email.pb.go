@@ -2720,6 +2720,126 @@ func (x *ResendVerificationEmailResponse) GetExpiryTimestamp() int64 {
 	return 0
 }
 
+type SendPasswordResetEmailRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Email             string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	UserId            string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	ForgotPasswordUrl string                 `protobuf:"bytes,3,opt,name=forgot_password_url,json=forgotPasswordUrl,proto3" json:"forgot_password_url,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *SendPasswordResetEmailRequest) Reset() {
+	*x = SendPasswordResetEmailRequest{}
+	mi := &file_protos_email_proto_msgTypes[36]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendPasswordResetEmailRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendPasswordResetEmailRequest) ProtoMessage() {}
+
+func (x *SendPasswordResetEmailRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_email_proto_msgTypes[36]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendPasswordResetEmailRequest.ProtoReflect.Descriptor instead.
+func (*SendPasswordResetEmailRequest) Descriptor() ([]byte, []int) {
+	return file_protos_email_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *SendPasswordResetEmailRequest) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *SendPasswordResetEmailRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *SendPasswordResetEmailRequest) GetForgotPasswordUrl() string {
+	if x != nil {
+		return x.ForgotPasswordUrl
+	}
+	return ""
+}
+
+type SendPasswordResetEmailResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	JobId         string                 `protobuf:"bytes,3,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendPasswordResetEmailResponse) Reset() {
+	*x = SendPasswordResetEmailResponse{}
+	mi := &file_protos_email_proto_msgTypes[37]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendPasswordResetEmailResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendPasswordResetEmailResponse) ProtoMessage() {}
+
+func (x *SendPasswordResetEmailResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_protos_email_proto_msgTypes[37]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendPasswordResetEmailResponse.ProtoReflect.Descriptor instead.
+func (*SendPasswordResetEmailResponse) Descriptor() ([]byte, []int) {
+	return file_protos_email_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *SendPasswordResetEmailResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *SendPasswordResetEmailResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *SendPasswordResetEmailResponse) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
 // Data structures
 type EmailJob struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
@@ -2748,7 +2868,7 @@ type EmailJob struct {
 
 func (x *EmailJob) Reset() {
 	*x = EmailJob{}
-	mi := &file_protos_email_proto_msgTypes[36]
+	mi := &file_protos_email_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2760,7 +2880,7 @@ func (x *EmailJob) String() string {
 func (*EmailJob) ProtoMessage() {}
 
 func (x *EmailJob) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_email_proto_msgTypes[36]
+	mi := &file_protos_email_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2773,7 +2893,7 @@ func (x *EmailJob) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EmailJob.ProtoReflect.Descriptor instead.
 func (*EmailJob) Descriptor() ([]byte, []int) {
-	return file_protos_email_proto_rawDescGZIP(), []int{36}
+	return file_protos_email_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *EmailJob) GetId() string {
@@ -2928,7 +3048,7 @@ type EmailTemplate struct {
 
 func (x *EmailTemplate) Reset() {
 	*x = EmailTemplate{}
-	mi := &file_protos_email_proto_msgTypes[37]
+	mi := &file_protos_email_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2940,7 +3060,7 @@ func (x *EmailTemplate) String() string {
 func (*EmailTemplate) ProtoMessage() {}
 
 func (x *EmailTemplate) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_email_proto_msgTypes[37]
+	mi := &file_protos_email_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2953,7 +3073,7 @@ func (x *EmailTemplate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EmailTemplate.ProtoReflect.Descriptor instead.
 func (*EmailTemplate) Descriptor() ([]byte, []int) {
-	return file_protos_email_proto_rawDescGZIP(), []int{37}
+	return file_protos_email_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *EmailTemplate) GetId() string {
@@ -3053,7 +3173,7 @@ type EmailTracking struct {
 
 func (x *EmailTracking) Reset() {
 	*x = EmailTracking{}
-	mi := &file_protos_email_proto_msgTypes[38]
+	mi := &file_protos_email_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3065,7 +3185,7 @@ func (x *EmailTracking) String() string {
 func (*EmailTracking) ProtoMessage() {}
 
 func (x *EmailTracking) ProtoReflect() protoreflect.Message {
-	mi := &file_protos_email_proto_msgTypes[38]
+	mi := &file_protos_email_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3078,7 +3198,7 @@ func (x *EmailTracking) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EmailTracking.ProtoReflect.Descriptor instead.
 func (*EmailTracking) Descriptor() ([]byte, []int) {
-	return file_protos_email_proto_rawDescGZIP(), []int{38}
+	return file_protos_email_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *EmailTracking) GetId() int64 {
@@ -3403,7 +3523,15 @@ const file_protos_email_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x15\n" +
 	"\x06job_id\x18\x03 \x01(\tR\x05jobId\x12\x19\n" +
 	"\bpin_code\x18\x04 \x01(\tR\apinCode\x12)\n" +
-	"\x10expiry_timestamp\x18\x05 \x01(\x03R\x0fexpiryTimestamp\"\xa8\x06\n" +
+	"\x10expiry_timestamp\x18\x05 \x01(\x03R\x0fexpiryTimestamp\"~\n" +
+	"\x1dSendPasswordResetEmailRequest\x12\x14\n" +
+	"\x05email\x18\x01 \x01(\tR\x05email\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\x12.\n" +
+	"\x13forgot_password_url\x18\x03 \x01(\tR\x11forgotPasswordUrl\"k\n" +
+	"\x1eSendPasswordResetEmailResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x15\n" +
+	"\x06job_id\x18\x03 \x01(\tR\x05jobId\"\xa8\x06\n" +
 	"\bEmailJob\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x0e\n" +
 	"\x02to\x18\x02 \x03(\tR\x02to\x12\x0e\n" +
@@ -3482,7 +3610,7 @@ const file_protos_email_proto_rawDesc = "" +
 	"\fPRIORITY_LOW\x10\x01\x12\x13\n" +
 	"\x0fPRIORITY_NORMAL\x10\x02\x12\x11\n" +
 	"\rPRIORITY_HIGH\x10\x03\x12\x13\n" +
-	"\x0fPRIORITY_URGENT\x10\x042\xee\f\n" +
+	"\x0fPRIORITY_URGENT\x10\x042\xd5\r\n" +
 	"\fEmailService\x12b\n" +
 	"\x15SendVerificationEmail\x12#.email.SendVerificationEmailRequest\x1a$.email.SendVerificationEmailResponse\x12k\n" +
 	"\x18SendVerificationReminder\x12&.email.SendVerificationReminderRequest\x1a'.email.SendVerificationReminderResponse\x12f\n" +
@@ -3501,7 +3629,8 @@ const file_protos_email_proto_rawDesc = "" +
 	"\x13UpdateEmailTemplate\x12!.email.UpdateEmailTemplateRequest\x1a\".email.UpdateEmailTemplateResponse\x12\\\n" +
 	"\x13DeleteEmailTemplate\x12!.email.DeleteEmailTemplateRequest\x1a\".email.DeleteEmailTemplateResponse\x12S\n" +
 	"\x10GetEmailTracking\x12\x1e.email.GetEmailTrackingRequest\x1a\x1f.email.GetEmailTrackingResponse\x12\\\n" +
-	"\x13UpdateEmailTracking\x12!.email.UpdateEmailTrackingRequest\x1a\".email.UpdateEmailTrackingResponse\x125\n" +
+	"\x13UpdateEmailTracking\x12!.email.UpdateEmailTrackingRequest\x1a\".email.UpdateEmailTrackingResponse\x12e\n" +
+	"\x16SendPasswordResetEmail\x12$.email.SendPasswordResetEmailRequest\x1a%.email.SendPasswordResetEmailResponse\x125\n" +
 	"\x06Health\x12\x14.email.HealthRequest\x1a\x15.email.HealthResponseB$Z\"booking-system/email-worker/protosb\x06proto3"
 
 var (
@@ -3517,7 +3646,7 @@ func file_protos_email_proto_rawDescGZIP() []byte {
 }
 
 var file_protos_email_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_protos_email_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
+var file_protos_email_proto_msgTypes = make([]protoimpl.MessageInfo, 47)
 var file_protos_email_proto_goTypes = []any{
 	(JobStatus)(0),                           // 0: email.JobStatus
 	(JobPriority)(0),                         // 1: email.JobPriority
@@ -3557,47 +3686,49 @@ var file_protos_email_proto_goTypes = []any{
 	(*SendVerificationReminderResponse)(nil), // 35: email.SendVerificationReminderResponse
 	(*ResendVerificationEmailRequest)(nil),   // 36: email.ResendVerificationEmailRequest
 	(*ResendVerificationEmailResponse)(nil),  // 37: email.ResendVerificationEmailResponse
-	(*EmailJob)(nil),                         // 38: email.EmailJob
-	(*EmailTemplate)(nil),                    // 39: email.EmailTemplate
-	(*EmailTracking)(nil),                    // 40: email.EmailTracking
-	nil,                                      // 41: email.CreateEmailJobRequest.VariablesEntry
-	nil,                                      // 42: email.CreateEmailJobRequest.TemplateDataEntry
-	nil,                                      // 43: email.CreateEmailTemplateRequest.VariablesMapEntry
-	nil,                                      // 44: email.UpdateEmailTemplateRequest.VariablesMapEntry
-	nil,                                      // 45: email.EmailJob.VariablesEntry
-	nil,                                      // 46: email.EmailTemplate.VariablesEntry
-	(*timestamppb.Timestamp)(nil),            // 47: google.protobuf.Timestamp
+	(*SendPasswordResetEmailRequest)(nil),    // 38: email.SendPasswordResetEmailRequest
+	(*SendPasswordResetEmailResponse)(nil),   // 39: email.SendPasswordResetEmailResponse
+	(*EmailJob)(nil),                         // 40: email.EmailJob
+	(*EmailTemplate)(nil),                    // 41: email.EmailTemplate
+	(*EmailTracking)(nil),                    // 42: email.EmailTracking
+	nil,                                      // 43: email.CreateEmailJobRequest.VariablesEntry
+	nil,                                      // 44: email.CreateEmailJobRequest.TemplateDataEntry
+	nil,                                      // 45: email.CreateEmailTemplateRequest.VariablesMapEntry
+	nil,                                      // 46: email.UpdateEmailTemplateRequest.VariablesMapEntry
+	nil,                                      // 47: email.EmailJob.VariablesEntry
+	nil,                                      // 48: email.EmailTemplate.VariablesEntry
+	(*timestamppb.Timestamp)(nil),            // 49: google.protobuf.Timestamp
 }
 var file_protos_email_proto_depIdxs = []int32{
-	41, // 0: email.CreateEmailJobRequest.variables:type_name -> email.CreateEmailJobRequest.VariablesEntry
-	42, // 1: email.CreateEmailJobRequest.template_data:type_name -> email.CreateEmailJobRequest.TemplateDataEntry
+	43, // 0: email.CreateEmailJobRequest.variables:type_name -> email.CreateEmailJobRequest.VariablesEntry
+	44, // 1: email.CreateEmailJobRequest.template_data:type_name -> email.CreateEmailJobRequest.TemplateDataEntry
 	1,  // 2: email.CreateEmailJobRequest.priority:type_name -> email.JobPriority
-	47, // 3: email.CreateEmailJobRequest.scheduled_at:type_name -> google.protobuf.Timestamp
-	38, // 4: email.CreateEmailJobResponse.job:type_name -> email.EmailJob
-	38, // 5: email.GetEmailJobResponse.job:type_name -> email.EmailJob
+	49, // 3: email.CreateEmailJobRequest.scheduled_at:type_name -> google.protobuf.Timestamp
+	40, // 4: email.CreateEmailJobResponse.job:type_name -> email.EmailJob
+	40, // 5: email.GetEmailJobResponse.job:type_name -> email.EmailJob
 	0,  // 6: email.GetJobStatusResponse.status:type_name -> email.JobStatus
-	47, // 7: email.GetJobStatusResponse.created_at:type_name -> google.protobuf.Timestamp
-	47, // 8: email.GetJobStatusResponse.updated_at:type_name -> google.protobuf.Timestamp
-	47, // 9: email.GetJobStatusResponse.completed_at:type_name -> google.protobuf.Timestamp
-	38, // 10: email.UpdateEmailJobStatusResponse.job:type_name -> email.EmailJob
-	38, // 11: email.ListEmailJobsResponse.jobs:type_name -> email.EmailJob
-	39, // 12: email.GetEmailTemplateResponse.template:type_name -> email.EmailTemplate
-	39, // 13: email.ListEmailTemplatesResponse.templates:type_name -> email.EmailTemplate
-	43, // 14: email.CreateEmailTemplateRequest.variables_map:type_name -> email.CreateEmailTemplateRequest.VariablesMapEntry
-	39, // 15: email.CreateEmailTemplateResponse.template:type_name -> email.EmailTemplate
-	44, // 16: email.UpdateEmailTemplateRequest.variables_map:type_name -> email.UpdateEmailTemplateRequest.VariablesMapEntry
-	39, // 17: email.UpdateEmailTemplateResponse.template:type_name -> email.EmailTemplate
-	40, // 18: email.GetEmailTrackingResponse.tracking:type_name -> email.EmailTracking
-	40, // 19: email.UpdateEmailTrackingResponse.tracking:type_name -> email.EmailTracking
-	45, // 20: email.EmailJob.variables:type_name -> email.EmailJob.VariablesEntry
+	49, // 7: email.GetJobStatusResponse.created_at:type_name -> google.protobuf.Timestamp
+	49, // 8: email.GetJobStatusResponse.updated_at:type_name -> google.protobuf.Timestamp
+	49, // 9: email.GetJobStatusResponse.completed_at:type_name -> google.protobuf.Timestamp
+	40, // 10: email.UpdateEmailJobStatusResponse.job:type_name -> email.EmailJob
+	40, // 11: email.ListEmailJobsResponse.jobs:type_name -> email.EmailJob
+	41, // 12: email.GetEmailTemplateResponse.template:type_name -> email.EmailTemplate
+	41, // 13: email.ListEmailTemplatesResponse.templates:type_name -> email.EmailTemplate
+	45, // 14: email.CreateEmailTemplateRequest.variables_map:type_name -> email.CreateEmailTemplateRequest.VariablesMapEntry
+	41, // 15: email.CreateEmailTemplateResponse.template:type_name -> email.EmailTemplate
+	46, // 16: email.UpdateEmailTemplateRequest.variables_map:type_name -> email.UpdateEmailTemplateRequest.VariablesMapEntry
+	41, // 17: email.UpdateEmailTemplateResponse.template:type_name -> email.EmailTemplate
+	42, // 18: email.GetEmailTrackingResponse.tracking:type_name -> email.EmailTracking
+	42, // 19: email.UpdateEmailTrackingResponse.tracking:type_name -> email.EmailTracking
+	47, // 20: email.EmailJob.variables:type_name -> email.EmailJob.VariablesEntry
 	0,  // 21: email.EmailJob.status:type_name -> email.JobStatus
 	1,  // 22: email.EmailJob.priority:type_name -> email.JobPriority
-	47, // 23: email.EmailJob.created_timestamp:type_name -> google.protobuf.Timestamp
-	47, // 24: email.EmailJob.updated_timestamp:type_name -> google.protobuf.Timestamp
-	47, // 25: email.EmailJob.completed_timestamp:type_name -> google.protobuf.Timestamp
-	46, // 26: email.EmailTemplate.variables:type_name -> email.EmailTemplate.VariablesEntry
-	47, // 27: email.EmailTemplate.created_timestamp:type_name -> google.protobuf.Timestamp
-	47, // 28: email.EmailTemplate.updated_timestamp:type_name -> google.protobuf.Timestamp
+	49, // 23: email.EmailJob.created_timestamp:type_name -> google.protobuf.Timestamp
+	49, // 24: email.EmailJob.updated_timestamp:type_name -> google.protobuf.Timestamp
+	49, // 25: email.EmailJob.completed_timestamp:type_name -> google.protobuf.Timestamp
+	48, // 26: email.EmailTemplate.variables:type_name -> email.EmailTemplate.VariablesEntry
+	49, // 27: email.EmailTemplate.created_timestamp:type_name -> google.protobuf.Timestamp
+	49, // 28: email.EmailTemplate.updated_timestamp:type_name -> google.protobuf.Timestamp
 	32, // 29: email.EmailService.SendVerificationEmail:input_type -> email.SendVerificationEmailRequest
 	34, // 30: email.EmailService.SendVerificationReminder:input_type -> email.SendVerificationReminderRequest
 	36, // 31: email.EmailService.ResendVerificationEmail:input_type -> email.ResendVerificationEmailRequest
@@ -3616,28 +3747,30 @@ var file_protos_email_proto_depIdxs = []int32{
 	24, // 44: email.EmailService.DeleteEmailTemplate:input_type -> email.DeleteEmailTemplateRequest
 	26, // 45: email.EmailService.GetEmailTracking:input_type -> email.GetEmailTrackingRequest
 	28, // 46: email.EmailService.UpdateEmailTracking:input_type -> email.UpdateEmailTrackingRequest
-	30, // 47: email.EmailService.Health:input_type -> email.HealthRequest
-	33, // 48: email.EmailService.SendVerificationEmail:output_type -> email.SendVerificationEmailResponse
-	35, // 49: email.EmailService.SendVerificationReminder:output_type -> email.SendVerificationReminderResponse
-	33, // 50: email.EmailService.ResendVerificationEmail:output_type -> email.SendVerificationEmailResponse
-	3,  // 51: email.EmailService.CreateEmailJob:output_type -> email.CreateEmailJobResponse
-	3,  // 52: email.EmailService.CreateTrackedEmailJob:output_type -> email.CreateEmailJobResponse
-	5,  // 53: email.EmailService.GetEmailJob:output_type -> email.GetEmailJobResponse
-	7,  // 54: email.EmailService.GetJobStatus:output_type -> email.GetJobStatusResponse
-	9,  // 55: email.EmailService.UpdateEmailJobStatus:output_type -> email.UpdateEmailJobStatusResponse
-	11, // 56: email.EmailService.ListEmailJobs:output_type -> email.ListEmailJobsResponse
-	13, // 57: email.EmailService.GetJobStats:output_type -> email.GetJobStatsResponse
-	15, // 58: email.EmailService.GetQueueStats:output_type -> email.GetQueueStatsResponse
-	17, // 59: email.EmailService.GetEmailTemplate:output_type -> email.GetEmailTemplateResponse
-	19, // 60: email.EmailService.ListEmailTemplates:output_type -> email.ListEmailTemplatesResponse
-	21, // 61: email.EmailService.CreateEmailTemplate:output_type -> email.CreateEmailTemplateResponse
-	23, // 62: email.EmailService.UpdateEmailTemplate:output_type -> email.UpdateEmailTemplateResponse
-	25, // 63: email.EmailService.DeleteEmailTemplate:output_type -> email.DeleteEmailTemplateResponse
-	27, // 64: email.EmailService.GetEmailTracking:output_type -> email.GetEmailTrackingResponse
-	29, // 65: email.EmailService.UpdateEmailTracking:output_type -> email.UpdateEmailTrackingResponse
-	31, // 66: email.EmailService.Health:output_type -> email.HealthResponse
-	48, // [48:67] is the sub-list for method output_type
-	29, // [29:48] is the sub-list for method input_type
+	38, // 47: email.EmailService.SendPasswordResetEmail:input_type -> email.SendPasswordResetEmailRequest
+	30, // 48: email.EmailService.Health:input_type -> email.HealthRequest
+	33, // 49: email.EmailService.SendVerificationEmail:output_type -> email.SendVerificationEmailResponse
+	35, // 50: email.EmailService.SendVerificationReminder:output_type -> email.SendVerificationReminderResponse
+	33, // 51: email.EmailService.ResendVerificationEmail:output_type -> email.SendVerificationEmailResponse
+	3,  // 52: email.EmailService.CreateEmailJob:output_type -> email.CreateEmailJobResponse
+	3,  // 53: email.EmailService.CreateTrackedEmailJob:output_type -> email.CreateEmailJobResponse
+	5,  // 54: email.EmailService.GetEmailJob:output_type -> email.GetEmailJobResponse
+	7,  // 55: email.EmailService.GetJobStatus:output_type -> email.GetJobStatusResponse
+	9,  // 56: email.EmailService.UpdateEmailJobStatus:output_type -> email.UpdateEmailJobStatusResponse
+	11, // 57: email.EmailService.ListEmailJobs:output_type -> email.ListEmailJobsResponse
+	13, // 58: email.EmailService.GetJobStats:output_type -> email.GetJobStatsResponse
+	15, // 59: email.EmailService.GetQueueStats:output_type -> email.GetQueueStatsResponse
+	17, // 60: email.EmailService.GetEmailTemplate:output_type -> email.GetEmailTemplateResponse
+	19, // 61: email.EmailService.ListEmailTemplates:output_type -> email.ListEmailTemplatesResponse
+	21, // 62: email.EmailService.CreateEmailTemplate:output_type -> email.CreateEmailTemplateResponse
+	23, // 63: email.EmailService.UpdateEmailTemplate:output_type -> email.UpdateEmailTemplateResponse
+	25, // 64: email.EmailService.DeleteEmailTemplate:output_type -> email.DeleteEmailTemplateResponse
+	27, // 65: email.EmailService.GetEmailTracking:output_type -> email.GetEmailTrackingResponse
+	29, // 66: email.EmailService.UpdateEmailTracking:output_type -> email.UpdateEmailTrackingResponse
+	39, // 67: email.EmailService.SendPasswordResetEmail:output_type -> email.SendPasswordResetEmailResponse
+	31, // 68: email.EmailService.Health:output_type -> email.HealthResponse
+	49, // [49:69] is the sub-list for method output_type
+	29, // [29:49] is the sub-list for method input_type
 	29, // [29:29] is the sub-list for extension type_name
 	29, // [29:29] is the sub-list for extension extendee
 	0,  // [0:29] is the sub-list for field type_name
@@ -3654,7 +3787,7 @@ func file_protos_email_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protos_email_proto_rawDesc), len(file_protos_email_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   45,
+			NumMessages:   47,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

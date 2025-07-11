@@ -17,12 +17,12 @@ export async function handleEmailResetPasswordJob(jobData) {
     // Check rate limiting for this user
     const currentAttempts = await getPasswordResetAttempts(userId);
 
-    if (currentAttempts >= PASSWORD_RESET_CONFIG.MAX_ATTEMPTS) {
-      logger.warn(`Password reset rate limit exceeded for user ${userId}`);
-      return {
-        message: 'If the email exists, a password reset link has been sent',
-      };
-    }
+    // if (currentAttempts >= PASSWORD_RESET_CONFIG.MAX_ATTEMPTS) {
+    //   logger.warn(`Password reset rate limit exceeded for user ${userId}`);
+    //   return {
+    //     message: 'If the email exists, a password reset link has been sent',
+    //   };
+    // }
 
     // Store token in Redis with TTL
     const tokenData = {
@@ -42,8 +42,9 @@ export async function handleEmailResetPasswordJob(jobData) {
       tokenExpiresIn: PASSWORD_RESET_CONFIG.TTL,
     });
     await sendPasswordResetEmailViaGrpc({
-      email: email,
-      resetToken: resetToken,
+      email,
+      resetToken,
+      userId,
     });
   } catch (error) {
     logger.error('Error in handleEmailResetPasswordJob:', error);
@@ -57,9 +58,17 @@ export async function handleEmailResetPasswordJob(jobData) {
 }
 
 export async function sendPasswordResetEmailViaGrpc(data) {
-  const { email, resetToken } = data;
-  const emailWorkerClient = grpcClients.emailWorkerClient;
-  const response = await emailWorkerClient.sendPasswordResetEmail(data);
-  // todo @dantt
-  return response;
+  try {
+    const { email, resetToken, userId } = data;
+    const passwordResetData = {
+      email,
+      user_id: userId,
+      forgot_password_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/forgot-password?user_id=${userId}&token=${resetToken}`,
+    };
+    const response = await grpcClients.emailService.sendPasswordResetEmail(passwordResetData);
+    logger.info(`Password reset email sent successfully to ${email}`, response);
+  } catch (e) {
+    logger.error('Failed to send password reset email via gRPC:', e.message);
+    throw new Error(`Email sending failed: ${e.message}`);
+  }
 }

@@ -324,6 +324,52 @@ func (s *Server) ResendVerificationEmail(ctx context.Context, req *protos.Resend
 	}, nil
 }
 
+// SendPasswordResetEmail implements the SendPasswordResetEmail gRPC method
+func (s *Server) SendPasswordResetEmail(ctx context.Context, req *protos.SendPasswordResetEmailRequest) (*protos.SendPasswordResetEmailResponse, error) {
+	s.logger.Info("Sending password reset email",
+		zap.String("user_id", req.UserId),
+		zap.String("email", req.Email),
+	)
+
+	// Create email job for password reset
+	job := models.NewEmailJob(
+		[]string{req.Email}, // to
+		nil,                 // cc
+		nil,                 // bcc
+		"password_reset",    // templateName
+		map[string]any{
+			"ResetURL": req.ForgotPasswordUrl,
+		},
+		models.JobPriorityHigh, // High priority for security-related emails
+	)
+	job.SetMaxRetries(3)
+
+	// Save job to database FIRST for tracking (important for security)
+	if err := s.emailService.CreateTrackedEmailJob(ctx, job); err != nil {
+		s.logger.Error("Failed to save password reset email job to database", zap.Error(err))
+		return &protos.SendPasswordResetEmailResponse{
+			Success: false,
+			Message: fmt.Sprintf("Failed to save password reset email job: %v", err),
+		}, nil
+	}
+
+	// Then publish to queue
+	err := s.processor.PublishJob(ctx, job)
+	if err != nil {
+		s.logger.Error("Failed to publish password reset email job", zap.Error(err))
+		return &protos.SendPasswordResetEmailResponse{
+			Success: false,
+			Message: fmt.Sprintf("Failed to send password reset email: %v", err),
+		}, nil
+	}
+
+	return &protos.SendPasswordResetEmailResponse{
+		Success: true,
+		Message: "Password reset email sent successfully",
+		JobId:   job.ID.String(),
+	}, nil
+}
+
 // Health implements the Health gRPC method
 func (s *Server) Health(ctx context.Context, req *protos.HealthRequest) (*protos.HealthResponse, error) {
 	// Check processor health
