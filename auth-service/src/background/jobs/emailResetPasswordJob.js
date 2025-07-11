@@ -2,68 +2,50 @@ import logger from '../../utils/logger.js';
 import { grpcClients } from '../../grpc/clients.js';
 import { PASSWORD_RESET_CONFIG } from '../../const/background.js';
 import {
-  deletePasswordResetToken,
   getPasswordResetAttempts,
   incrementPasswordResetAttempts,
-  setPasswordResetToken,
 } from '../../services/redis/redisService.js';
-import { generateSecureToken } from '../../helpers/tokenHelper.js';
 
 export async function handleEmailResetPasswordJob(jobData) {
-  const { email, userId } = jobData;
-  const { token: resetToken, tokenHash } = generateSecureToken('reset');
+  const { email, userId, forgotPasswordUrl } = jobData;
+
   try {
     logger.info(`Processing email reset password job for email: ${email}`);
+
     // Check rate limiting for this user
     const currentAttempts = await getPasswordResetAttempts(userId);
 
-    // if (currentAttempts >= PASSWORD_RESET_CONFIG.MAX_ATTEMPTS) {
-    //   logger.warn(`Password reset rate limit exceeded for user ${userId}`);
-    //   return {
-    //     message: 'If the email exists, a password reset link has been sent',
-    //   };
-    // }
-
-    // Store token in Redis with TTL
-    const tokenData = {
-      user_id: userId,
-      email: email,
-      created_at: new Date().toISOString(),
-    };
-
-    await setPasswordResetToken(tokenHash, tokenData);
+    if (currentAttempts >= PASSWORD_RESET_CONFIG.MAX_ATTEMPTS) {
+      logger.warn(`Password reset rate limit exceeded for user ${userId}`);
+      return;
+    }
 
     // Increment attempts counter
     await incrementPasswordResetAttempts(userId);
 
-    logger.info(`Password reset token created for user ${userId}`, {
+    logger.info(`Password reset email job for user ${userId}`, {
       userId: userId,
       email: email,
-      tokenExpiresIn: PASSWORD_RESET_CONFIG.TTL,
     });
+
     await sendPasswordResetEmailViaGrpc({
       email,
-      resetToken,
       userId,
+      forgotPasswordUrl,
     });
   } catch (error) {
     logger.error('Error in handleEmailResetPasswordJob:', error);
-    try {
-      await deletePasswordResetToken(tokenHash);
-    } catch (redisError) {
-      logger.error(`Failed to remove password reset token from Redis:`, redisError);
-    }
     throw error;
   }
 }
 
 export async function sendPasswordResetEmailViaGrpc(data) {
   try {
-    const { email, resetToken, userId } = data;
+    const { email, userId, forgotPasswordUrl } = data;
     const passwordResetData = {
       email,
       user_id: userId,
-      forgot_password_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/forgot-password?user_id=${userId}&token=${resetToken}`,
+      forgot_password_url: forgotPasswordUrl,
     };
     const response = await grpcClients.emailService.sendPasswordResetEmail(passwordResetData);
     logger.info(`Password reset email sent successfully to ${email}`, response);

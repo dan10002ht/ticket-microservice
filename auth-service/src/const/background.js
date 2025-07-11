@@ -14,6 +14,7 @@ export const EMAIL_VERIFICATION_JOB = 'email_verification';
 
 // ========== PASSWORD RESET JOBS ==========
 export const EMAIL_RESET_PASSWORD_JOB = 'email_reset_password';
+export const PASSWORD_RESET_TOKEN_JOB = 'password_reset_token';
 
 // ========== SESSION MANAGEMENT JOBS ==========
 export const CLEANUP_EXPIRED_SESSIONS_JOB = 'cleanup_expired_sessions';

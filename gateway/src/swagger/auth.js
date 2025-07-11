@@ -515,10 +515,68 @@
  *               $ref: '#/components/schemas/PasswordResetResponse'
  *       400:
  *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Email is required"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "MISSING_REQUIRED_FIELD"
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "User not found"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "USER_NOT_FOUND"
+ *       429:
+ *         description: Too many password reset attempts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Too many password reset attempts, please try again later"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "TOO_MANY_ATTEMPTS"
  *       500:
  *         description: Failed to send password reset email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Failed to send password reset email"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "PASSWORD_RESET_FAILED"
  */
 
 /**
@@ -542,13 +600,69 @@
  *             schema:
  *               $ref: '#/components/schemas/PasswordResetResponse'
  *       400:
- *         description: Validation error or invalid token
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Token and new password are required"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "MISSING_REQUIRED_FIELD"
  *       401:
  *         description: Invalid or expired reset token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Invalid or expired reset token"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "INVALID_TOKEN"
  *       404:
  *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "User not found"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "USER_NOT_FOUND"
  *       500:
  *         description: Password reset failed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Password reset failed"
+ *                 correlationId:
+ *                   type: string
+ *                   format: uuid
+ *                 code:
+ *                   type: string
+ *                   example: "PASSWORD_RESET_FAILED"
  */
 
 export default {};

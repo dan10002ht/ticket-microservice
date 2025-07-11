@@ -12,8 +12,10 @@ import {
   CACHE_USER_PROFILE_JOB,
   CACHE_USER_ROLES_JOB,
   EMAIL_RESET_PASSWORD_JOB,
+  PASSWORD_RESET_TOKEN_JOB,
 } from '../const/background.js';
 import { handleEmailResetPasswordJob } from './jobs/emailResetPasswordJob.js';
+import { handlePasswordResetJob } from './jobs/passwordResetJob.js';
 
 /**
  * Register all job handlers for the background service
@@ -25,8 +27,12 @@ export async function registerJobHandlers() {
     // Register email verification job handler
     backgroundService.registerHandler(EMAIL_VERIFICATION_JOB, handleEmailVerificationJob);
     logger.info('Registered email_verification job handler');
+
+    // Register password reset job handlers
     backgroundService.registerHandler(EMAIL_RESET_PASSWORD_JOB, handleEmailResetPasswordJob);
     logger.info('Registered email_reset_password job handler');
+    backgroundService.registerHandler(PASSWORD_RESET_TOKEN_JOB, handlePasswordResetJob);
+    logger.info('Registered password_reset_token job handler');
 
     // Register cache job handlers
     backgroundService.registerHandler(CACHE_USER_PROFILE_JOB, handleCacheUserProfileJob);

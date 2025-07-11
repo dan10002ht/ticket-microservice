@@ -12,7 +12,8 @@ import {
 } from '../redis/redisService.js';
 import logger from '../../utils/logger.js';
 import { getBackgroundService } from '../../background/backgroundService.js';
-import { EMAIL_RESET_PASSWORD_JOB } from '../../const/background.js';
+import { PASSWORD_RESET_TOKEN_JOB } from '../../const/background.js';
+import { createAuthError, ERROR_CODES } from '../../utils/errorCodes.js';
 
 const userRepository = getUserRepository();
 const userSessionRepository = getUserSessionRepository();
@@ -31,10 +32,10 @@ export async function forgotPassword(email) {
       };
     }
 
-    backgroundService.enqueueJob(EMAIL_RESET_PASSWORD_JOB, {
+    // Enqueue password reset token generation job
+    backgroundService.enqueueJob(PASSWORD_RESET_TOKEN_JOB, {
       email: user.email,
       userId: user.id,
-      resetToken: user.reset_token,
     });
 
     return {
@@ -42,7 +43,10 @@ export async function forgotPassword(email) {
     };
   } catch (error) {
     logger.error('Error in forgotPassword:', error);
-    throw new Error(`Failed to send password reset email: ${error.message}`);
+    throw createAuthError(
+      ERROR_CODES.PASSWORD_RESET_FAILED,
+      `Failed to send password reset email: ${error.message}`
+    );
   }
 }
 
@@ -57,7 +61,7 @@ export async function resetPassword(token, newPassword) {
     const tokenData = await getPasswordResetToken(tokenHash);
 
     if (!tokenData) {
-      throw new Error('Invalid or expired reset token');
+      throw createAuthError(ERROR_CODES.INVALID_TOKEN, 'Invalid or expired reset token');
     }
 
     // Update user password
@@ -82,7 +86,13 @@ export async function resetPassword(token, newPassword) {
     };
   } catch (error) {
     logger.error('Password reset failed:', error);
-    throw new Error(`Password reset failed: ${error.message}`);
+    if (error.errorCode) {
+      throw error; // Already an AuthError
+    }
+    throw createAuthError(
+      ERROR_CODES.PASSWORD_RESET_FAILED,
+      `Password reset failed: ${error.message}`
+    );
   }
 }
 

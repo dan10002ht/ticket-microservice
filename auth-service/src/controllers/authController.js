@@ -440,18 +440,22 @@ export async function forgotPassword(call, callback) {
   try {
     const { email } = call.request;
 
-    const result = await passwordResetService.forgotPassword(email);
+    if (!email) {
+      return callback(
+        getGrpcErrorResponse(
+          createAuthError(ERROR_CODES.MISSING_REQUIRED_FIELD, 'Email is required')
+        )
+      );
+    }
 
+    const result = await passwordResetService.forgotPassword(email);
     callback(null, {
       success: true,
       message: result.message,
     });
   } catch (error) {
     console.error('Forgot password error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -463,10 +467,11 @@ export async function resetPassword(call, callback) {
     const { token, new_password } = call.request;
 
     if (!token || !new_password) {
-      return callback({
-        code: 3,
-        message: 'Token and new password are required',
-      });
+      return callback(
+        getGrpcErrorResponse(
+          createAuthError(ERROR_CODES.MISSING_REQUIRED_FIELD, 'Token and new password are required')
+        )
+      );
     }
 
     const result = await passwordResetService.resetPassword(token, new_password);
@@ -477,10 +482,7 @@ export async function resetPassword(call, callback) {
     });
   } catch (error) {
     console.error('Reset password error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
