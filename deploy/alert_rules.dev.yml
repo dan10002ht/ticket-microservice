@@ -1,0 +1,143 @@
+groups:
+  - name: gateway_alerts
+    rules:
+      - alert: HighGatewayLatency
+        expr: histogram_quantile(0.95, http_request_duration_seconds{service="gateway"}) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: gateway
+        annotations:
+          summary: "Gateway latency is high (95th percentile > 1s)"
+          description: "Gateway {{ $labels.instance }} has high latency: {{ $value }}s"
+
+      - alert: HighGatewayErrorRate
+        expr: rate(http_requests_total{status_code=~"5..", service="gateway"}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          service: gateway
+        annotations:
+          summary: "High error rate on gateway"
+          description: "Gateway {{ $labels.instance }} has high 5xx error rate: {{ $value }}"
+
+      - alert: GatewayDown
+        expr: up{job="gateway"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: gateway
+        annotations:
+          summary: "Gateway is down"
+          description: "Gateway {{ $labels.instance }} has been down for more than 1 minute"
+
+  - name: auth_service_alerts
+    rules:
+      - alert: HighAuthFailureRate
+        expr: rate(auth_attempts_total{status="failed"}[5m]) > 0.2
+        for: 2m
+        labels:
+          severity: critical
+          service: auth-service
+        annotations:
+          summary: "High authentication failure rate"
+          description: "Auth service {{ $labels.instance }} has high failure rate: {{ $value }}"
+
+      - alert: HighAuthLatency
+        expr: histogram_quantile(0.95, auth_duration_seconds) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: auth-service
+        annotations:
+          summary: "High authentication latency"
+          description: "Auth service {{ $labels.instance }} has high latency: {{ $value }}s"
+
+      - alert: AuthServiceDown
+        expr: up{job="auth-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: auth-service
+        annotations:
+          summary: "Auth service is down"
+          description: "Auth service {{ $labels.instance }} has been down for more than 1 minute"
+
+  - name: email_worker_alerts
+    rules:
+      - alert: EmailQueueBacklog
+        expr: email_queue_size > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: email-worker
+        annotations:
+          summary: "Email queue has backlog"
+          description: "Email worker {{ $labels.instance }} has {{ $value }} emails in queue"
+
+      - alert: LowEmailDeliveryRate
+        expr: rate(email_jobs_processed_total{status="success"}[5m]) / rate(email_jobs_processed_total[5m]) < 0.95
+        for: 10m
+        labels:
+          severity: critical
+          service: email-worker
+        annotations:
+          summary: "Low email delivery success rate"
+          description: "Email worker {{ $labels.instance }} has low success rate: {{ $value }}"
+
+      - alert: EmailWorkerDown
+        expr: up{job="email-worker"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: email-worker
+        annotations:
+          summary: "Email worker is down"
+          description: "Email worker {{ $labels.instance }} has been down for more than 1 minute"
+
+  - name: infrastructure_alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80% on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 85% on {{ $labels.instance }}"
+
+      - alert: HighDiskUsage
+        expr: (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage"
+          description: "Disk usage is above 85% on {{ $labels.instance }}"
+
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis {{ $labels.instance }} has been down for more than 1 minute"
+
+      - alert: PostgresDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL {{ $labels.instance }} has been down for more than 1 minute"

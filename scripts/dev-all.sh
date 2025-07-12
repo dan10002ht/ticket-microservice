@@ -167,10 +167,17 @@ cd deploy
 # Use docker compose v2 instead of docker-compose
 if command -v docker &> /dev/null && docker compose version &> /dev/null; then
     echo "✅ Using Docker Compose v2"
-    docker compose -f docker-compose.dev.yml up -d redis postgres-master postgres-slave1 postgres-slave2 postgres-main-master postgres-main-slave1 postgres-main-slave2 kafka zookeeper prometheus grafana elasticsearch kibana
+    docker compose -f docker-compose.dev.yml up -d redis postgres-master postgres-slave1 postgres-slave2 postgres-main-master postgres-main-slave1 postgres-main-slave2 kafka zookeeper grafana elasticsearch kibana \
+        prometheus node-exporter redis-exporter postgres-exporter
+    # Mount prometheus.dev.yml và alert_rules.dev.yml vào container Prometheus
+    docker compose -f docker-compose.dev.yml exec prometheus cp /etc/prometheus/prometheus.dev.yml /etc/prometheus/prometheus.yml 2>/dev/null || true
+    docker compose -f docker-compose.dev.yml exec prometheus cp /etc/prometheus/alert_rules.dev.yml /etc/prometheus/alert_rules.yml 2>/dev/null || true
 else
     echo "❌ Docker Compose v2 not available, trying docker-compose..."
-    docker-compose -f docker-compose.dev.yml up -d redis postgres-master postgres-slave1 postgres-slave2 postgres-main-master postgres-main-slave1 postgres-main-slave2 kafka zookeeper prometheus grafana elasticsearch kibana
+    docker-compose -f docker-compose.dev.yml up -d redis postgres-master postgres-slave1 postgres-slave2 postgres-main-master postgres-main-slave1 postgres-main-slave2 kafka zookeeper prometheus grafana elasticsearch kibana node-exporter redis-exporter postgres-exporter
+    # Mount prometheus.dev.yml và alert_rules.dev.yml vào container Prometheus
+    docker-compose -f docker-compose.dev.yml exec prometheus cp /etc/prometheus/prometheus.dev.yml /etc/prometheus/prometheus.yml 2>/dev/null || true
+    docker-compose -f docker-compose.dev.yml exec prometheus cp /etc/prometheus/alert_rules.dev.yml /etc/prometheus/alert_rules.yml 2>/dev/null || true
 fi
 
 # Wait for infrastructure to be ready

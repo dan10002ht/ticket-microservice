@@ -27,13 +27,9 @@ const router = express.Router();
 
 router.post('/register/email', validateRegistration, registerWithEmailHandler);
 router.post('/register/oauth', validateOAuthRegistration, registerWithOAuthHandler);
-router.post('/register/test/google/callback', (req, res) => {
-  return res.status(200).json(req.body);
-});
 router.post('/login', validateLogin, loginHandler);
 router.post('/forgot-password', validateForgotPassword, forgotPasswordHandler);
 router.post('/reset-password', validateResetPassword, resetPasswordHandler);
-
 router.post(
   '/send-verification-email',
   validateSendVerificationEmail,
@@ -45,7 +41,6 @@ router.post(
   validateResendVerificationEmail,
   resendVerificationEmailHandler
 );
-
 router.post('/refresh', validateRefreshToken, refreshTokenHandler);
 router.post('/logout', logoutHandler);
 

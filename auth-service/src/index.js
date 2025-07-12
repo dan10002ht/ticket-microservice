@@ -4,6 +4,8 @@ import logger from './utils/logger.js';
 import { server } from './server.js';
 import { initializeBackgroundService } from './background/registerJobHandlers.js';
 import { healthCheck as grpcHealthCheck } from './grpc/clients.js';
+import express from 'express';
+import promBundle from 'express-prom-bundle';
 
 dotenv.config();
 
@@ -35,6 +37,21 @@ server.bindAsync(`${HOST}:${PORT}`, grpc.ServerCredentials.createInsecure(), asy
   logger.info('🔐 JWT Authentication ready');
   logger.info('⚡ Functional Programming approach');
   logger.info('🔄 Background job processing enabled');
+});
+
+// Start metrics HTTP server using express-prom-bundle
+const metricsApp = express();
+const metricsMiddleware = promBundle({
+  includeMethod: true,
+  includePath: true,
+  promClient: {
+    collectDefaultMetrics: {},
+  },
+});
+metricsApp.use(metricsMiddleware);
+const METRICS_PORT = process.env.PROMETHEUS_PORT || 9090;
+metricsApp.listen(METRICS_PORT, () => {
+  logger.info(`📊 Metrics endpoint available at http://localhost:${METRICS_PORT}/metrics`);
 });
 
 export default server;

@@ -1,12 +1,16 @@
 import grpcClients from '../grpc/clients.js';
-import { sendSuccessResponse, createHandler, createSimpleHandler } from '../utils/responseHandler.js';
+import {
+  sendSuccessResponse,
+  createHandler,
+  createSimpleHandler,
+} from '../utils/responseHandler.js';
 
 /**
  * Get user profile
  */
 const getUserProfile = async (req, res) => {
   const result = await grpcClients.userService.getProfile({
-    userId: req.user.id
+    userId: req.user.id,
   });
   sendSuccessResponse(res, 200, result, req.correlationId);
 };
@@ -17,7 +21,7 @@ const getUserProfile = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   const result = await grpcClients.userService.updateProfile({
     userId: req.user.id,
-    ...req.body
+    ...req.body,
   });
   sendSuccessResponse(res, 200, result, req.correlationId);
 };
@@ -27,7 +31,7 @@ const updateUserProfile = async (req, res) => {
  */
 const getUserAddresses = async (req, res) => {
   const result = await grpcClients.userService.getAddresses({
-    userId: req.user.id
+    userId: req.user.id,
   });
   sendSuccessResponse(res, 200, result, req.correlationId);
 };
@@ -38,7 +42,7 @@ const getUserAddresses = async (req, res) => {
 const addUserAddress = async (req, res) => {
   const result = await grpcClients.userService.addAddress({
     userId: req.user.id,
-    ...req.body
+    ...req.body,
   });
   sendSuccessResponse(res, 201, result, req.correlationId);
 };
@@ -50,7 +54,7 @@ const updateUserAddress = async (req, res) => {
   const result = await grpcClients.userService.updateAddress({
     userId: req.user.id,
     addressId: req.params.addressId,
-    ...req.body
+    ...req.body,
   });
   sendSuccessResponse(res, 200, result, req.correlationId);
 };
@@ -61,7 +65,7 @@ const updateUserAddress = async (req, res) => {
 const deleteUserAddress = async (req, res) => {
   await grpcClients.userService.deleteAddress({
     userId: req.user.id,
-    addressId: req.params.addressId
+    addressId: req.params.addressId,
   });
   sendSuccessResponse(res, 200, { message: 'Address deleted successfully' }, req.correlationId);
 };
@@ -73,4 +77,4 @@ export const updateProfileHandler = createHandler(updateUserProfile, 'user', 'up
 export const getAddressesHandler = createSimpleHandler(getUserAddresses, 'user', 'getAddresses');
 export const addAddressHandler = createHandler(addUserAddress, 'user', 'addAddress');
 export const updateAddressHandler = createHandler(updateUserAddress, 'user', 'updateAddress');
-export const deleteAddressHandler = createSimpleHandler(deleteUserAddress, 'user', 'deleteAddress'); 
+export const deleteAddressHandler = createSimpleHandler(deleteUserAddress, 'user', 'deleteAddress');

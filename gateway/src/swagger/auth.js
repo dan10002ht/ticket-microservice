@@ -474,6 +474,7 @@
  *       required:
  *         - token
  *         - new_password
+ *         - confirm_password
  *       properties:
  *         token:
  *           type: string
@@ -482,6 +483,9 @@
  *           type: string
  *           minLength: 8
  *           description: New password (min 8 characters)
+ *         confirm_password:
+ *           type: string
+ *           description: Confirm new password
  *     PasswordResetResponse:
  *       type: object
  *       properties:

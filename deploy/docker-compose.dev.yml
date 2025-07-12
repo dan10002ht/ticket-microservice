@@ -221,9 +221,35 @@ services:
     ports:
       - "59090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.dev.yml:/etc/prometheus/prometheus.yml
+      - ./alert_rules.dev.yml:/etc/prometheus/alert_rules.dev.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=15d"
+      - "--storage.tsdb.retention.size=512MB"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - booking-net
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "59093:9093"
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager_data:/alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+    networks:
+      - booking-net
+    restart: unless-stopped
 
   grafana:
     image: grafana/grafana:latest
@@ -231,10 +257,58 @@ services:
       - "53001:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
     networks:
       - booking-net
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "59100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    networks:
+      - booking-net
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    ports:
+      - "59121:9121"
+    environment:
+      REDIS_ADDR: redis://redis:6379
+    networks:
+      - booking-net
+    restart: unless-stopped
+    depends_on:
+      - redis
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    ports:
+      - "59187:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://booking_user:booking_pass@postgres-master:5432/booking_system_auth?sslmode=disable"
+    networks:
+      - booking-net
+    restart: unless-stopped
+    depends_on:
+      - postgres-master
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
@@ -376,6 +450,8 @@ volumes:
   redis_data:
   grafana_data:
   elasticsearch_data:
+  prometheus_data:
+  alertmanager_data:
 
 networks:
   booking-net:

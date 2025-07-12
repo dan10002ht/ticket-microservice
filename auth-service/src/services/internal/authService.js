@@ -32,6 +32,7 @@ import {
   EMAIL_VERIFICATION_JOB,
   JOB_RETRY_CONFIGS,
 } from '../../const/background.js';
+import { authAttempts } from '../../metrics/authMetrics.js';
 // import * as auditService from './auditService.js'; // TODO: Implement audit service
 
 // Get repository instances from factory
@@ -161,6 +162,7 @@ export async function registerWithEmail(registerData) {
       JOB_RETRY_CONFIGS.EMAIL_OPERATIONS
     );
 
+    authAttempts.inc({ method: 'register', status: 'success', user_type: 'user' });
     return {
       user: userProfile,
       organization: organization,
@@ -169,6 +171,7 @@ export async function registerWithEmail(registerData) {
       authType: 'email',
     };
   } catch (error) {
+    authAttempts.inc({ method: 'register', status: 'failed', user_type: 'user' });
     throw new Error(`Email registration failed: ${error.message}`);
   }
 }
@@ -252,12 +255,15 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
         }
       );
 
+      authAttempts.inc({ method: 'register', status: 'success', user_type: 'user' });
       return {
         user: sanitizeUserForResponse({ ...existingUser, role: primaryRole.name }),
         access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,
         authType: 'oauth',
         isNewUser: false,
+        organization: null,
+        message: `Linked ${provider} account to existing email`,
       };
     }
 
@@ -323,12 +329,14 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
         }
       );
 
+      authAttempts.inc({ method: 'register', status: 'success', user_type: 'user' });
       return {
         user: sanitizeUserForResponse({ ...existingUserByEmail, role: primaryRole.name }),
         access_token: tokens.accessToken,
         refresh_token: tokens.refreshToken,
         authType: 'oauth',
         isNewUser: false,
+        organization: null,
         message: `Linked ${provider} account to existing email`,
       };
     }
@@ -396,14 +404,17 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
       }
     );
 
+    authAttempts.inc({ method: 'register', status: 'success', user_type: 'user' });
     return {
       user: sanitizeUserForResponse({ ...newUser, role: 'individual' }),
       access_token: tokens.accessToken,
       refresh_token: tokens.refreshToken,
       authType: 'oauth',
       isNewUser: true,
+      organization: null,
     };
   } catch (error) {
+    authAttempts.inc({ method: 'register', status: 'failed', user_type: 'user' });
     throw new Error(`OAuth registration failed: ${error.message}`);
   }
 }
@@ -470,12 +481,14 @@ export async function login(email, password, sessionData = {}) {
 
     await createUserSessionAndRefreshToken(user.id, sessionInfo, refreshTokenData);
 
+    authAttempts.inc({ method: 'login', status: 'success', user_type: 'user' });
     return {
       user: userProfile,
       access_token: tokens.accessToken,
       refresh_token: tokens.refreshToken,
     };
   } catch (error) {
+    authAttempts.inc({ method: 'login', status: 'failed', user_type: 'user' });
     console.log('error', error.message);
     throw new Error(`Login failed: ${error.message}`);
   }

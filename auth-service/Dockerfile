@@ -33,6 +33,7 @@ USER nodejs
 
 # Expose gRPC port
 EXPOSE 50051
+EXPOSE 9090
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
