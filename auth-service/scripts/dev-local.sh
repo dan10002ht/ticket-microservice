@@ -94,7 +94,7 @@ kill_port 50051 "auth-service"
 # Start only infrastructure services (no other microservices)
 echo "🐳 Starting infrastructure services only..."
 cd ../deploy
-docker compose -f docker-compose.dev.yml up -d redis postgres-master postgres-slave1 postgres-slave2 kafka zookeeper prometheus grafana elasticsearch kibana
+docker compose -f docker-compose.dev.yml up -d redis postgres-master postgres-slave1 postgres-slave2 kafka zookeeper prometheus grafana elasticsearch kibana node-exporter redis-exporter postgres-exporter
 
 # Wait for services to be ready
 echo "⏳ Waiting for infrastructure services to be ready..."
