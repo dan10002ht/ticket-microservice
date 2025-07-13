@@ -149,16 +149,6 @@ export async function up(knex) {
     table.timestamp('updated_at').defaultTo(knex.fn.now());
   });
 
-  // Create email_verification_tokens table - Internal only (performance critical)
-  await knex.schema.createTable('email_verification_tokens', (table) => {
-    table.bigIncrements('id').primary(); // Auto increment for performance
-    table.bigInteger('user_id').notNullable().references('id').inTable('users').onDelete('CASCADE');
-    table.string('token_hash', 1000).unique().notNullable();
-    table.timestamp('expires_at').notNullable();
-    table.boolean('is_used').defaultTo(false);
-    table.timestamp('created_at').defaultTo(knex.fn.now());
-  });
-
   // Create audit_logs table - Internal only (performance critical)
   await knex.schema.createTable('audit_logs', (table) => {
     table.bigIncrements('id').primary(); // Auto increment for performance
@@ -330,7 +320,7 @@ export async function down(knex) {
   await knex.schema.dropTableIfExists('audit_logs');
   await knex.schema.dropTableIfExists('refresh_tokens'); // Drop before user_sessions
   await knex.schema.dropTableIfExists('user_sessions');
-  await knex.schema.dropTableIfExists('email_verification_tokens');
+
   await knex.schema.dropTableIfExists('role_permissions');
   await knex.schema.dropTableIfExists('user_roles');
   await knex.schema.dropTableIfExists('permissions');

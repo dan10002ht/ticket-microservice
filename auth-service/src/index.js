@@ -49,7 +49,7 @@ const metricsMiddleware = promBundle({
   },
 });
 metricsApp.use(metricsMiddleware);
-const METRICS_PORT = process.env.PROMETHEUS_PORT || 9090;
+const METRICS_PORT = process.env.PROMETHEUS_PORT || 9190;
 metricsApp.listen(METRICS_PORT, () => {
   logger.info(`📊 Metrics endpoint available at http://localhost:${METRICS_PORT}/metrics`);
 });

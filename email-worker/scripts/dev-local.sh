@@ -100,7 +100,7 @@ kill_port 2112 "email-worker-metrics"
 # Start only infrastructure services (no other microservices)
 echo "🐳 Starting infrastructure services only..."
 cd ../deploy
-docker compose -f docker-compose.dev.yml up -d redis postgres-main-master postgres-main-slave1 postgres-main-slave2 kafka zookeeper prometheus grafana elasticsearch kibana
+docker compose -f docker-compose.dev.yml up -d redis postgres-main-master postgres-main-slave1 postgres-main-slave2 kafka zookeeper prometheus grafana elasticsearch kibana node-exporter redis-exporter postgres-exporter
 
 # Wait for services to be ready
 echo "⏳ Waiting for infrastructure services to be ready..."

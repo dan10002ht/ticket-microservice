@@ -427,6 +427,24 @@ export async function getKeys(pattern) {
 }
 
 /**
+ * Delete keys by pattern
+ */
+export async function deleteByPattern(pattern) {
+  try {
+    const keys = await redisClient.keys(pattern);
+    if (keys.length > 0) {
+      const deleted = await redisClient.del(...keys);
+      logger.debug(`Redis DEL pattern: ${pattern}, deleted: ${deleted} keys`);
+      return deleted;
+    }
+    return 0;
+  } catch (error) {
+    logger.error(`Redis DEL pattern failed for ${pattern}:`, error);
+    throw error;
+  }
+}
+
+/**
  * Get Redis info
  */
 export async function getRedisInfo() {

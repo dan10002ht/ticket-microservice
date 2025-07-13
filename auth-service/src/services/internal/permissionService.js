@@ -4,6 +4,7 @@ import {
   getPermissionRepository,
 } from '../../repositories/repositoryFactory.js';
 import { sanitizeUserForResponse } from '../../utils/sanitizers.js';
+import { getCachedPermission, setCachedPermission } from './cacheService.js';
 
 // Get repository instances from factory
 const userRepository = getUserRepository();
@@ -48,13 +49,25 @@ export async function getUserPermissions(userId) {
  */
 export async function hasPermission(userId, permissionName) {
   try {
+    // Check cache first
+    const cacheKey = `perm:${userId}:${permissionName}`;
+    const cachedResult = await getCachedPermission(cacheKey);
+    if (cachedResult !== null) {
+      return cachedResult;
+    }
+
     const user = await userRepository.findByPublicId(userId);
     if (!user) {
       return false;
     }
 
     const permissions = await permissionRepository.getUserPermissions(user.id);
-    return permissions.some((permission) => permission.name === permissionName);
+    const hasPermission = permissions.some((permission) => permission.name === permissionName);
+
+    // Cache result (5 minutes)
+    await setCachedPermission(cacheKey, hasPermission, 300);
+
+    return hasPermission;
   } catch (error) {
     throw new Error(`Failed to check permission: ${error.message}`);
   }
@@ -65,17 +78,86 @@ export async function hasPermission(userId, permissionName) {
  */
 export async function hasResourcePermission(userId, resource, action) {
   try {
+    // Check cache first
+    const cacheKey = `resource_perm:${userId}:${resource}:${action}`;
+    const cachedResult = await getCachedPermission(cacheKey);
+    if (cachedResult !== null) {
+      return cachedResult;
+    }
+
     const user = await userRepository.findByPublicId(userId);
     if (!user) {
       return false;
     }
 
     const permissions = await permissionRepository.getUserPermissions(user.id);
-    return permissions.some(
+    const hasPermission = permissions.some(
       (permission) => permission.resource === resource && permission.action === action
     );
+
+    // Cache result (5 minutes)
+    await setCachedPermission(cacheKey, hasPermission, 300);
+
+    return hasPermission;
   } catch (error) {
     throw new Error(`Failed to check resource permission: ${error.message}`);
+  }
+}
+
+/**
+ * Batch check multiple permissions for a user
+ */
+export async function batchCheckPermissions(userId, permissionNames) {
+  try {
+    const results = {};
+
+    // Check cache first for each permission
+    const cachePromises = permissionNames.map(async (permissionName) => {
+      const cacheKey = `perm:${userId}:${permissionName}`;
+      const cachedResult = await getCachedPermission(cacheKey);
+      if (cachedResult !== null) {
+        results[permissionName] = cachedResult;
+        return { permissionName, cached: true, result: cachedResult };
+      }
+      return { permissionName, cached: false };
+    });
+
+    const cacheResults = await Promise.all(cachePromises);
+    const uncachedPermissions = cacheResults.filter((r) => !r.cached).map((r) => r.permissionName);
+
+    // If all permissions are cached, return results
+    if (uncachedPermissions.length === 0) {
+      return results;
+    }
+
+    // Get user permissions from database for uncached permissions
+    const user = await userRepository.findByPublicId(userId);
+    if (!user) {
+      // Return false for all uncached permissions
+      uncachedPermissions.forEach((permissionName) => {
+        results[permissionName] = false;
+      });
+      return results;
+    }
+
+    const userPermissions = await permissionRepository.getUserPermissions(user.id);
+    const userPermissionNames = userPermissions.map((p) => p.name);
+
+    // Check each uncached permission
+    const cacheSetPromises = uncachedPermissions.map(async (permissionName) => {
+      const hasPermission = userPermissionNames.includes(permissionName);
+      results[permissionName] = hasPermission;
+
+      // Cache result
+      const cacheKey = `perm:${userId}:${permissionName}`;
+      await setCachedPermission(cacheKey, hasPermission, 300);
+    });
+
+    await Promise.all(cacheSetPromises);
+
+    return results;
+  } catch (error) {
+    throw new Error(`Failed to batch check permissions: ${error.message}`);
   }
 }
 

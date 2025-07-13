@@ -4,7 +4,6 @@ import UserRoleRepository from './userRoleRepository.js';
 import PermissionRepository from './permissionRepository.js';
 import RefreshTokenRepository from './refreshTokenRepository.js';
 
-import EmailVerificationTokenRepository from './emailVerificationTokenRepository.js';
 import UserSessionRepository from './userSessionRepository.js';
 import UserProfileRepository from './userProfileRepository.js';
 import OAuthAccountRepository from './oauthAccountRepository.js';
@@ -17,7 +16,6 @@ let userRoleRepositoryInstance = null;
 let permissionRepositoryInstance = null;
 let refreshTokenRepositoryInstance = null;
 
-let emailVerificationTokenRepositoryInstance = null;
 let userSessionRepositoryInstance = null;
 let userProfileRepositoryInstance = null;
 let oauthAccountRepositoryInstance = null;
@@ -74,16 +72,6 @@ export function getRefreshTokenRepository() {
 }
 
 /**
- * Get EmailVerificationTokenRepository singleton instance
- */
-export function getEmailVerificationTokenRepository() {
-  if (!emailVerificationTokenRepositoryInstance) {
-    emailVerificationTokenRepositoryInstance = new EmailVerificationTokenRepository();
-  }
-  return emailVerificationTokenRepositoryInstance;
-}
-
-/**
  * Get UserSessionRepository singleton instance
  */
 export function getUserSessionRepository() {
@@ -132,7 +120,7 @@ export function resetRepositories() {
   userRoleRepositoryInstance = null;
   permissionRepositoryInstance = null;
   refreshTokenRepositoryInstance = null;
-  emailVerificationTokenRepositoryInstance = null;
+
   userSessionRepositoryInstance = null;
   userProfileRepositoryInstance = null;
   oauthAccountRepositoryInstance = null;
@@ -149,7 +137,7 @@ export function getAllRepositories() {
     userRole: getUserRoleRepository(),
     permission: getPermissionRepository(),
     refreshToken: getRefreshTokenRepository(),
-    emailVerificationToken: getEmailVerificationTokenRepository(),
+
     userSession: getUserSessionRepository(),
     userProfile: getUserProfileRepository(),
     oauthAccount: getOAuthAccountRepository(),

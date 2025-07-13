@@ -15,7 +15,13 @@ service AuthService {
   
   // Token verification
   rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+  
+  // Authorization methods
   rpc GetUserPermissions(GetUserPermissionsRequest) returns (GetUserPermissionsResponse);
+  rpc CheckPermission(CheckPermissionRequest) returns (CheckPermissionResponse);
+  rpc CheckResourcePermission(CheckResourcePermissionRequest) returns (CheckResourcePermissionResponse);
+  rpc GetUserRoles(GetUserRolesRequest) returns (GetUserRolesResponse);
+  rpc BatchCheckPermissions(BatchCheckPermissionsRequest) returns (BatchCheckPermissionsResponse);
   
   // User management
   rpc GetUser(GetUserRequest) returns (GetUserResponse);
@@ -315,4 +321,51 @@ message RoleData {
   string name = 2;
   string description = 3;
   repeated PermissionData permissions = 4;
+}
+
+// Authorization messages
+message CheckPermissionRequest {
+  string user_id = 1;
+  string permission_name = 2;
+}
+
+message CheckPermissionResponse {
+  bool allowed = 1;
+  string reason = 2;
+  repeated string roles = 3;
+}
+
+message CheckResourcePermissionRequest {
+  string user_id = 1;
+  string resource = 2;
+  string action = 3;
+  map<string, string> context = 4;
+}
+
+message CheckResourcePermissionResponse {
+  bool allowed = 1;
+  string reason = 2;
+  repeated string permissions = 3;
+}
+
+message GetUserRolesRequest {
+  string user_id = 1;
+}
+
+message GetUserRolesResponse {
+  bool success = 1;
+  string message = 2;
+  repeated RoleData roles = 3;
+}
+
+message BatchCheckPermissionsRequest {
+  string user_id = 1;
+  repeated string permission_names = 2;
+}
+
+message BatchCheckPermissionsResponse {
+  bool success = 1;
+  string message = 2;
+  map<string, bool> results = 3;
+  repeated string roles = 4;
 } 

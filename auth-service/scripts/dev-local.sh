@@ -174,7 +174,7 @@ LOG_LEVEL=debug
 LOG_FORMAT=json
 
 # Monitoring Configuration
-PROMETHEUS_PORT=9090
+PROMETHEUS_PORT=9190
 
 # Health Check Configuration
 HEALTH_CHECK_INTERVAL=30000

@@ -2,172 +2,464 @@ syntax = "proto3";
 
 package event;
 
+option go_package = "github.com/booking-system/shared-lib/protos/event";
+option java_package = "com.bookingsystem.shared.protos.event";
+option java_multiple_files = true;
 
-import "google/protobuf/timestamp.proto";
-
-// Event Service
+// Event Service - Core event management
 service EventService {
-  // Event Management
-  rpc CreateEvent(CreateEventRequest) returns (EventResponse);
-  rpc GetEvent(GetEventRequest) returns (EventResponse);
-  rpc UpdateEvent(UpdateEventRequest) returns (EventResponse);
+  // CRUD operations for events
+  rpc CreateEvent(CreateEventRequest) returns (CreateEventResponse);
+  rpc GetEvent(GetEventRequest) returns (GetEventResponse);
+  rpc UpdateEvent(UpdateEventRequest) returns (UpdateEventResponse);
   rpc DeleteEvent(DeleteEventRequest) returns (DeleteEventResponse);
   rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
+  
+  // Event search and filtering
   rpc SearchEvents(SearchEventsRequest) returns (SearchEventsResponse);
-  
-  // Event Categories
-  rpc GetEventCategories(GetEventCategoriesRequest) returns (GetEventCategoriesResponse);
+  rpc GetEventsByVenue(GetEventsByVenueRequest) returns (GetEventsByVenueResponse);
+  rpc GetUpcomingEvents(GetUpcomingEventsRequest) returns (GetUpcomingEventsResponse);
   rpc GetFeaturedEvents(GetFeaturedEventsRequest) returns (GetFeaturedEventsResponse);
+}
+
+// Pricing Service - Dynamic pricing management
+service PricingService {
+  // CRUD operations for pricing
+  rpc CreatePricing(CreatePricingRequest) returns (CreatePricingResponse);
+  rpc GetPricing(GetPricingRequest) returns (GetPricingResponse);
+  rpc UpdatePricing(UpdatePricingRequest) returns (UpdatePricingResponse);
+  rpc DeletePricing(DeletePricingRequest) returns (DeletePricingResponse);
+  rpc ListPricing(ListPricingRequest) returns (ListPricingResponse);
   
-  // Health Check
-  rpc Health(HealthRequest) returns (HealthResponse);
+  // Pricing operations
+  rpc CalculatePrice(CalculatePriceRequest) returns (CalculatePriceResponse);
+  rpc GetPricingByEvent(GetPricingByEventRequest) returns (GetPricingByEventResponse);
+  rpc GetPricingByZone(GetPricingByZoneRequest) returns (GetPricingByZoneResponse);
+  rpc ApplyDiscount(ApplyDiscountRequest) returns (ApplyDiscountResponse);
 }
 
-// Event Management Messages
+// Availability Service - Seat availability management
+service AvailabilityService {
+  // Availability operations
+  rpc GetEventAvailability(GetEventAvailabilityRequest) returns (GetEventAvailabilityResponse);
+  rpc GetZoneAvailability(GetZoneAvailabilityRequest) returns (GetZoneAvailabilityResponse);
+  rpc GetSeatAvailability(GetSeatAvailabilityRequest) returns (GetSeatAvailabilityResponse);
+  rpc UpdateSeatAvailability(UpdateSeatAvailabilityRequest) returns (UpdateSeatAvailabilityResponse);
+  rpc BlockSeats(BlockSeatsRequest) returns (BlockSeatsResponse);
+  rpc ReleaseSeats(ReleaseSeatsRequest) returns (ReleaseSeatsResponse);
+}
+
+// =============================================================================
+// Event Service Messages
+// =============================================================================
+
+message Event {
+  string id = 1;
+  string venue_id = 2;
+  string layout_id = 3;
+  string name = 4;
+  string description = 5;
+  string event_type = 6;
+  string category = 7;
+  string start_date = 8;
+  string end_date = 9;
+  string doors_open = 10;
+  string status = 11;
+  int32 max_capacity = 12;
+  int32 current_capacity = 13;
+  int32 min_age = 14;
+  bool is_featured = 15;
+  string images = 16; // JSON string
+  string tags = 17; // JSON string
+  string metadata = 18; // JSON string
+  string created_at = 19;
+  string updated_at = 20;
+  string created_by = 21;
+  string updated_by = 22;
+}
+
 message CreateEventRequest {
-  string title = 1;
-  string description = 2;
-  google.protobuf.Timestamp start_date = 3;
-  google.protobuf.Timestamp end_date = 4;
-  string location = 5;
-  string venue_id = 6;
-  double price = 7;
-  string currency = 8;
-  int32 capacity = 9;
-  string category = 10;
-  string organizer_id = 11;
-  map<string, string> metadata = 12;
+  string venue_id = 1;
+  string layout_id = 2;
+  string name = 3;
+  string description = 4;
+  string event_type = 5;
+  string category = 6;
+  string start_date = 7;
+  string end_date = 8;
+  string doors_open = 9;
+  int32 max_capacity = 10;
+  int32 min_age = 11;
+  bool is_featured = 12;
+  string images = 13; // JSON string
+  string tags = 14; // JSON string
+  string metadata = 15; // JSON string
+  string created_by = 16;
 }
 
-message EventResponse {
-  bool success = 1;
-  Event event = 2;
-  string message = 3;
+message CreateEventResponse {
+  Event event = 1;
+  string error = 2;
 }
 
 message GetEventRequest {
-  string event_id = 1;
+  string id = 1;
+}
+
+message GetEventResponse {
+  Event event = 1;
+  string error = 2;
 }
 
 message UpdateEventRequest {
-  string event_id = 1;
-  string title = 2;
-  string description = 3;
-  google.protobuf.Timestamp start_date = 4;
-  google.protobuf.Timestamp end_date = 5;
-  string location = 6;
-  string venue_id = 7;
-  double price = 8;
-  string currency = 9;
-  int32 capacity = 10;
-  string category = 11;
-  map<string, string> metadata = 12;
+  string id = 1;
+  string layout_id = 2;
+  string name = 3;
+  string description = 4;
+  string event_type = 5;
+  string category = 6;
+  string start_date = 7;
+  string end_date = 8;
+  string doors_open = 9;
+  string status = 10;
+  int32 max_capacity = 11;
+  int32 min_age = 12;
+  bool is_featured = 13;
+  string images = 14; // JSON string
+  string tags = 15; // JSON string
+  string metadata = 16; // JSON string
+  string updated_by = 17;
+}
+
+message UpdateEventResponse {
+  Event event = 1;
+  string error = 2;
 }
 
 message DeleteEventRequest {
-  string event_id = 1;
+  string id = 1;
 }
 
 message DeleteEventResponse {
   bool success = 1;
-  string message = 2;
+  string error = 2;
 }
 
 message ListEventsRequest {
   int32 page = 1;
   int32 limit = 2;
-  string category = 3;
-  string status = 4;
-  google.protobuf.Timestamp from_date = 5;
-  google.protobuf.Timestamp to_date = 6;
+  string status = 3;
+  string event_type = 4;
+  string category = 5;
+  string venue_id = 6;
+  string start_date_from = 7;
+  string start_date_to = 8;
 }
 
 message ListEventsResponse {
-  bool success = 1;
-  repeated Event events = 2;
-  int32 total = 3;
-  int32 page = 4;
-  int32 limit = 5;
-  string message = 6;
+  repeated Event events = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
 }
 
 message SearchEventsRequest {
   string query = 1;
   int32 page = 2;
   int32 limit = 3;
-  string category = 4;
-  string location = 5;
-  google.protobuf.Timestamp from_date = 6;
-  google.protobuf.Timestamp to_date = 7;
+  string event_type = 4;
+  string category = 5;
 }
 
 message SearchEventsResponse {
-  bool success = 1;
-  repeated Event events = 2;
-  int32 total = 3;
+  repeated Event events = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
+}
+
+message GetEventsByVenueRequest {
+  string venue_id = 1;
+  string status = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetEventsByVenueResponse {
+  repeated Event events = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
+}
+
+message GetUpcomingEventsRequest {
+  int32 days_ahead = 1;
+  string event_type = 2;
+  string category = 3;
   int32 page = 4;
   int32 limit = 5;
-  string message = 6;
 }
 
-message GetEventCategoriesRequest {
-  bool include_count = 1;
-}
-
-message GetEventCategoriesResponse {
-  bool success = 1;
-  repeated EventCategory categories = 2;
-  string message = 3;
+message GetUpcomingEventsResponse {
+  repeated Event events = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
 }
 
 message GetFeaturedEventsRequest {
-  int32 limit = 1;
-  string category = 2;
+  int32 page = 1;
+  int32 limit = 2;
 }
 
 message GetFeaturedEventsResponse {
+  repeated Event events = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
+}
+
+// =============================================================================
+// Pricing Service Messages
+// =============================================================================
+
+message EventPricing {
+  string id = 1;
+  string event_id = 2;
+  string zone_id = 3;
+  string pricing_category = 4;
+  double base_price = 5;
+  string currency = 6;
+  string pricing_rules = 7; // JSON string
+  string discount_rules = 8; // JSON string
+  bool is_active = 9;
+  string valid_from = 10;
+  string valid_until = 11;
+  string created_at = 12;
+  string updated_at = 13;
+  string created_by = 14;
+  string updated_by = 15;
+}
+
+message CreatePricingRequest {
+  string event_id = 1;
+  string zone_id = 2;
+  string pricing_category = 3;
+  double base_price = 4;
+  string currency = 5;
+  string pricing_rules = 6; // JSON string
+  string discount_rules = 7; // JSON string
+  string valid_from = 8;
+  string valid_until = 9;
+  string created_by = 10;
+}
+
+message CreatePricingResponse {
+  EventPricing pricing = 1;
+  string error = 2;
+}
+
+message GetPricingRequest {
+  string id = 1;
+}
+
+message GetPricingResponse {
+  EventPricing pricing = 1;
+  string error = 2;
+}
+
+message UpdatePricingRequest {
+  string id = 1;
+  double base_price = 2;
+  string currency = 3;
+  string pricing_rules = 4; // JSON string
+  string discount_rules = 5; // JSON string
+  bool is_active = 6;
+  string valid_from = 7;
+  string valid_until = 8;
+  string updated_by = 9;
+}
+
+message UpdatePricingResponse {
+  EventPricing pricing = 1;
+  string error = 2;
+}
+
+message DeletePricingRequest {
+  string id = 1;
+}
+
+message DeletePricingResponse {
   bool success = 1;
-  repeated Event events = 2;
-  string message = 3;
+  string error = 2;
 }
 
-// Health Check Messages
-message HealthRequest {
-  string service = 1;
+message ListPricingRequest {
+  string event_id = 1;
+  bool is_active = 2;
+  int32 page = 3;
+  int32 limit = 4;
 }
 
-message HealthResponse {
-  string status = 1;
-  string message = 2;
-  map<string, string> details = 3;
+message ListPricingResponse {
+  repeated EventPricing pricing = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
 }
 
-// Data Models
-message Event {
+message CalculatePriceRequest {
+  string event_id = 1;
+  string zone_id = 2;
+  string pricing_category = 3;
+  int32 quantity = 4;
+  string discount_code = 5;
+  string user_id = 6;
+}
+
+message CalculatePriceResponse {
+  double base_price = 1;
+  double final_price = 2;
+  double discount_amount = 3;
+  string discount_reason = 4;
+  string currency = 5;
+  string pricing_details = 6; // JSON string
+  string error = 7;
+}
+
+message GetPricingByEventRequest {
+  string event_id = 1;
+  bool is_active = 2;
+}
+
+message GetPricingByEventResponse {
+  repeated EventPricing pricing = 1;
+  string error = 2;
+}
+
+message GetPricingByZoneRequest {
+  string event_id = 1;
+  string zone_id = 2;
+  bool is_active = 3;
+}
+
+message GetPricingByZoneResponse {
+  repeated EventPricing pricing = 1;
+  string error = 2;
+}
+
+message ApplyDiscountRequest {
+  string event_id = 1;
+  string discount_code = 2;
+  double original_price = 3;
+  string user_id = 4;
+}
+
+message ApplyDiscountResponse {
+  double discount_amount = 1;
+  double final_price = 2;
+  string discount_reason = 3;
+  bool is_valid = 4;
+  string error = 5;
+}
+
+// =============================================================================
+// Availability Service Messages
+// =============================================================================
+
+message SeatAvailability {
   string id = 1;
-  string title = 2;
-  string description = 3;
-  google.protobuf.Timestamp start_date = 4;
-  google.protobuf.Timestamp end_date = 5;
-  string location = 6;
-  string venue_id = 7;
-  double price = 8;
-  string currency = 9;
-  int32 capacity = 10;
-  int32 available_tickets = 11;
-  string category = 12;
-  string organizer_id = 13;
-  string status = 14;
-  map<string, string> metadata = 15;
-  google.protobuf.Timestamp created_at = 16;
-  google.protobuf.Timestamp updated_at = 17;
+  string event_id = 2;
+  string seat_id = 3;
+  string zone_id = 4;
+  string availability_status = 5;
+  string reservation_id = 6;
+  string blocked_reason = 7;
+  string blocked_until = 8;
+  string last_updated = 9;
+  string created_at = 10;
+  string updated_at = 11;
 }
 
-message EventCategory {
-  string id = 1;
-  string name = 2;
-  string description = 3;
-  string icon = 4;
-  int32 event_count = 5;
-  google.protobuf.Timestamp created_at = 6;
+message GetEventAvailabilityRequest {
+  string event_id = 1;
+}
+
+message GetEventAvailabilityResponse {
+  repeated SeatAvailability availability = 1;
+  int32 total_seats = 2;
+  int32 available_seats = 3;
+  int32 reserved_seats = 4;
+  int32 booked_seats = 5;
+  int32 blocked_seats = 6;
+  string error = 7;
+}
+
+message GetZoneAvailabilityRequest {
+  string event_id = 1;
+  string zone_id = 2;
+}
+
+message GetZoneAvailabilityResponse {
+  repeated SeatAvailability availability = 1;
+  int32 total_seats = 2;
+  int32 available_seats = 3;
+  int32 reserved_seats = 4;
+  int32 booked_seats = 5;
+  int32 blocked_seats = 6;
+  string error = 7;
+}
+
+message GetSeatAvailabilityRequest {
+  string event_id = 1;
+  string seat_id = 2;
+}
+
+message GetSeatAvailabilityResponse {
+  SeatAvailability availability = 1;
+  string error = 2;
+}
+
+message UpdateSeatAvailabilityRequest {
+  string event_id = 1;
+  string seat_id = 2;
+  string availability_status = 3;
+  string reservation_id = 4;
+  string blocked_reason = 5;
+  string blocked_until = 6;
+}
+
+message UpdateSeatAvailabilityResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message BlockSeatsRequest {
+  string event_id = 1;
+  repeated string seat_ids = 2;
+  string blocked_reason = 3;
+  string blocked_until = 4;
+}
+
+message BlockSeatsResponse {
+  int32 blocked_count = 1;
+  repeated string blocked_seat_ids = 2;
+  string error = 3;
+}
+
+message ReleaseSeatsRequest {
+  string event_id = 1;
+  repeated string seat_ids = 2;
+}
+
+message ReleaseSeatsResponse {
+  int32 released_count = 1;
+  repeated string released_seat_ids = 2;
+  string error = 3;
 } 

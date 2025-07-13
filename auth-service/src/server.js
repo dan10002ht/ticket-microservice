@@ -8,6 +8,7 @@ import { closeConnections } from './config/databaseConfig.js';
 
 // Import functional controllers
 import * as authController from './controllers/authController.js';
+import * as authorizationController from './controllers/authorizationController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,6 +55,13 @@ server.addService(authProto.AuthService.service, {
   // Token Management
   refreshToken: authController.refreshToken,
   validateToken: authController.validateToken,
+
+  // Authorization methods
+  checkPermission: authorizationController.checkPermission,
+  checkResourcePermission: authorizationController.checkResourcePermission,
+  getUserPermissions: authorizationController.getUserPermissions,
+  getUserRoles: authorizationController.getUserRoles,
+  batchCheckPermissions: authorizationController.batchCheckPermissions,
 
   // Password Management
   forgotPassword: authController.forgotPassword,

@@ -200,6 +200,37 @@ export async function cacheHealthCheck() {
   return await redisService.healthCheck();
 }
 
+// ========== PERMISSION CACHE ==========
+
+export async function setCachedPermission(cacheKey, permissionResult, ttlSeconds = 300) {
+  try {
+    await redisService.setWithTTL(cacheKey, permissionResult, ttlSeconds);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+export async function getCachedPermission(cacheKey) {
+  try {
+    const result = await redisService.get(cacheKey);
+    return result === null ? null : result === 'true';
+  } catch (error) {
+    return null;
+  }
+}
+
+export async function invalidateUserPermissionCache(userId) {
+  try {
+    // Invalidate all permission cache keys for this user
+    const pattern = `perm:${userId}:*`;
+    await redisService.deleteByPattern(pattern);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 // ========== UTILITY METHODS ==========
 
 export async function invalidateUserCache(userId) {

@@ -1,7 +1,4 @@
-import {
-  getRefreshTokenRepository,
-  getEmailVerificationTokenRepository,
-} from '../../repositories/repositoryFactory.js';
+import { getRefreshTokenRepository } from '../../repositories/repositoryFactory.js';
 
 /**
  * Token Cleanup Service
@@ -10,7 +7,6 @@ import {
 class TokenCleanupService {
   constructor() {
     this.refreshTokenRepo = getRefreshTokenRepository();
-    this.emailVerificationTokenRepo = getEmailVerificationTokenRepository();
   }
 
   /**
@@ -18,15 +14,11 @@ class TokenCleanupService {
    */
   async cleanupAllExpiredTokens() {
     try {
-      const results = await Promise.all([
-        this.refreshTokenRepo.deleteExpired(),
-        this.emailVerificationTokenRepo.deleteExpired(),
-      ]);
+      const deletedCount = await this.refreshTokenRepo.deleteExpired();
 
       return {
-        refreshTokens: results[0],
-        emailVerificationTokens: results[1],
-        totalDeleted: results.reduce((sum, count) => sum + count, 0),
+        refreshTokens: deletedCount,
+        totalDeleted: deletedCount,
       };
     } catch (error) {
       console.error('Error cleaning up expired tokens:', error);
@@ -42,18 +34,6 @@ class TokenCleanupService {
       return await this.refreshTokenRepo.deleteExpired();
     } catch (error) {
       console.error('Error cleaning up expired refresh tokens:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Cleanup chỉ email verification tokens
-   */
-  async cleanupExpiredEmailVerificationTokens() {
-    try {
-      return await this.emailVerificationTokenRepo.deleteExpired();
-    } catch (error) {
-      console.error('Error cleaning up expired email verification tokens:', error);
       throw error;
     }
   }

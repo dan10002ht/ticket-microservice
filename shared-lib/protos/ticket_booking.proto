@@ -1,0 +1,536 @@
+syntax = "proto3";
+
+package ticket_booking;
+
+option go_package = "github.com/booking-system/shared-lib/protos/ticket_booking";
+option java_package = "com.bookingsystem.shared.protos.ticket_booking";
+option java_multiple_files = true;
+
+// Ticket Service - Core ticket booking operations
+service TicketService {
+  // CRUD operations for tickets
+  rpc CreateTicket(CreateTicketRequest) returns (CreateTicketResponse);
+  rpc GetTicket(GetTicketRequest) returns (GetTicketResponse);
+  rpc UpdateTicket(UpdateTicketRequest) returns (UpdateTicketResponse);
+  rpc DeleteTicket(DeleteTicketRequest) returns (DeleteTicketResponse);
+  rpc ListTickets(ListTicketsRequest) returns (ListTicketsResponse);
+  
+  // Ticket operations
+  rpc CancelTicket(CancelTicketRequest) returns (CancelTicketResponse);
+  rpc RefundTicket(RefundTicketRequest) returns (RefundTicketResponse);
+  rpc UseTicket(UseTicketRequest) returns (UseTicketResponse);
+  rpc ValidateTicket(ValidateTicketRequest) returns (ValidateTicketResponse);
+  
+  // Ticket queries
+  rpc GetTicketsByUser(GetTicketsByUserRequest) returns (GetTicketsByUserResponse);
+  rpc GetTicketsByEvent(GetTicketsByEventRequest) returns (GetTicketsByEventResponse);
+  rpc GetTicketByNumber(GetTicketByNumberRequest) returns (GetTicketByNumberResponse);
+}
+
+// Booking Service - Booking session management
+service BookingService {
+  // Booking session operations
+  rpc CreateBookingSession(CreateBookingSessionRequest) returns (CreateBookingSessionResponse);
+  rpc GetBookingSession(GetBookingSessionRequest) returns (GetBookingSessionResponse);
+  rpc UpdateBookingSession(UpdateBookingSessionRequest) returns (UpdateBookingSessionResponse);
+  rpc CancelBookingSession(CancelBookingSessionRequest) returns (CancelBookingSessionResponse);
+  
+  // Booking flow operations
+  rpc StartBooking(StartBookingRequest) returns (StartBookingResponse);
+  rpc CompleteBooking(CompleteBookingRequest) returns (CompleteBookingResponse);
+  rpc ExtendBookingSession(ExtendBookingSessionRequest) returns (ExtendBookingSessionResponse);
+  
+  // Booking queries
+  rpc GetUserBookings(GetUserBookingsRequest) returns (GetUserBookingsResponse);
+  rpc GetActiveBookings(GetActiveBookingsRequest) returns (GetActiveBookingsResponse);
+}
+
+// Seat Service - Seat reservation management
+service SeatService {
+  // Seat reservation operations
+  rpc ReserveSeats(ReserveSeatsRequest) returns (ReserveSeatsResponse);
+  rpc ReleaseSeats(ReleaseSeatsRequest) returns (ReleaseSeatsResponse);
+  rpc ConfirmSeats(ConfirmSeatsRequest) returns (ConfirmSeatsResponse);
+  
+  // Seat queries
+  rpc GetReservedSeats(GetReservedSeatsRequest) returns (GetReservedSeatsResponse);
+  rpc GetAvailableSeats(GetAvailableSeatsRequest) returns (GetAvailableSeatsResponse);
+  rpc GetSeatReservation(GetSeatReservationRequest) returns (GetSeatReservationResponse);
+  
+  // Bulk operations
+  rpc ReserveSeatsBulk(ReserveSeatsBulkRequest) returns (ReserveSeatsBulkResponse);
+  rpc ReleaseSeatsBulk(ReleaseSeatsBulkRequest) returns (ReleaseSeatsBulkResponse);
+}
+
+// =============================================================================
+// Ticket Service Messages
+// =============================================================================
+
+message Ticket {
+  string id = 1;
+  string event_id = 2;
+  string seat_id = 3;
+  string zone_id = 4;
+  string user_id = 5;
+  string booking_session_id = 6;
+  string ticket_number = 7;
+  string ticket_type = 8;
+  string pricing_category = 9;
+  double base_price = 10;
+  double final_price = 11;
+  string currency = 12;
+  double discount_amount = 13;
+  string discount_reason = 14;
+  string status = 15;
+  string payment_status = 16;
+  string payment_method = 17;
+  string payment_reference = 18;
+  string qr_code = 19;
+  string barcode = 20;
+  string valid_from = 21;
+  string valid_until = 22;
+  string used_at = 23;
+  string cancelled_at = 24;
+  string cancelled_reason = 25;
+  string refunded_at = 26;
+  double refunded_amount = 27;
+  string metadata = 28; // JSON string
+  string created_at = 29;
+  string updated_at = 30;
+  string created_by = 31;
+  string updated_by = 32;
+}
+
+message CreateTicketRequest {
+  string event_id = 1;
+  string seat_id = 2;
+  string zone_id = 3;
+  string user_id = 4;
+  string booking_session_id = 5;
+  string ticket_type = 6;
+  string pricing_category = 7;
+  double base_price = 8;
+  double final_price = 9;
+  string currency = 10;
+  double discount_amount = 11;
+  string discount_reason = 12;
+  string payment_method = 13;
+  string payment_reference = 14;
+  string valid_from = 15;
+  string valid_until = 16;
+  string metadata = 17; // JSON string
+  string created_by = 18;
+}
+
+message CreateTicketResponse {
+  Ticket ticket = 1;
+  string error = 2;
+}
+
+message GetTicketRequest {
+  string id = 1;
+}
+
+message GetTicketResponse {
+  Ticket ticket = 1;
+  string error = 2;
+}
+
+message UpdateTicketRequest {
+  string id = 1;
+  string status = 2;
+  string payment_status = 3;
+  string payment_method = 4;
+  string payment_reference = 5;
+  string qr_code = 6;
+  string barcode = 7;
+  string metadata = 8; // JSON string
+  string updated_by = 9;
+}
+
+message UpdateTicketResponse {
+  Ticket ticket = 1;
+  string error = 2;
+}
+
+message DeleteTicketRequest {
+  string id = 1;
+}
+
+message DeleteTicketResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message ListTicketsRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  string status = 3;
+  string payment_status = 4;
+  string event_id = 5;
+  string user_id = 6;
+}
+
+message ListTicketsResponse {
+  repeated Ticket tickets = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
+}
+
+message CancelTicketRequest {
+  string id = 1;
+  string reason = 2;
+}
+
+message CancelTicketResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message RefundTicketRequest {
+  string id = 1;
+  double refund_amount = 2;
+  string reason = 3;
+}
+
+message RefundTicketResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message UseTicketRequest {
+  string ticket_number = 1;
+  string qr_code = 2;
+}
+
+message UseTicketResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message ValidateTicketRequest {
+  string ticket_number = 1;
+  string qr_code = 2;
+}
+
+message ValidateTicketResponse {
+  bool is_valid = 1;
+  Ticket ticket = 2;
+  string error = 3;
+}
+
+message GetTicketsByUserRequest {
+  string user_id = 1;
+  string status = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetTicketsByUserResponse {
+  repeated Ticket tickets = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
+}
+
+message GetTicketsByEventRequest {
+  string event_id = 1;
+  string status = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetTicketsByEventResponse {
+  repeated Ticket tickets = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
+}
+
+message GetTicketByNumberRequest {
+  string ticket_number = 1;
+}
+
+message GetTicketByNumberResponse {
+  Ticket ticket = 1;
+  string error = 2;
+}
+
+// =============================================================================
+// Booking Service Messages
+// =============================================================================
+
+message BookingSession {
+  string id = 1;
+  string user_id = 2;
+  string event_id = 3;
+  string session_token = 4;
+  string status = 5;
+  int32 seat_count = 6;
+  double total_amount = 7;
+  string currency = 8;
+  string expires_at = 9;
+  string completed_at = 10;
+  string cancelled_at = 11;
+  string cancelled_reason = 12;
+  string ip_address = 13;
+  string user_agent = 14;
+  string metadata = 15; // JSON string
+  string created_at = 16;
+  string updated_at = 17;
+  string created_by = 18;
+  string updated_by = 19;
+}
+
+message CreateBookingSessionRequest {
+  string user_id = 1;
+  string event_id = 2;
+  int32 session_timeout_minutes = 3;
+  string ip_address = 4;
+  string user_agent = 5;
+  string metadata = 6; // JSON string
+}
+
+message CreateBookingSessionResponse {
+  BookingSession session = 1;
+  string error = 2;
+}
+
+message GetBookingSessionRequest {
+  string id = 1;
+  string session_token = 2;
+}
+
+message GetBookingSessionResponse {
+  BookingSession session = 1;
+  string error = 2;
+}
+
+message UpdateBookingSessionRequest {
+  string id = 1;
+  string status = 2;
+  int32 seat_count = 3;
+  double total_amount = 4;
+  string metadata = 5; // JSON string
+}
+
+message UpdateBookingSessionResponse {
+  BookingSession session = 1;
+  string error = 2;
+}
+
+message CancelBookingSessionRequest {
+  string id = 1;
+  string reason = 2;
+}
+
+message CancelBookingSessionResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message StartBookingRequest {
+  string user_id = 1;
+  string event_id = 2;
+  repeated string seat_ids = 3;
+  int32 session_timeout_minutes = 4;
+}
+
+message StartBookingResponse {
+  BookingSession session = 1;
+  repeated string reserved_seat_ids = 2;
+  double total_amount = 3;
+  string error = 4;
+}
+
+message CompleteBookingRequest {
+  string session_id = 1;
+  string payment_reference = 2;
+  string payment_method = 3;
+}
+
+message CompleteBookingResponse {
+  bool success = 1;
+  repeated Ticket tickets = 2;
+  string error = 3;
+}
+
+message ExtendBookingSessionRequest {
+  string id = 1;
+  int32 additional_minutes = 2;
+}
+
+message ExtendBookingSessionResponse {
+  bool success = 1;
+  string new_expires_at = 2;
+  string error = 3;
+}
+
+message GetUserBookingsRequest {
+  string user_id = 1;
+  string status = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetUserBookingsResponse {
+  repeated BookingSession sessions = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
+}
+
+message GetActiveBookingsRequest {
+  string event_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetActiveBookingsResponse {
+  repeated BookingSession sessions = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
+}
+
+// =============================================================================
+// Seat Service Messages
+// =============================================================================
+
+message SeatReservation {
+  string id = 1;
+  string booking_session_id = 2;
+  string event_id = 3;
+  string seat_id = 4;
+  string zone_id = 5;
+  string reservation_token = 6;
+  string status = 7;
+  string reserved_at = 8;
+  string expires_at = 9;
+  string released_at = 10;
+  string released_reason = 11;
+  string pricing_category = 12;
+  double base_price = 13;
+  double final_price = 14;
+  string currency = 15;
+  string metadata = 16; // JSON string
+  string created_at = 17;
+  string updated_at = 18;
+  string created_by = 19;
+  string updated_by = 20;
+}
+
+message ReserveSeatsRequest {
+  string booking_session_id = 1;
+  string event_id = 2;
+  repeated string seat_ids = 3;
+  string pricing_category = 4;
+  double base_price = 5;
+  double final_price = 6;
+  string currency = 7;
+  int32 reservation_timeout_minutes = 8;
+}
+
+message ReserveSeatsResponse {
+  repeated SeatReservation reservations = 1;
+  int32 reserved_count = 2;
+  double total_amount = 3;
+  string error = 4;
+}
+
+message ReleaseSeatsRequest {
+  repeated string reservation_ids = 1;
+  string reason = 2;
+}
+
+message ReleaseSeatsResponse {
+  int32 released_count = 1;
+  repeated string released_reservation_ids = 2;
+  string error = 3;
+}
+
+message ConfirmSeatsRequest {
+  repeated string reservation_ids = 1;
+}
+
+message ConfirmSeatsResponse {
+  int32 confirmed_count = 1;
+  repeated string confirmed_reservation_ids = 2;
+  string error = 3;
+}
+
+message GetReservedSeatsRequest {
+  string booking_session_id = 1;
+  string event_id = 2;
+  string status = 3;
+}
+
+message GetReservedSeatsResponse {
+  repeated SeatReservation reservations = 1;
+  string error = 2;
+}
+
+message GetAvailableSeatsRequest {
+  string event_id = 1;
+  string zone_id = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+
+message GetAvailableSeatsResponse {
+  repeated string available_seat_ids = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  string error = 5;
+}
+
+message GetSeatReservationRequest {
+  string reservation_id = 1;
+  string reservation_token = 2;
+}
+
+message GetSeatReservationResponse {
+  SeatReservation reservation = 1;
+  string error = 2;
+}
+
+message ReserveSeatsBulkRequest {
+  string booking_session_id = 1;
+  string event_id = 2;
+  repeated SeatReservationData seats = 3;
+  int32 reservation_timeout_minutes = 4;
+}
+
+message SeatReservationData {
+  string seat_id = 1;
+  string zone_id = 2;
+  string pricing_category = 3;
+  double base_price = 4;
+  double final_price = 5;
+  string currency = 6;
+}
+
+message ReserveSeatsBulkResponse {
+  repeated SeatReservation reservations = 1;
+  int32 reserved_count = 2;
+  double total_amount = 3;
+  string error = 4;
+}
+
+message ReleaseSeatsBulkRequest {
+  repeated string reservation_ids = 1;
+  string reason = 2;
+}
+
+message ReleaseSeatsBulkResponse {
+  int32 released_count = 1;
+  repeated string released_reservation_ids = 2;
+  string error = 3;
+} 
