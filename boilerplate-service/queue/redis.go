@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"boilerplate-service/config"
+	"boilerplate-service/internal/config"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -15,18 +15,28 @@ type RedisClient struct {
 
 func NewRedisClient(cfg config.RedisConfig) (*RedisClient, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-		Password: cfg.Password,
-		DB:       cfg.DB,
+		Addr:         fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+		Password:     cfg.Password,
+		DB:           cfg.DB,
+		DialTimeout:  cfg.Timeout,
+		ReadTimeout:  cfg.Timeout,
+		WriteTimeout: cfg.Timeout,
+		PoolSize:     10,
+		MinIdleConns: 5,
 	})
-
+	
 	// Test connection
 	ctx := context.Background()
 	if err := client.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("failed to ping Redis: %w", err)
+		return nil, err
 	}
-
+	
 	return &RedisClient{client}, nil
+}
+
+func (r *RedisClient) Ping() error {
+	ctx := context.Background()
+	return r.Client.Ping(ctx).Err()
 }
 
 func (r *RedisClient) Close() error {

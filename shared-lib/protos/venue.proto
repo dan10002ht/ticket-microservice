@@ -2,9 +2,7 @@ syntax = "proto3";
 
 package venue;
 
-option go_package = "github.com/booking-system/shared-lib/protos/venue";
-option java_package = "com.bookingsystem.shared.protos.venue";
-option java_multiple_files = true;
+import "google/protobuf/timestamp.proto";
 
 // Venue Service - Core venue management
 service VenueService {

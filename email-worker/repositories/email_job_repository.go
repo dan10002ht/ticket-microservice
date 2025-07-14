@@ -30,24 +30,25 @@ func NewEmailJobRepository(db *sql.DB, logger *zap.Logger) *EmailJobRepository {
 func (r *EmailJobRepository) Create(ctx context.Context, job *models.EmailJob) error {
 	query := `
 		INSERT INTO email_jobs (
-			id, to_emails, cc_emails, bcc_emails, template_name, variables,
+			public_id, to_emails, cc_emails, bcc_emails, template_name, variables,
 			status, priority, retry_count, max_retries, error_message, 
 			processed_at, sent_at, created_at, updated_at
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+		RETURNING id
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
-		job.ID, job.To, job.CC, job.BCC, job.TemplateName, job.Variables,
+	err := r.db.QueryRowContext(ctx, query,
+		job.PublicID, job.To, job.CC, job.BCC, job.TemplateName, job.Variables,
 		job.Status, job.Priority, job.RetryCount, job.MaxRetries, job.ErrorMessage,
 		job.ProcessedAt, job.SentAt, job.CreatedAt, job.UpdatedAt,
-	)
+	).Scan(&job.ID)
 
 	if err != nil {
 		return fmt.Errorf("failed to create email job: %w", err)
 	}
 
 	r.logger.Info("Email job created",
-		zap.String("job_id", job.ID.String()),
+		zap.String("job_id", job.PublicID.String()),
 		zap.String("template_name", job.TemplateName),
 		zap.Any("recipients", job.To),
 	)
@@ -55,10 +56,36 @@ func (r *EmailJobRepository) Create(ctx context.Context, job *models.EmailJob) e
 	return nil
 }
 
-// GetByID retrieves an email job by ID
-func (r *EmailJobRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.EmailJob, error) {
+// GetByPublicID retrieves an email job by public ID
+func (r *EmailJobRepository) GetByPublicID(ctx context.Context, publicID uuid.UUID) (*models.EmailJob, error) {
 	query := `
-		SELECT id, to_emails, cc_emails, bcc_emails, template_name, variables,
+		SELECT id, public_id, to_emails, cc_emails, bcc_emails, template_name, variables,
+			   status, priority, retry_count, max_retries, error_message,
+			   processed_at, sent_at, created_at, updated_at
+		FROM email_jobs WHERE public_id = $1
+	`
+
+	var job models.EmailJob
+	err := r.db.QueryRowContext(ctx, query, publicID).Scan(
+		&job.ID, &job.PublicID, &job.To, &job.CC, &job.BCC, &job.TemplateName, &job.Variables,
+		&job.Status, &job.Priority, &job.RetryCount, &job.MaxRetries, &job.ErrorMessage,
+		&job.ProcessedAt, &job.SentAt, &job.CreatedAt, &job.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("email job not found: %s", publicID)
+		}
+		return nil, fmt.Errorf("failed to get email job: %w", err)
+	}
+
+	return &job, nil
+}
+
+// GetByID retrieves an email job by internal ID
+func (r *EmailJobRepository) GetByID(ctx context.Context, id int64) (*models.EmailJob, error) {
+	query := `
+		SELECT id, public_id, to_emails, cc_emails, bcc_emails, template_name, variables,
 			   status, priority, retry_count, max_retries, error_message,
 			   processed_at, sent_at, created_at, updated_at
 		FROM email_jobs WHERE id = $1
@@ -66,14 +93,14 @@ func (r *EmailJobRepository) GetByID(ctx context.Context, id uuid.UUID) (*models
 
 	var job models.EmailJob
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&job.ID, &job.To, &job.CC, &job.BCC, &job.TemplateName, &job.Variables,
+		&job.ID, &job.PublicID, &job.To, &job.CC, &job.BCC, &job.TemplateName, &job.Variables,
 		&job.Status, &job.Priority, &job.RetryCount, &job.MaxRetries, &job.ErrorMessage,
 		&job.ProcessedAt, &job.SentAt, &job.CreatedAt, &job.UpdatedAt,
 	)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("email job not found: %s", id)
+			return nil, fmt.Errorf("email job not found: %d", id)
 		}
 		return nil, fmt.Errorf("failed to get email job: %w", err)
 	}
@@ -82,7 +109,7 @@ func (r *EmailJobRepository) GetByID(ctx context.Context, id uuid.UUID) (*models
 }
 
 // UpdateStatus updates the status of an email job
-func (r *EmailJobRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
+func (r *EmailJobRepository) UpdateStatus(ctx context.Context, id int64, status string) error {
 	query := `
 		UPDATE email_jobs 
 		SET status = $1, updated_at = $2
@@ -100,11 +127,11 @@ func (r *EmailJobRepository) UpdateStatus(ctx context.Context, id uuid.UUID, sta
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("email job not found: %s", id)
+		return fmt.Errorf("email job not found: %d", id)
 	}
 
 	r.logger.Info("Email job status updated",
-		zap.String("job_id", id.String()),
+		zap.Int64("job_id", id),
 		zap.String("status", status),
 	)
 
@@ -112,7 +139,7 @@ func (r *EmailJobRepository) UpdateStatus(ctx context.Context, id uuid.UUID, sta
 }
 
 // UpdateProcessingTime updates the processing time fields
-func (r *EmailJobRepository) UpdateProcessingTime(ctx context.Context, id uuid.UUID, processingAt, completedAt *time.Time) error {
+func (r *EmailJobRepository) UpdateProcessingTime(ctx context.Context, id int64, processingAt, completedAt *time.Time) error {
 	query := `
 		UPDATE email_jobs 
 		SET processed_at = $1, sent_at = $2, updated_at = $3
@@ -130,14 +157,14 @@ func (r *EmailJobRepository) UpdateProcessingTime(ctx context.Context, id uuid.U
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("email job not found: %s", id)
+		return fmt.Errorf("email job not found: %d", id)
 	}
 
 	return nil
 }
 
 // IncrementRetryCount increments the retry count for an email job
-func (r *EmailJobRepository) IncrementRetryCount(ctx context.Context, id uuid.UUID) error {
+func (r *EmailJobRepository) IncrementRetryCount(ctx context.Context, id int64) error {
 	query := `
 		UPDATE email_jobs 
 		SET retry_count = retry_count + 1, updated_at = $1
@@ -155,7 +182,7 @@ func (r *EmailJobRepository) IncrementRetryCount(ctx context.Context, id uuid.UU
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("email job not found: %s", id)
+		return fmt.Errorf("email job not found: %d", id)
 	}
 
 	return nil
@@ -164,7 +191,7 @@ func (r *EmailJobRepository) IncrementRetryCount(ctx context.Context, id uuid.UU
 // GetPendingJobs retrieves pending jobs that are ready to be processed
 func (r *EmailJobRepository) GetPendingJobs(ctx context.Context, limit int) ([]*models.EmailJob, error) {
 	query := `
-		SELECT id, to_emails, cc_emails, bcc_emails, template_name, variables,
+		SELECT id, public_id, to_emails, cc_emails, bcc_emails, template_name, variables,
 			   status, priority, retry_count, max_retries, error_message,
 			   processed_at, sent_at, created_at, updated_at
 		FROM email_jobs 
@@ -184,7 +211,7 @@ func (r *EmailJobRepository) GetPendingJobs(ctx context.Context, limit int) ([]*
 	for rows.Next() {
 		var job models.EmailJob
 		err := rows.Scan(
-			&job.ID, &job.To, &job.CC, &job.BCC, &job.TemplateName, &job.Variables,
+			&job.ID, &job.PublicID, &job.To, &job.CC, &job.BCC, &job.TemplateName, &job.Variables,
 			&job.Status, &job.Priority, &job.RetryCount, &job.MaxRetries, &job.ErrorMessage,
 			&job.ProcessedAt, &job.SentAt, &job.CreatedAt, &job.UpdatedAt,
 		)

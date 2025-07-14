@@ -71,13 +71,13 @@ func (s *EmailService) SendEmail(ctx context.Context, request *SendEmailRequest)
 	return job, nil
 }
 
-// GetJob retrieves an email job by ID
+// GetJob retrieves an email job by public ID
 func (s *EmailService) GetJob(ctx context.Context, id string) (*models.EmailJob, error) {
 	jobID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("invalid job ID: %w", err)
 	}
-	return s.jobRepo.GetByID(ctx, jobID)
+	return s.jobRepo.GetByPublicID(ctx, jobID)
 }
 
 // ListJobs retrieves email jobs with pagination
@@ -106,7 +106,7 @@ func (s *EmailService) RetryJob(ctx context.Context, id string) error {
 		return fmt.Errorf("invalid job ID: %w", err)
 	}
 
-	job, err := s.jobRepo.GetByID(ctx, jobID)
+	job, err := s.jobRepo.GetByPublicID(ctx, jobID)
 	if err != nil {
 		return fmt.Errorf("failed to get job: %w", err)
 	}
@@ -116,7 +116,7 @@ func (s *EmailService) RetryJob(ctx context.Context, id string) error {
 	}
 
 	// Reset job for retry
-	if err := s.jobRepo.UpdateStatus(ctx, jobID, string(models.JobStatusPending)); err != nil {
+	if err := s.jobRepo.UpdateStatus(ctx, job.ID, string(models.JobStatusPending)); err != nil {
 		return fmt.Errorf("failed to update job: %w", err)
 	}
 
@@ -204,7 +204,13 @@ func (s *EmailService) UpdateJobStatus(ctx context.Context, jobID, status string
 	if err != nil {
 		return fmt.Errorf("invalid job ID: %w", err)
 	}
-	return s.jobRepo.UpdateStatus(ctx, id, status)
+	
+	job, err := s.jobRepo.GetByPublicID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to get job: %w", err)
+	}
+	
+	return s.jobRepo.UpdateStatus(ctx, job.ID, status)
 }
 
 // ProcessEmailJob processes an email job

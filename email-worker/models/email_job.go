@@ -40,7 +40,8 @@ const (
 
 // EmailJob represents an email job in the system
 type EmailJob struct {
-	ID           uuid.UUID    `db:"id" json:"id"`
+	ID           int64        `db:"id" json:"-"`                    // Internal ID for performance
+	PublicID     uuid.UUID    `db:"public_id" json:"id"`            // Public ID for API
 	To           StringArray  `db:"to_emails" json:"to"`
 	CC           StringArray  `db:"cc_emails" json:"cc"`
 	BCC          StringArray  `db:"bcc_emails" json:"bcc"`
@@ -193,7 +194,7 @@ func (m *VariablesMap) Scan(value any) error {
 // NewEmailJob tạo một email job mới
 func NewEmailJob(to, cc, bcc []string, templateName string, variables map[string]any, priority JobPriority) *EmailJob {
 	return &EmailJob{
-		ID:           uuid.New(),
+		PublicID:     uuid.New(),
 		To:           StringArray(to),
 		CC:           StringArray(cc),
 		BCC:          StringArray(bcc),

@@ -25,7 +25,15 @@ func (m *MockEmailJobRepository) Create(ctx context.Context, job *models.EmailJo
 	return args.Error(0)
 }
 
-func (m *MockEmailJobRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.EmailJob, error) {
+func (m *MockEmailJobRepository) GetByPublicID(ctx context.Context, publicID uuid.UUID) (*models.EmailJob, error) {
+	args := m.Called(ctx, publicID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.EmailJob), args.Error(1)
+}
+
+func (m *MockEmailJobRepository) GetByID(ctx context.Context, id int64) (*models.EmailJob, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -33,7 +41,7 @@ func (m *MockEmailJobRepository) GetByID(ctx context.Context, id uuid.UUID) (*mo
 	return args.Get(0).(*models.EmailJob), args.Error(1)
 }
 
-func (m *MockEmailJobRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {
+func (m *MockEmailJobRepository) UpdateStatus(ctx context.Context, id int64, status string) error {
 	args := m.Called(ctx, id, status)
 	return args.Error(0)
 }
@@ -46,7 +54,7 @@ func (m *MockEmailJobRepository) GetPendingJobs(ctx context.Context, limit int) 
 	return args.Get(0).([]*models.EmailJob), args.Error(1)
 }
 
-func (m *MockEmailJobRepository) IncrementRetryCount(ctx context.Context, id uuid.UUID) error {
+func (m *MockEmailJobRepository) IncrementRetryCount(ctx context.Context, id int64) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
@@ -102,7 +110,7 @@ func (m *MockEmailTrackingRepository) Create(ctx context.Context, tracking *mode
 	return args.Error(0)
 }
 
-func (m *MockEmailTrackingRepository) GetByJobID(ctx context.Context, jobID uuid.UUID) (*models.EmailTracking, error) {
+func (m *MockEmailTrackingRepository) GetByJobID(ctx context.Context, jobID int64) (*models.EmailTracking, error) {
 	args := m.Called(ctx, jobID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -110,7 +118,15 @@ func (m *MockEmailTrackingRepository) GetByJobID(ctx context.Context, jobID uuid
 	return args.Get(0).(*models.EmailTracking), args.Error(1)
 }
 
-func (m *MockEmailTrackingRepository) UpdateStatus(ctx context.Context, jobID uuid.UUID, status string) error {
+func (m *MockEmailTrackingRepository) GetByPublicID(ctx context.Context, publicID uuid.UUID) (*models.EmailTracking, error) {
+	args := m.Called(ctx, publicID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*models.EmailTracking), args.Error(1)
+}
+
+func (m *MockEmailTrackingRepository) UpdateStatus(ctx context.Context, jobID int64, status string) error {
 	args := m.Called(ctx, jobID, status)
 	return args.Error(0)
 }

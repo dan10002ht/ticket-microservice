@@ -1,13 +1,14 @@
 -- Migration: 001_initial_schema.sql
--- Description: Initial database schema for email worker service
+-- Description: Initial database schema for email worker service with Hybrid ID Pattern
 -- Created: 2024-01-01
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Email Jobs Table
+-- Email Jobs Table with Hybrid ID Pattern
 CREATE TABLE IF NOT EXISTS email_jobs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id BIGSERIAL PRIMARY KEY,                           -- Internal ID for performance
+    public_id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(), -- Public ID for API
     to_emails TEXT[] NOT NULL, -- Array of recipient emails
     cc_emails TEXT[], -- Array of CC emails
     bcc_emails TEXT[], -- Array of BCC emails
@@ -18,42 +19,44 @@ CREATE TABLE IF NOT EXISTS email_jobs (
     retry_count INTEGER DEFAULT 0,
     max_retries INTEGER DEFAULT 3,
     error_message TEXT,
-    processed_at TIMESTAMP,
-    sent_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    processed_at TIMESTAMP WITH TIME ZONE,
+    sent_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Email Templates Table
+-- Email Templates Table (using string ID for template names)
 CREATE TABLE IF NOT EXISTS email_templates (
-    id VARCHAR(100) PRIMARY KEY,
+    id VARCHAR(100) PRIMARY KEY, -- Template identifier (e.g., 'email_verification', 'booking_confirmation')
     name VARCHAR(255) NOT NULL,
     subject VARCHAR(500),
     html_template TEXT,
     text_template TEXT,
     variables JSONB,
     is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Email Tracking Table
+-- Email Tracking Table with Hybrid ID Pattern
 CREATE TABLE IF NOT EXISTS email_tracking (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    job_id UUID REFERENCES email_jobs(id) ON DELETE CASCADE,
+    id BIGSERIAL PRIMARY KEY,                           -- Internal ID for performance
+    public_id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(), -- Public ID for API
+    job_id BIGINT NOT NULL REFERENCES email_jobs(id) ON DELETE CASCADE,
     provider VARCHAR(50),
     message_id VARCHAR(255),
     status VARCHAR(50),
-    sent_at TIMESTAMP,
-    delivered_at TIMESTAMP,
-    opened_at TIMESTAMP,
-    clicked_at TIMESTAMP,
+    sent_at TIMESTAMP WITH TIME ZONE,
+    delivered_at TIMESTAMP WITH TIME ZONE,
+    opened_at TIMESTAMP WITH TIME ZONE,
+    clicked_at TIMESTAMP WITH TIME ZONE,
     error_message TEXT,
     bounce_reason TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for better performance
+CREATE INDEX idx_email_jobs_public_id ON email_jobs(public_id);
 CREATE INDEX idx_email_jobs_status ON email_jobs(status);
 CREATE INDEX idx_email_jobs_priority ON email_jobs(priority);
 CREATE INDEX idx_email_jobs_created_at ON email_jobs(created_at);
@@ -65,6 +68,7 @@ CREATE INDEX idx_email_jobs_sent_at ON email_jobs(sent_at);
 CREATE INDEX idx_email_templates_is_active ON email_templates(is_active);
 CREATE INDEX idx_email_templates_name ON email_templates(name);
 
+CREATE INDEX idx_email_tracking_public_id ON email_tracking(public_id);
 CREATE INDEX idx_email_tracking_job_id ON email_tracking(job_id);
 CREATE INDEX idx_email_tracking_status ON email_tracking(status);
 CREATE INDEX idx_email_tracking_provider ON email_tracking(provider);
@@ -198,26 +202,20 @@ INSERT INTO email_templates (id, name, subject, html_template, text_template, va
         <div class="warning">
             <strong>Important:</strong>
             <ul>
-                <li>This code will expire in <strong>{{.ExpiryMinutes}}</strong> minutes</li>
-                <li>If you did not create an account, please ignore this email</li>
+                <li>This code will expire in 15 minutes</li>
+                <li>If you did not request this verification, please ignore this email</li>
                 <li>Never share this code with anyone</li>
             </ul>
         </div>
 
-        <p>If you have any questions, please contact our support team.</p>
-
-        <p>Best regards,<br><strong>Booking System Team</strong></p>
-
         <div class="footer">
-            <p>This email was sent for email verification purposes.</p>
-            <p>&copy; 2024 Booking System. All rights reserved.</p>
+            <p>This is an automated email from Booking System. Please do not reply to this email.</p>
+            <p>If you have any questions, please contact our support team.</p>
         </div>
     </div>
 </body>
 </html>',
-    'Email Verification - Booking System
-
-Hello {{.Name}},
+    'Hello {{.Name}},
 
 Thank you for registering with Booking System. To complete your registration, please verify your email address using the verification code below:
 
@@ -228,84 +226,14 @@ How to verify:
 - Or visit: {{.VerificationURL}}
 
 Important:
-- This code will expire in {{.ExpiryMinutes}} minutes
-- If you did not create an account, please ignore this email
+- This code will expire in 15 minutes
+- If you did not request this verification, please ignore this email
 - Never share this code with anyone
 
-If you have any questions, please contact our support team.
+This is an automated email from Booking System. Please do not reply to this email.
 
-Best regards,
-Booking System Team
-
----
-This email was sent for email verification purposes.
-© 2024 Booking System. All rights reserved.',
-    '{"Name": "string", "PinCode": "string", "VerificationURL": "string", "ExpiryMinutes": "number"}'
-),
-(
-    'password_reset',
-    'Password Reset',
-    'Reset your password',
-    '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Password Reset</title>
-</head>
-<body>
-    <h1>Password Reset Request</h1>
-    <p>Hi {{.Email}},</p>
-    <p>You requested a password reset. Click the link below to reset your password:</p>
-    <a href="{{.ResetURL}}">Reset Password</a>
-    <p>This link will expire in 15 minutes.</p>
-    <p>If you did not request this, please ignore this email.</p>
-    <p>Best regards,<br>Booking System Team</p>
-</body>
-</html>',
-    'Password Reset Request
-
-Hi {{.Email}},
-
-You requested a password reset. Click the link below to reset your password:
-{{.ResetURL}}
-
-This link will expire in 15 minutes.
-
-If you did not request this, please ignore this email.
-
-Best regards,
-Booking System Team',
-    '{"Email": "string", "ResetURL": "string"}'
-),
-(
-    'welcome_email',
-    'Welcome Email',
-    'Welcome to Booking System!',
-    '<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Welcome</title>
-</head>
-<body>
-    <h1>Welcome to Booking System!</h1>
-    <p>Hi {{.Name}},</p>
-    <p>Thank you for joining Booking System. We are excited to have you on board!</p>
-    <p>You can now start booking events and managing your account.</p>
-    <p>Best regards,<br>Booking System Team</p>
-</body>
-</html>',
-    'Welcome to Booking System!
-
-Hi {{.Name}},
-
-Thank you for joining Booking System. We are excited to have you on board!
-
-You can now start booking events and managing your account.
-
-Best regards,
-Booking System Team',
-    '{"Name": "string"}'
+If you have any questions, please contact our support team.',
+    '{"Name": "string", "PinCode": "string", "VerificationURL": "string"}'
 ),
 (
     'booking_confirmation',
@@ -316,98 +244,291 @@ Booking System Team',
 <head>
     <meta charset="utf-8">
     <title>Booking Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .title {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .booking-details {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .booking-details h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        .detail-value {
+            color: #2c3e50;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Booking Confirmation</h1>
-    <p>Hi {{.Name}},</p>
-    <p>Your booking has been confirmed!</p>
-    <h2>Booking Details:</h2>
-    <ul>
-        <li><strong>Event:</strong> {{.EventName}}</li>
-        <li><strong>Date:</strong> {{.EventDate}}</li>
-        <li><strong>Time:</strong> {{.EventTime}}</li>
-        <li><strong>Venue:</strong> {{.Venue}}</li>
-        <li><strong>Ticket Quantity:</strong> {{.TicketQuantity}}</li>
-        <li><strong>Total Amount:</strong> {{.TotalAmount}}</li>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Booking System</div>
+            <h1 class="title">Booking Confirmation</h1>
+        </div>
+
+        <div class="success">
+            <strong>✅ Your booking has been confirmed!</strong>
+            <p>Thank you for your booking. We have received your payment and your tickets are confirmed.</p>
+        </div>
+
+        <div class="booking-details">
+            <h3>Booking Details</h3>
+            <div class="detail-row">
+                <span class="detail-label">Booking ID:</span>
+                <span class="detail-value">{{.BookingID}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Event:</span>
+                <span class="detail-value">{{.EventName}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Date & Time:</span>
+                <span class="detail-value">{{.EventDateTime}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Venue:</span>
+                <span class="detail-value">{{.VenueName}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Seats:</span>
+                <span class="detail-value">{{.Seats}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Total Amount:</span>
+                <span class="detail-value">{{.TotalAmount}}</span>
+            </div>
+        </div>
+
+        <p><strong>What happens next?</strong></p>
+        <ul>
+            <li>Your tickets will be sent to this email address</li>
+            <li>You can also download your tickets from your account</li>
+            <li>Please arrive at least 30 minutes before the event</li>
+            <li>Bring a valid ID and your tickets</li>
     </ul>
-    <p>Booking ID: {{.BookingID}}</p>
-    <p>Best regards,<br>Booking System Team</p>
+
+        <div class="footer">
+            <p>This is an automated email from Booking System. Please do not reply to this email.</p>
+            <p>If you have any questions, please contact our support team.</p>
+        </div>
+    </div>
 </body>
 </html>',
-    'Booking Confirmation
-
-Hi {{.Name}},
-
-Your booking has been confirmed!
+    'Your booking has been confirmed!
 
 Booking Details:
+- Booking ID: {{.BookingID}}
 - Event: {{.EventName}}
-- Date: {{.EventDate}}
-- Time: {{.EventTime}}
-- Venue: {{.Venue}}
-- Ticket Quantity: {{.TicketQuantity}}
+- Date & Time: {{.EventDateTime}}
+- Venue: {{.VenueName}}
+- Seats: {{.Seats}}
 - Total Amount: {{.TotalAmount}}
 
-Booking ID: {{.BookingID}}
+What happens next?
+- Your tickets will be sent to this email address
+- You can also download your tickets from your account
+- Please arrive at least 30 minutes before the event
+- Bring a valid ID and your tickets
 
-Best regards,
-Booking System Team',
-    '{"Name": "string", "EventName": "string", "EventDate": "string", "EventTime": "string", "Venue": "string", "TicketQuantity": "number", "TotalAmount": "string", "BookingID": "string"}'
+This is an automated email from Booking System. Please do not reply to this email.
+
+If you have any questions, please contact our support team.',
+    '{"BookingID": "string", "EventName": "string", "EventDateTime": "string", "VenueName": "string", "Seats": "string", "TotalAmount": "string"}'
 ),
 (
-    'organization_invitation',
-    'Organization Invitation',
-    'You have been invited to join an organization',
+    'password_reset',
+    'Password Reset Request',
+    'Reset your password',
     '<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Organization Invitation</title>
+    <title>Password Reset</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .title {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .button:hover {
+            background-color: #c82333;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Organization Invitation</h1>
-    <p>Hi {{.Name}},</p>
-    <p>You have been invited to join <strong>{{.OrganizationName}}</strong> on Booking System.</p>
-    <p>Role: {{.Role}}</p>
-    <p>Click the link below to accept the invitation:</p>
-    <a href="{{.InvitationURL}}">Accept Invitation</a>
-    <p>This invitation will expire in {{.ExpiryDays}} days.</p>
-    <p>Best regards,<br>Booking System Team</p>
+    <div class="container">
+        <div class="header">
+            <div class="logo">Booking System</div>
+            <h1 class="title">Password Reset Request</h1>
+        </div>
+
+        <p>Hello <strong>{{.Name}}</strong>,</p>
+
+        <p>We received a request to reset your password for your Booking System account. If you made this request, please click the button below to reset your password:</p>
+
+        <div style="text-align: center">
+            <a href="{{.ResetURL}}" class="button">Reset Password</a>
+        </div>
+
+        <div class="warning">
+            <strong>Important:</strong>
+            <ul>
+                <li>This link will expire in 1 hour</li>
+                <li>If you did not request a password reset, please ignore this email</li>
+                <li>Never share this link with anyone</li>
+            </ul>
+        </div>
+
+        <p>If the button above does not work, you can copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; color: #007bff;">{{.ResetURL}}</p>
+
+        <div class="footer">
+            <p>This is an automated email from Booking System. Please do not reply to this email.</p>
+            <p>If you have any questions, please contact our support team.</p>
+        </div>
+    </div>
 </body>
 </html>',
-    'Organization Invitation
+    'Hello {{.Name}},
 
-Hi {{.Name}},
+We received a request to reset your password for your Booking System account. If you made this request, please click the link below to reset your password:
 
-You have been invited to join {{.OrganizationName}} on Booking System.
+{{.ResetURL}}
 
-Role: {{.Role}}
+Important:
+- This link will expire in 1 hour
+- If you did not request a password reset, please ignore this email
+- Never share this link with anyone
 
-Click the link below to accept the invitation:
-{{.InvitationURL}}
+This is an automated email from Booking System. Please do not reply to this email.
 
-This invitation will expire in {{.ExpiryDays}} days.
-
-Best regards,
-Booking System Team',
-    '{"Name": "string", "OrganizationName": "string", "Role": "string", "InvitationURL": "string", "ExpiryDays": "number"}'
+If you have any questions, please contact our support team.',
+    '{"Name": "string", "ResetURL": "string"}'
 );
 
--- Function to update updated_at timestamp
+-- Add updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated_at = NOW();
+    NEW.updated_at = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
 $$ language 'plpgsql';
 
--- Triggers to automatically update updated_at
+-- Trigger to update updated_at timestamp for email_jobs
 CREATE TRIGGER update_email_jobs_updated_at 
     BEFORE UPDATE ON email_jobs 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+-- Trigger to update updated_at timestamp for email_templates
 CREATE TRIGGER update_email_templates_updated_at 
     BEFORE UPDATE ON email_templates 
     FOR EACH ROW 

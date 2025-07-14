@@ -8,23 +8,25 @@ import (
 
 // EmailTracking represents email delivery tracking information
 type EmailTracking struct {
-	ID            uuid.UUID  `db:"id" json:"id"`
-	JobID         uuid.UUID  `db:"job_id" json:"job_id"`
-	Provider      string     `db:"provider" json:"provider"`
-	MessageID     *string    `db:"message_id" json:"message_id"`
-	Status        string     `db:"status" json:"status"`
-	SentAt        *time.Time `db:"sent_at" json:"sent_at"`
-	DeliveredAt   *time.Time `db:"delivered_at" json:"delivered_at"`
-	OpenedAt      *time.Time `db:"opened_at" json:"opened_at"`
-	ClickedAt     *time.Time `db:"clicked_at" json:"clicked_at"`
-	ErrorMessage  *string    `db:"error_message" json:"error_message"`
-	CreatedAt     time.Time  `db:"created_at" json:"created_at"`
+	ID            int64       `db:"id" json:"-"`                    // Internal ID for performance
+	PublicID      uuid.UUID   `db:"public_id" json:"id"`            // Public ID for API
+	JobID         int64       `db:"job_id" json:"job_id"`           // References email_jobs.id
+	Provider      string      `db:"provider" json:"provider"`
+	MessageID     *string     `db:"message_id" json:"message_id"`
+	Status        string      `db:"status" json:"status"`
+	SentAt        *time.Time  `db:"sent_at" json:"sent_at"`
+	DeliveredAt   *time.Time  `db:"delivered_at" json:"delivered_at"`
+	OpenedAt      *time.Time  `db:"opened_at" json:"opened_at"`
+	ClickedAt     *time.Time  `db:"clicked_at" json:"clicked_at"`
+	ErrorMessage  *string     `db:"error_message" json:"error_message"`
+	BounceReason  *string     `db:"bounce_reason" json:"bounce_reason"`
+	CreatedAt     time.Time   `db:"created_at" json:"created_at"`
 }
 
 // NewEmailTracking creates a new EmailTracking record
-func NewEmailTracking(jobID uuid.UUID, provider string) *EmailTracking {
+func NewEmailTracking(jobID int64, provider string) *EmailTracking {
 	return &EmailTracking{
-		ID:        uuid.New(),
+		PublicID:  uuid.New(),
 		JobID:     jobID,
 		Provider:  provider,
 		Status:    "pending",

@@ -116,18 +116,18 @@ func (w *Worker) processJob(ctx context.Context, job *models.EmailJob) {
 	startTime := time.Now()
 
 	w.logger.Info("Processing email job",
-		zap.String("job_id", job.ID.String()),
+		zap.String("job_id", job.PublicID.String()),
 		zap.String("template", job.TemplateName),
 		zap.Strings("recipients", job.To),
 	)
 
 	// Update job status (ignore if job not found in DB)
 	job.MarkAsProcessing()
-	updateErr := w.emailService.UpdateJobStatus(ctx, job.ID.String(), string(job.Status))
+	updateErr := w.emailService.UpdateJobStatus(ctx, job.PublicID.String(), string(job.Status))
 	if updateErr != nil {
 		// Log as warning instead of error for job not found
 		w.logger.Warn("Could not update job status in database (job may not be tracked)",
-			zap.String("job_id", job.ID.String()),
+			zap.String("job_id", job.PublicID.String()),
 			zap.Error(updateErr))
 	}
 
@@ -138,7 +138,7 @@ func (w *Worker) processJob(ctx context.Context, job *models.EmailJob) {
 
 	if err != nil {
 		w.logger.Error("Failed to process email job",
-			zap.String("job_id", job.ID.String()),
+			zap.String("job_id", job.PublicID.String()),
 			zap.String("template", job.TemplateName),
 			zap.Error(err),
 			zap.Duration("processing_time", processingTime),
@@ -151,16 +151,16 @@ func (w *Worker) processJob(ctx context.Context, job *models.EmailJob) {
 
 	// Mark job as completed (ignore if job not found in DB)
 	job.MarkAsCompleted()
-	completeErr := w.emailService.UpdateJobStatus(ctx, job.ID.String(), string(job.Status))
+	completeErr := w.emailService.UpdateJobStatus(ctx, job.PublicID.String(), string(job.Status))
 	if completeErr != nil {
 		// Log as warning instead of error for job not found
 		w.logger.Warn("Could not update job status to completed in database (job may not be tracked)",
-			zap.String("job_id", job.ID.String()),
+			zap.String("job_id", job.PublicID.String()),
 			zap.Error(completeErr))
 	}
 
 	w.logger.Info("Email job processed successfully",
-		zap.String("job_id", job.ID.String()),
+		zap.String("job_id", job.PublicID.String()),
 		zap.String("template", job.TemplateName),
 		zap.Duration("processing_time", processingTime),
 	)
@@ -171,16 +171,16 @@ func (w *Worker) handleJobFailure(ctx context.Context, job *models.EmailJob, err
 	if !job.CanRetry() {
 		// Max retries reached, mark as failed
 		job.MarkAsFailed()
-		updateErr := w.emailService.UpdateJobStatus(ctx, job.ID.String(), string(job.Status))
+		updateErr := w.emailService.UpdateJobStatus(ctx, job.PublicID.String(), string(job.Status))
 		if updateErr != nil {
 			// Log as warning instead of error for job not found
 			w.logger.Warn("Could not update job status to failed in database (job may not be tracked)",
-				zap.String("job_id", job.ID.String()),
+				zap.String("job_id", job.PublicID.String()),
 				zap.Error(updateErr))
 		}
 
 		w.logger.Error("Email job failed permanently",
-			zap.String("job_id", job.ID.String()),
+			zap.String("job_id", job.PublicID.String()),
 			zap.String("template", job.TemplateName),
 			zap.Int("retry_count", job.RetryCount),
 			zap.Error(err),
@@ -192,11 +192,11 @@ func (w *Worker) handleJobFailure(ctx context.Context, job *models.EmailJob, err
 	job.IncrementRetry()
 
 	job.MarkAsRetrying()
-	updateErr := w.emailService.UpdateJobStatus(ctx, job.ID.String(), string(job.Status))
+	updateErr := w.emailService.UpdateJobStatus(ctx, job.PublicID.String(), string(job.Status))
 	if updateErr != nil {
 		// Log as warning instead of error for job not found
 		w.logger.Warn("Could not update job status to retrying in database (job may not be tracked)",
-			zap.String("job_id", job.ID.String()),
+			zap.String("job_id", job.PublicID.String()),
 			zap.Error(updateErr))
 	}
 
@@ -204,7 +204,7 @@ func (w *Worker) handleJobFailure(ctx context.Context, job *models.EmailJob, err
 	retryDelay := w.calculateRetryDelay(job.RetryCount)
 
 	w.logger.Info("Scheduling job retry",
-		zap.String("job_id", job.ID.String()),
+		zap.String("job_id", job.PublicID.String()),
 		zap.String("template", job.TemplateName),
 		zap.Int("retry_count", job.RetryCount),
 		zap.Duration("retry_delay", retryDelay),
@@ -219,7 +219,7 @@ func (w *Worker) handleJobFailure(ctx context.Context, job *models.EmailJob, err
 		requeueErr := w.queue.Publish(context.Background(), job)
 		if requeueErr != nil {
 			w.logger.Error("Failed to requeue job for retry",
-				zap.String("job_id", job.ID.String()),
+				zap.String("job_id", job.PublicID.String()),
 				zap.Error(requeueErr))
 		}
 	}()

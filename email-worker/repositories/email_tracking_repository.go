@@ -30,24 +30,25 @@ func NewEmailTrackingRepository(db *sql.DB, logger *zap.Logger) *EmailTrackingRe
 func (r *EmailTrackingRepository) Create(ctx context.Context, tracking *models.EmailTracking) error {
 	query := `
 		INSERT INTO email_tracking (
-			id, job_id, provider, message_id, status, sent_at, delivered_at, 
-			opened_at, clicked_at, error_message, created_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+			public_id, job_id, provider, message_id, status, sent_at, delivered_at, 
+			opened_at, clicked_at, error_message, bounce_reason, created_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		RETURNING id
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
-		tracking.ID, tracking.JobID, tracking.Provider, tracking.MessageID,
+	err := r.db.QueryRowContext(ctx, query,
+		tracking.PublicID, tracking.JobID, tracking.Provider, tracking.MessageID,
 		tracking.Status, tracking.SentAt, tracking.DeliveredAt, tracking.OpenedAt,
-		tracking.ClickedAt, tracking.ErrorMessage, tracking.CreatedAt,
-	)
+		tracking.ClickedAt, tracking.ErrorMessage, tracking.BounceReason, tracking.CreatedAt,
+	).Scan(&tracking.ID)
 
 	if err != nil {
 		return fmt.Errorf("failed to create email tracking: %w", err)
 	}
 
 	r.logger.Info("Email tracking created",
-		zap.String("tracking_id", tracking.ID.String()),
-		zap.String("job_id", tracking.JobID.String()),
+		zap.String("tracking_id", tracking.PublicID.String()),
+		zap.Int64("job_id", tracking.JobID),
 		zap.String("provider", tracking.Provider),
 	)
 
@@ -55,23 +56,48 @@ func (r *EmailTrackingRepository) Create(ctx context.Context, tracking *models.E
 }
 
 // GetByJobID retrieves email tracking by job ID
-func (r *EmailTrackingRepository) GetByJobID(ctx context.Context, jobID uuid.UUID) (*models.EmailTracking, error) {
+func (r *EmailTrackingRepository) GetByJobID(ctx context.Context, jobID int64) (*models.EmailTracking, error) {
 	query := `
-		SELECT id, job_id, provider, message_id, status, sent_at, delivered_at, 
-		       opened_at, clicked_at, error_message, created_at
+		SELECT id, public_id, job_id, provider, message_id, status, sent_at, delivered_at, 
+		       opened_at, clicked_at, error_message, bounce_reason, created_at
 		FROM email_tracking WHERE job_id = $1
 	`
 
 	var tracking models.EmailTracking
 	err := r.db.QueryRowContext(ctx, query, jobID).Scan(
-		&tracking.ID, &tracking.JobID, &tracking.Provider, &tracking.MessageID,
+		&tracking.ID, &tracking.PublicID, &tracking.JobID, &tracking.Provider, &tracking.MessageID,
 		&tracking.Status, &tracking.SentAt, &tracking.DeliveredAt, &tracking.OpenedAt,
-		&tracking.ClickedAt, &tracking.ErrorMessage, &tracking.CreatedAt,
+		&tracking.ClickedAt, &tracking.ErrorMessage, &tracking.BounceReason, &tracking.CreatedAt,
 	)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("email tracking not found for job: %s", jobID)
+			return nil, fmt.Errorf("email tracking not found for job: %d", jobID)
+		}
+		return nil, fmt.Errorf("failed to get email tracking: %w", err)
+	}
+
+	return &tracking, nil
+}
+
+// GetByPublicID retrieves email tracking by public ID
+func (r *EmailTrackingRepository) GetByPublicID(ctx context.Context, publicID uuid.UUID) (*models.EmailTracking, error) {
+	query := `
+		SELECT id, public_id, job_id, provider, message_id, status, sent_at, delivered_at, 
+		       opened_at, clicked_at, error_message, bounce_reason, created_at
+		FROM email_tracking WHERE public_id = $1
+	`
+
+	var tracking models.EmailTracking
+	err := r.db.QueryRowContext(ctx, query, publicID).Scan(
+		&tracking.ID, &tracking.PublicID, &tracking.JobID, &tracking.Provider, &tracking.MessageID,
+		&tracking.Status, &tracking.SentAt, &tracking.DeliveredAt, &tracking.OpenedAt,
+		&tracking.ClickedAt, &tracking.ErrorMessage, &tracking.BounceReason, &tracking.CreatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("email tracking not found: %s", publicID)
 		}
 		return nil, fmt.Errorf("failed to get email tracking: %w", err)
 	}
@@ -80,7 +106,7 @@ func (r *EmailTrackingRepository) GetByJobID(ctx context.Context, jobID uuid.UUI
 }
 
 // UpdateStatus updates the status of email tracking
-func (r *EmailTrackingRepository) UpdateStatus(ctx context.Context, jobID uuid.UUID, status string) error {
+func (r *EmailTrackingRepository) UpdateStatus(ctx context.Context, jobID int64, status string) error {
 	query := `
 		UPDATE email_tracking 
 		SET status = $1
@@ -98,11 +124,11 @@ func (r *EmailTrackingRepository) UpdateStatus(ctx context.Context, jobID uuid.U
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("email tracking not found for job: %s", jobID)
+		return fmt.Errorf("email tracking not found for job: %d", jobID)
 	}
 
 	r.logger.Info("Email tracking status updated",
-		zap.String("job_id", jobID.String()),
+		zap.Int64("job_id", jobID),
 		zap.String("status", status),
 	)
 
@@ -110,7 +136,7 @@ func (r *EmailTrackingRepository) UpdateStatus(ctx context.Context, jobID uuid.U
 }
 
 // MarkAsSent marks the email as sent
-func (r *EmailTrackingRepository) MarkAsSent(ctx context.Context, jobID uuid.UUID, messageID string) error {
+func (r *EmailTrackingRepository) MarkAsSent(ctx context.Context, jobID int64, messageID string) error {
 	query := `
 		UPDATE email_tracking 
 		SET status = 'sent', message_id = $1, sent_at = $2
@@ -128,11 +154,11 @@ func (r *EmailTrackingRepository) MarkAsSent(ctx context.Context, jobID uuid.UUI
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("email tracking not found for job: %s", jobID)
+		return fmt.Errorf("email tracking not found for job: %d", jobID)
 	}
 
 	r.logger.Info("Email marked as sent",
-		zap.String("job_id", jobID.String()),
+		zap.Int64("job_id", jobID),
 		zap.String("message_id", messageID),
 	)
 
@@ -140,7 +166,7 @@ func (r *EmailTrackingRepository) MarkAsSent(ctx context.Context, jobID uuid.UUI
 }
 
 // MarkAsDelivered marks the email as delivered
-func (r *EmailTrackingRepository) MarkAsDelivered(ctx context.Context, jobID uuid.UUID) error {
+func (r *EmailTrackingRepository) MarkAsDelivered(ctx context.Context, jobID int64) error {
 	query := `
 		UPDATE email_tracking 
 		SET status = 'delivered', delivered_at = $1
@@ -158,18 +184,18 @@ func (r *EmailTrackingRepository) MarkAsDelivered(ctx context.Context, jobID uui
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("email tracking not found for job: %s", jobID)
+		return fmt.Errorf("email tracking not found for job: %d", jobID)
 	}
 
 	r.logger.Info("Email marked as delivered",
-		zap.String("job_id", jobID.String()),
+		zap.Int64("job_id", jobID),
 	)
 
 	return nil
 }
 
 // MarkAsOpened marks the email as opened
-func (r *EmailTrackingRepository) MarkAsOpened(ctx context.Context, jobID uuid.UUID) error {
+func (r *EmailTrackingRepository) MarkAsOpened(ctx context.Context, jobID int64) error {
 	query := `
 		UPDATE email_tracking 
 		SET status = 'opened', opened_at = $1
@@ -187,18 +213,18 @@ func (r *EmailTrackingRepository) MarkAsOpened(ctx context.Context, jobID uuid.U
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("email tracking not found for job: %s", jobID)
+		return fmt.Errorf("email tracking not found for job: %d", jobID)
 	}
 
 	r.logger.Info("Email marked as opened",
-		zap.String("job_id", jobID.String()),
+		zap.Int64("job_id", jobID),
 	)
 
 	return nil
 }
 
 // MarkAsClicked marks the email as clicked
-func (r *EmailTrackingRepository) MarkAsClicked(ctx context.Context, jobID uuid.UUID) error {
+func (r *EmailTrackingRepository) MarkAsClicked(ctx context.Context, jobID int64) error {
 	query := `
 		UPDATE email_tracking 
 		SET status = 'clicked', clicked_at = $1
@@ -216,18 +242,18 @@ func (r *EmailTrackingRepository) MarkAsClicked(ctx context.Context, jobID uuid.
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("email tracking not found for job: %s", jobID)
+		return fmt.Errorf("email tracking not found for job: %d", jobID)
 	}
 
 	r.logger.Info("Email marked as clicked",
-		zap.String("job_id", jobID.String()),
+		zap.Int64("job_id", jobID),
 	)
 
 	return nil
 }
 
 // MarkAsFailed marks the email as failed
-func (r *EmailTrackingRepository) MarkAsFailed(ctx context.Context, jobID uuid.UUID, errorMessage string) error {
+func (r *EmailTrackingRepository) MarkAsFailed(ctx context.Context, jobID int64, errorMessage string) error {
 	query := `
 		UPDATE email_tracking 
 		SET status = 'failed', error_message = $1
@@ -245,12 +271,42 @@ func (r *EmailTrackingRepository) MarkAsFailed(ctx context.Context, jobID uuid.U
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("email tracking not found for job: %s", jobID)
+		return fmt.Errorf("email tracking not found for job: %d", jobID)
 	}
 
 	r.logger.Info("Email marked as failed",
-		zap.String("job_id", jobID.String()),
+		zap.Int64("job_id", jobID),
 		zap.String("error", errorMessage),
+	)
+
+	return nil
+}
+
+// MarkAsBounced marks the email as bounced
+func (r *EmailTrackingRepository) MarkAsBounced(ctx context.Context, jobID int64, bounceReason string) error {
+	query := `
+		UPDATE email_tracking 
+		SET status = 'bounced', bounce_reason = $1
+		WHERE job_id = $2
+	`
+
+	result, err := r.db.ExecContext(ctx, query, bounceReason, jobID)
+	if err != nil {
+		return fmt.Errorf("failed to mark email as bounced: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("email tracking not found for job: %d", jobID)
+	}
+
+	r.logger.Info("Email marked as bounced",
+		zap.Int64("job_id", jobID),
+		zap.String("bounce_reason", bounceReason),
 	)
 
 	return nil
@@ -268,12 +324,8 @@ func (r *EmailTrackingRepository) GetStats(ctx context.Context, timeRange time.D
 			COUNT(CASE WHEN status = 'clicked' THEN 1 END) as clicked,
 			COUNT(CASE WHEN status = 'failed' THEN 1 END) as failed,
 			COUNT(CASE WHEN status = 'bounced' THEN 1 END) as bounced,
-			AVG(CASE WHEN delivered_at IS NOT NULL AND sent_at IS NOT NULL 
-				THEN EXTRACT(EPOCH FROM (delivered_at - sent_at)) 
-				END) as avg_delivery_time,
-			AVG(CASE WHEN opened_at IS NOT NULL AND sent_at IS NOT NULL 
-				THEN EXTRACT(EPOCH FROM (opened_at - sent_at)) 
-				END) as avg_open_time
+			AVG(EXTRACT(EPOCH FROM (delivered_at - sent_at))) as avg_delivery_time,
+			AVG(EXTRACT(EPOCH FROM (opened_at - sent_at))) as avg_open_time
 		FROM email_tracking 
 		WHERE created_at >= $1
 	`
