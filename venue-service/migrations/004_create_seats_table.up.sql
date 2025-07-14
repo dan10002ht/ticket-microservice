@@ -1,12 +1,11 @@
--- Migration: Create seats table
--- Description: Individual seats within seating zones
-
-CREATE TABLE IF NOT EXISTS seats (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    zone_id UUID NOT NULL REFERENCES seating_zones(id) ON DELETE CASCADE,
+-- Create seats table with Hybrid ID Pattern
+CREATE TABLE seats (
+    id BIGSERIAL PRIMARY KEY,
+    public_id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+    zone_id BIGINT NOT NULL REFERENCES seating_zones(id) ON DELETE CASCADE,
     seat_number VARCHAR(20) NOT NULL,
     row_number VARCHAR(20) NOT NULL,
-    seat_type VARCHAR(50) DEFAULT 'standard', -- 'standard', 'wheelchair', 'companion', 'aisle'
+    seat_type VARCHAR(50) DEFAULT 'standard' CHECK (seat_type IN ('standard', 'wheelchair', 'companion', 'aisle', 'premium', 'vip')),
     coordinates JSONB NOT NULL, -- Canvas coordinates for seat position
     properties JSONB, -- Additional seat properties (width, height, angle, etc.)
     is_active BOOLEAN DEFAULT true,
@@ -14,14 +13,13 @@ CREATE TABLE IF NOT EXISTS seats (
     display_order INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by UUID,
-    updated_by UUID,
     
     -- Ensure unique seat within zone
     UNIQUE(zone_id, row_number, seat_number)
 );
 
 -- Indexes for performance
+CREATE INDEX idx_seats_public_id ON seats(public_id);
 CREATE INDEX idx_seats_zone_id ON seats(zone_id);
 CREATE INDEX idx_seats_row_number ON seats(row_number);
 CREATE INDEX idx_seats_seat_number ON seats(seat_number);

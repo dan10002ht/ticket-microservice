@@ -1,12 +1,11 @@
--- Migration: Create venue layouts table
--- Description: Canvas-based seating layouts for venues
-
-CREATE TABLE IF NOT EXISTS venue_layouts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    venue_id UUID NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+-- Create venue layouts table with Hybrid ID Pattern
+CREATE TABLE venue_layouts (
+    id BIGSERIAL PRIMARY KEY,
+    public_id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),
+    venue_id BIGINT NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    layout_type VARCHAR(50) NOT NULL, -- 'theater', 'stadium', 'conference', 'custom'
+    layout_type VARCHAR(50) NOT NULL CHECK (layout_type IN ('theater', 'stadium', 'conference', 'custom')),
     canvas_config JSONB NOT NULL, -- Canvas configuration with dimensions, background, etc.
     seating_config JSONB NOT NULL, -- Seating arrangement configuration
     is_active BOOLEAN DEFAULT true,
@@ -14,14 +13,13 @@ CREATE TABLE IF NOT EXISTS venue_layouts (
     version INTEGER DEFAULT 1,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by UUID,
-    updated_by UUID,
     
     -- Ensure only one default layout per venue
     UNIQUE(venue_id, is_default) DEFERRABLE INITIALLY DEFERRED
 );
 
 -- Indexes for performance
+CREATE INDEX idx_venue_layouts_public_id ON venue_layouts(public_id);
 CREATE INDEX idx_venue_layouts_venue_id ON venue_layouts(venue_id);
 CREATE INDEX idx_venue_layouts_is_active ON venue_layouts(is_active);
 CREATE INDEX idx_venue_layouts_is_default ON venue_layouts(is_default);

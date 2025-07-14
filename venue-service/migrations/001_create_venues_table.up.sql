@@ -1,8 +1,10 @@
--- Migration: Create venues table
--- Description: Core venue information table
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE IF NOT EXISTS venues (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+-- Create venues table with Hybrid ID Pattern
+CREATE TABLE venues (
+    id BIGSERIAL PRIMARY KEY,                           -- Internal ID for performance
+    public_id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(), -- Public ID for API
     name VARCHAR(255) NOT NULL,
     description TEXT,
     address TEXT NOT NULL,
@@ -13,26 +15,25 @@ CREATE TABLE IF NOT EXISTS venues (
     phone VARCHAR(50),
     email VARCHAR(255),
     website VARCHAR(255),
-    capacity INTEGER NOT NULL,
-    venue_type VARCHAR(50) NOT NULL, -- 'stadium', 'theater', 'conference_center', 'arena', 'outdoor'
-    amenities JSONB, -- Store amenities as JSON array
-    images JSONB, -- Store image URLs as JSON array
+    capacity INTEGER NOT NULL CHECK (capacity > 0),
+    venue_type VARCHAR(50) NOT NULL CHECK (venue_type IN ('stadium', 'theater', 'conference_center', 'arena', 'auditorium', 'outdoor', 'other')),
+    amenities JSONB DEFAULT '[]'::jsonb, -- Store amenities as JSON array
+    images JSONB DEFAULT '[]'::jsonb, -- Store image URLs as JSON array
     coordinates JSONB, -- Store lat/lng as JSON object
-    status VARCHAR(20) DEFAULT 'active', -- 'active', 'inactive', 'maintenance'
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'maintenance')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    created_by UUID,
-    updated_by UUID
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Indexes for performance
+CREATE INDEX idx_venues_public_id ON venues(public_id);
 CREATE INDEX idx_venues_city ON venues(city);
 CREATE INDEX idx_venues_country ON venues(country);
 CREATE INDEX idx_venues_venue_type ON venues(venue_type);
 CREATE INDEX idx_venues_status ON venues(status);
 CREATE INDEX idx_venues_created_at ON venues(created_at);
 
--- Trigger to update updated_at timestamp
+-- Add updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -41,6 +42,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Trigger to update updated_at timestamp
 CREATE TRIGGER update_venues_updated_at 
     BEFORE UPDATE ON venues 
     FOR EACH ROW 
