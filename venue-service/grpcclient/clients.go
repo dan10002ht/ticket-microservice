@@ -1,6 +1,7 @@
 package grpcclient
 
 import (
+	"context"
 	"venue-service/internal/config"
 
 	"google.golang.org/grpc"
@@ -14,30 +15,30 @@ type Clients struct {
 }
 
 func NewClients(cfg config.GRPCConfig) (*Clients, error) {
-	authConn, err := grpc.Dial(cfg.AuthServiceURL, 
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
+	defer cancel()
+
+	authConn, err := grpc.DialContext(ctx, cfg.AuthServiceURL,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithTimeout(cfg.Timeout),
 	)
 	if err != nil {
 		return nil, err
 	}
-	
-	userConn, err := grpc.Dial(cfg.UserServiceURL, 
+
+	userConn, err := grpc.DialContext(ctx, cfg.UserServiceURL,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithTimeout(cfg.Timeout),
 	)
 	if err != nil {
 		return nil, err
 	}
-	
-	bookingConn, err := grpc.Dial(cfg.BookingServiceURL, 
+
+	bookingConn, err := grpc.DialContext(ctx, cfg.BookingServiceURL,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithTimeout(cfg.Timeout),
 	)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &Clients{
 		AuthService:    authConn,
 		UserService:    userConn,
@@ -47,7 +48,7 @@ func NewClients(cfg config.GRPCConfig) (*Clients, error) {
 
 func (c *Clients) Close() error {
 	var errs []error
-	
+
 	if c.AuthService != nil {
 		if err := c.AuthService.Close(); err != nil {
 			errs = append(errs, err)
@@ -63,9 +64,9 @@ func (c *Clients) Close() error {
 			errs = append(errs, err)
 		}
 	}
-	
+
 	if len(errs) > 0 {
 		return errs[0] // Return first error
 	}
 	return nil
-} 
+}

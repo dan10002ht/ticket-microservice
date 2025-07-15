@@ -12,26 +12,26 @@ import (
 type StringArray []string
 
 type Venue struct {
-	ID int64 `db:"id" json:"-"`
-	PublicID uuid.UUID `db:"public_id" json:"id"`
-	Name string `db:"name" json:"name"`
-	Description string `db:"description" json:"description"`
-	Address string `db:"address" json:"address"`
-	City string `db:"city" json:"city"`
-	State string `db:"state" json:"state"`
-	Country string `db:"country" json:"country"`
-	PostalCode string `db:"postal_code" json:"postal_code"`
-	Phone string `db:"phone" json:"phone"`
-	Email string `db:"email" json:"email"`
-	Website string `db:"website" json:"website"`
-	Capacity int `db:"capacity" json:"capacity"`
-	VenueType string `db:"venue_type" json:"venue_type"`
-	Amenities StringArray `db:"amenities" json:"amenities"`
-	Images StringArray `db:"images" json:"images"`
+	ID          int64       `db:"id" json:"-"`
+	PublicID    uuid.UUID   `db:"public_id" json:"id"`
+	Name        string      `db:"name" json:"name"`
+	Description string      `db:"description" json:"description"`
+	Address     string      `db:"address" json:"address"`
+	City        string      `db:"city" json:"city"`
+	State       string      `db:"state" json:"state"`
+	Country     string      `db:"country" json:"country"`
+	PostalCode  string      `db:"postal_code" json:"postal_code"`
+	Phone       string      `db:"phone" json:"phone"`
+	Email       string      `db:"email" json:"email"`
+	Website     string      `db:"website" json:"website"`
+	Capacity    int         `db:"capacity" json:"capacity"`
+	VenueType   string      `db:"venue_type" json:"venue_type"`
+	Amenities   StringArray `db:"amenities" json:"amenities"`
+	Images      StringArray `db:"images" json:"images"`
 	Coordinates StringArray `db:"coordinates" json:"coordinates"`
-	Status string `db:"status" json:"status"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	Status      string      `db:"status" json:"status"`
+	CreatedAt   time.Time   `db:"created_at" json:"created_at"`
+	UpdatedAt   time.Time   `db:"updated_at" json:"updated_at"`
 }
 
 // Value implements driver.Valuer for StringArray
@@ -140,24 +140,24 @@ func (s *StringArray) Scan(value any) error {
 
 func NewVenue(name, description, address, city, state, country, postalCode, phone, email, website string, capacity int, venueType string, amenities, images, coordinates []string) *Venue {
 	return &Venue{
-		PublicID: uuid.New(),
-		Name: name,
+		PublicID:    uuid.New(),
+		Name:        name,
 		Description: description,
-		Address: address,
-		City: city,
-		State: state,
-		Country: country,
-		PostalCode: postalCode,
-		Phone: phone,
-		Email: email,
-		Website: website,
-		Capacity: capacity,
-		VenueType: venueType,
-		Amenities: amenities,
-		Images: images,
+		Address:     address,
+		City:        city,
+		State:       state,
+		Country:     country,
+		PostalCode:  postalCode,
+		Phone:       phone,
+		Email:       email,
+		Website:     website,
+		Capacity:    capacity,
+		VenueType:   venueType,
+		Amenities:   amenities,
+		Images:      images,
 		Coordinates: coordinates,
-		Status: "active",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Status:      "active",
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 }

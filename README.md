@@ -1,5 +1,9 @@
 # 🎟️ Event Ticket Booking System - Microservices Architecture
 
+## 🚦 Project Status
+
+- **Phase 2 (Venue Service):** Đã hoàn thành toàn bộ venue-service với models, repository, business logic, gRPC endpoints, Redis caching, unit tests. Sẵn sàng cho các phase tiếp theo.
+
 ## 🎯 System Overview
 
 A high-performance event ticket booking system built with microservices architecture designed for scalability, consistency, and high availability. The system supports:
