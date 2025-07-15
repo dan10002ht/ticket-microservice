@@ -11,6 +11,10 @@ type Services struct {
 	Redis    *queue.RedisClient
 	User     *UserService
 	Admin    *AdminService
+	Venue   *VenueService
+	Layout  *LayoutService
+	Zone    *ZoneService
+	Seat    *SeatService
 }
 
 func NewServices(db *database.Database, redis *queue.RedisClient, grpcClients *grpcclient.Clients) *Services {
@@ -19,6 +23,10 @@ func NewServices(db *database.Database, redis *queue.RedisClient, grpcClients *g
 		Redis:    redis,
 		User:     NewUserService(db, redis, grpcClients),
 		Admin:    NewAdminService(db, redis, grpcClients),
+		Venue:   NewVenueService(db, redis, grpcClients),
+		Layout:  NewLayoutService(db, redis, grpcClients),
+		Zone:    NewZoneService(db, redis, grpcClients),
+		Seat:    NewSeatService(db, redis, grpcClients),
 	}
 }
 

@@ -20,9 +20,9 @@ func NewAdminService(db *database.Database, redis *queue.RedisClient, grpcClient
 	}
 }
 
-func (s *AdminService) GetMetrics() (map[string]interface{}, error) {
+func (s *AdminService) GetMetrics() (map[string]any, error) {
 	// Sample implementation
-	return map[string]interface{}{
+	return map[string]any{
 		"total_users":          1000,
 		"active_users":         500,
 		"requests_per_minute":  100,

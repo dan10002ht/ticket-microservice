@@ -20,9 +20,9 @@ func NewUserService(db *database.Database, redis *queue.RedisClient, grpcClients
 	}
 }
 
-func (s *UserService) GetProfile(userID string) (map[string]interface{}, error) {
+func (s *UserService) GetProfile(userID string) (map[string]any, error) {
 	// Sample implementation
-	return map[string]interface{}{
+	return map[string]any{
 		"user_id": userID,
 		"name":    "John Doe",
 		"email":   "john@example.com",
