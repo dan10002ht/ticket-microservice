@@ -55,27 +55,46 @@ service AvailabilityService {
 
 message Event {
   string id = 1;
-  string venue_id = 2;
-  string layout_id = 3;
-  string name = 4;
-  string description = 5;
-  string event_type = 6;
-  string category = 7;
-  string start_date = 8;
-  string end_date = 9;
-  string doors_open = 10;
-  string status = 11;
-  int32 max_capacity = 12;
-  int32 current_capacity = 13;
-  int32 min_age = 14;
-  bool is_featured = 15;
-  string images = 16; // JSON string
-  string tags = 17; // JSON string
-  string metadata = 18; // JSON string
-  string created_at = 19;
-  string updated_at = 20;
-  string created_by = 21;
-  string updated_by = 22;
+  string organization_id = 2;
+  string name = 3;
+  string description = 4;
+  string start_date = 5;
+  string end_date = 6;
+  // Venue info nhúng
+  string venue_name = 7;
+  string venue_address = 8;
+  string venue_city = 9;
+  string venue_country = 10;
+  int32 venue_capacity = 11;
+  // Layout
+  string canvas_config = 12;
+  repeated EventSeatingZone zones = 13;
+  repeated EventSeat seats = 14;
+  string created_at = 15;
+  string updated_at = 16;
+}
+
+message EventSeatingZone {
+  string id = 1;
+  string event_id = 2;
+  string name = 3;
+  string zone_type = 4;
+  string coordinates = 5;
+  int32 seat_count = 6;
+  string color = 7;
+  string created_at = 8;
+  string updated_at = 9;
+}
+
+message EventSeat {
+  string id = 1;
+  string event_id = 2;
+  string zone_id = 3;
+  string seat_number = 4;
+  string row_number = 5;
+  string coordinates = 6;
+  string created_at = 7;
+  string updated_at = 8;
 }
 
 message CreateEventRequest {

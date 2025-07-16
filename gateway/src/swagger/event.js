@@ -7,181 +7,80 @@
  *       properties:
  *         id:
  *           type: string
- *           description: Event ID
- *         title:
+ *         organization_id:
  *           type: string
- *           description: Event title
+ *         name:
+ *           type: string
  *         description:
  *           type: string
- *           description: Event description
- *         category:
+ *         start_date:
  *           type: string
- *           description: Event category
- *         startDate:
+ *         end_date:
  *           type: string
- *           format: date-time
- *           description: Event start date
- *         endDate:
+ *         venue_name:
  *           type: string
- *           format: date-time
- *           description: Event end date
- *         location:
+ *         venue_address:
  *           type: string
- *           description: Event location
- *         address:
+ *         venue_city:
  *           type: string
- *           description: Event address
- *         city:
+ *         venue_country:
  *           type: string
- *           description: Event city
- *         country:
- *           type: string
- *           description: Event country
- *         price:
- *           type: number
- *           description: Ticket price
- *         availableTickets:
+ *         venue_capacity:
  *           type: integer
- *           description: Number of available tickets
- *         totalTickets:
- *           type: integer
- *           description: Total number of tickets
- *         status:
+ *         canvas_config:
  *           type: string
- *           enum: [draft, published, cancelled, completed]
- *           description: Event status
- *         organizerId:
- *           type: string
- *           description: Organizer ID
- *         organizerName:
- *           type: string
- *           description: Organizer name
- *         imageUrl:
- *           type: string
- *           description: Event image URL
- *         tags:
+ *         zones:
  *           type: array
  *           items:
- *             type: string
- *           description: Event tags
- *         createdAt:
- *           type: string
- *           format: date-time
- *           description: Event creation date
- *         updatedAt:
- *           type: string
- *           format: date-time
- *           description: Last update date
- *     EventCreate:
- *       type: object
- *       required:
- *         - title
- *         - description
- *         - startDate
- *         - endDate
- *         - location
- *         - price
- *         - totalTickets
- *       properties:
- *         title:
- *           type: string
- *           minLength: 3
- *           maxLength: 200
- *           description: Event title
- *         description:
- *           type: string
- *           minLength: 10
- *           description: Event description
- *         category:
- *           type: string
- *           description: Event category
- *         startDate:
- *           type: string
- *           format: date-time
- *           description: Event start date
- *         endDate:
- *           type: string
- *           format: date-time
- *           description: Event end date
- *         location:
- *           type: string
- *           description: Event location
- *         address:
- *           type: string
- *           description: Event address
- *         city:
- *           type: string
- *           description: Event city
- *         country:
- *           type: string
- *           description: Event country
- *         price:
- *           type: number
- *           minimum: 0
- *           description: Ticket price
- *         totalTickets:
- *           type: integer
- *           minimum: 1
- *           description: Total number of tickets
- *         imageUrl:
- *           type: string
- *           description: Event image URL
- *         tags:
+ *             $ref: '#/components/schemas/EventSeatingZone'
+ *         seats:
  *           type: array
  *           items:
- *             type: string
- *           description: Event tags
- *     EventUpdate:
+ *             $ref: '#/components/schemas/EventSeat'
+ *         created_at:
+ *           type: string
+ *         updated_at:
+ *           type: string
+ *     EventSeatingZone:
  *       type: object
  *       properties:
- *         title:
+ *         id:
  *           type: string
- *           minLength: 3
- *           maxLength: 200
- *           description: Event title
- *         description:
+ *         event_id:
  *           type: string
- *           minLength: 10
- *           description: Event description
- *         category:
+ *         name:
  *           type: string
- *           description: Event category
- *         startDate:
+ *         zone_type:
  *           type: string
- *           format: date-time
- *           description: Event start date
- *         endDate:
+ *         coordinates:
  *           type: string
- *           format: date-time
- *           description: Event end date
- *         location:
- *           type: string
- *           description: Event location
- *         address:
- *           type: string
- *           description: Event address
- *         city:
- *           type: string
- *           description: Event city
- *         country:
- *           type: string
- *           description: Event country
- *         price:
- *           type: number
- *           minimum: 0
- *           description: Ticket price
- *         totalTickets:
+ *         seat_count:
  *           type: integer
- *           minimum: 1
- *           description: Total number of tickets
- *         imageUrl:
+ *         color:
  *           type: string
- *           description: Event image URL
- *         tags:
- *           type: array
- *           items:
- *             type: string
- *           description: Event tags
+ *         created_at:
+ *           type: string
+ *         updated_at:
+ *           type: string
+ *     EventSeat:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         event_id:
+ *           type: string
+ *         zone_id:
+ *           type: string
+ *         seat_number:
+ *           type: string
+ *         row_number:
+ *           type: string
+ *         coordinates:
+ *           type: string
+ *         created_at:
+ *           type: string
+ *         updated_at:
+ *           type: string
  */
 
 /**

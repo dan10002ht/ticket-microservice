@@ -20,7 +20,7 @@ The Analytics Service is responsible for collecting, processing, and analyzing d
 - **Predictive Analytics**: Forecast trends and patterns
 - **Performance Metrics**: Monitor system performance
 - **User Behavior Analysis**: Analyze user interactions
-- **Revenue Analytics**: Track revenue and financial metrics
+- **Revenue Analytics**: Track revenue and financial metrics (theo event, layout/zone/seat là property của event)
 - **gRPC Communication**: Inter-service data collection
 
 ## 🏗️ Architecture

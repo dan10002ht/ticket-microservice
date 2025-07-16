@@ -2,7 +2,7 @@
 
 ## 🚦 Project Status
 
-- **Phase 2 (Venue Service):** Đã hoàn thành toàn bộ venue-service với models, repository, business logic, gRPC endpoints, Redis caching, unit tests. Sẵn sàng cho các phase tiếp theo.
+- **Phase 2 (Event-centric Venue/Seating):** Đã chuyển toàn bộ logic venue/layout/zone/seat sang event-service. Mỗi event có venue info, layout, zone, seat riêng biệt, không còn venue-service hay bảng venue/layout/zone/seat dùng chung.
 
 ## 🎯 System Overview
 
@@ -33,10 +33,12 @@ A high-performance event ticket booking system built with microservices architec
 - **Authentication**: Node.js + JWT + Redis + gRPC server
 - **Device Management**: Node.js + Redis + PostgreSQL + gRPC server (internal only)
 - **Security Monitoring**: Node.js + Elasticsearch + Redis + gRPC server (internal only)
-- **Booking Engine**: Java (Spring Boot) + Redis + PostgreSQL + gRPC
-- **Payment Processing**: Java + Stripe/PayPal integration + gRPC
-- **Real-time**: Node.js + WebSocket + Redis Pub/Sub
-- **Message Queue**: Redis Queue + Kafka (for high throughput)
+- **Booking Worker**: Go (Golang) + Redis/Kafka + gRPC
+- **Event Service**: Go (Golang) + PostgreSQL + gRPC
+- **Email Worker**: Go (Golang) + Redis/Kafka + gRPC
+- **Notification Service**: Node.js + Redis + gRPC
+- **Realtime Service**: Node.js + WebSocket + Redis Pub/Sub
+- **User/Profile/Support/Rate Limiter**: Node.js + Redis + gRPC
 - **Database**: PostgreSQL (primary) + Redis (cache) + Elasticsearch (logs)
 - **Inter-Service Communication**: gRPC (high performance) + REST (external APIs)
 - **Monitoring**: Prometheus + Grafana + ELK Stack
@@ -83,26 +85,25 @@ Booking Service → Kafka → Email Worker → Invoice Service (gRPC) → Notifi
 
 ### Core Services (Critical Path)
 
-- **gateway/**: API Gateway with rate limiting, load balancing, and gRPC client
-- **auth-service/**: Authentication and authorization with gRPC server
-- **device-service/**: Device management and session control with gRPC server
-- **security-service/**: Threat detection and security monitoring with gRPC server
-- **ticket-service/**: Public ticket APIs with caching and gRPC server
-- **booking-service/**: Core booking logic with Redis locking and gRPC server
-- **payment-service/**: Payment processing with idempotency and gRPC server
+- **gateway/**: Node.js (API Gateway, rate limiting, load balancing, gRPC client)
+- **auth-service/**: Node.js (Authentication and authorization, gRPC server)
+- **event-service/**: Go (Event, venue info, layout, zone, seat, pricing, schedule, gRPC server)
+- **booking-worker/**: Go (Distributed booking queue, gRPC server)
+- **ticket-service/**: (Placeholder, chưa implement)
+- **booking-service/**: (Placeholder, chưa implement)
+- **payment-service/**: (Placeholder, chưa implement)
 
 ### Supporting Services
 
-- **realtime-service/**: WebSocket server for real-time updates
-- **notification-service/**: Multi-channel notifications with gRPC server
-- **email-worker/**: Background email processing with gRPC client
-- **invoice-service/**: PDF invoice generation with gRPC server
-- **analytics-service/**: User behavior tracking with gRPC server
-- **event-management/**: Admin CRUD operations with gRPC server
-- **user-profile/**: User account management with gRPC server
-- **pricing-service/**: Dynamic pricing algorithms with gRPC server
-- **support-service/**: Customer support system with gRPC server
-- **rate-limiter/**: Distributed rate limiting
+- **realtime-service/**: Node.js (WebSocket server for real-time updates)
+- **notification-service/**: Node.js (Multi-channel notifications, gRPC server)
+- **email-worker/**: Go (Background email processing, gRPC client)
+- **invoice-service/**: (Placeholder, chưa implement)
+- **analytics-service/**: (Placeholder, chưa implement)
+- **user-service/**: Node.js (User account management, gRPC server)
+- **pricing-service/**: (Placeholder, chưa implement)
+- **support-service/**: Node.js (Customer support system, gRPC server)
+- **rate-limiter/**: Node.js (Distributed rate limiting)
 
 ### Infrastructure
 
@@ -273,7 +274,7 @@ kubectl get pods -n booking-system
 | Email Worker         | 🟡 Planning | Java     | PostgreSQL | Redis | Client |
 | Invoice Service      | 🟡 Planning | Java     | PostgreSQL | -     | Server |
 | Analytics Service    | 🟡 Planning | Java     | PostgreSQL | Redis | Server |
-| Event Management     | 🟡 Planning | Java     | PostgreSQL | Redis | Server |
+| Event Management     | 🟡 Planning | Node.js  | PostgreSQL | Redis | Server |
 | User Profile         | 🟡 Planning | Node.js  | PostgreSQL | Redis | Server |
 | Pricing Service      | 🟡 Planning | Java     | PostgreSQL | Redis | Server |
 | Support Service      | 🟡 Planning | Node.js  | PostgreSQL | Redis | Server |
@@ -363,27 +364,27 @@ The **Check-in Service** is responsible for validating tickets and processing ch
 
 ## 🗂️ Service Language Mapping & Flow
 
-| Service              | Language | Rationale/Strengths                                              |
-| -------------------- | -------- | ---------------------------------------------------------------- |
-| gateway              | Node.js  | Fast I/O, API Gateway, easy middleware, real-time integration    |
-| auth-service         | Node.js  | JWT, OAuth2, rapid development, easy integration                 |
-| device-service       | Node.js  | Device management, session control, security integration         |
-| security-service     | Node.js  | Threat detection, security monitoring, real-time alerts          |
-| user-profile         | Node.js  | CRUD, preferences, easy frontend integration                     |
-| event-management     | Node.js  | Event/venue CRUD, media, search                                  |
-| realtime-service     | Node.js  | WebSocket, real-time, pub/sub, fast push                         |
-| notification-service | Go       | High performance, concurrent notification delivery, retry, scale |
-| email-worker         | Go       | Max performance for bulk email, goroutines, queue, retry         |
-| support-service      | Node.js  | Ticket, chat, knowledge base, easy WebSocket integration         |
-| checkin-service      | Go       | Real-time check-in, validate tickets, scale for large events     |
-| booking-worker       | Go       | High-concurrency queue, 100k+ clients, goroutines, scale         |
-| booking-service      | Java     | Transaction, business logic, consistency                         |
-| ticket-service       | Java     | Inventory, concurrency, atomic updates                           |
-| payment-service      | Java     | Secure transactions, payment gateway integration                 |
-| pricing-service      | Java     | Dynamic pricing, rule engine, promotions                         |
-| invoice-service      | Java     | Invoice, PDF, compliance, audit                                  |
-| analytics-service    | Java     | Big data, ETL, reporting, Kafka, ClickHouse                      |
-| rate-limiter         | Java     | Distributed rate limiting, Redis/Kafka, API protection           |
+| Service              | Language | Rationale/Strengths                                                      |
+| -------------------- | -------- | ------------------------------------------------------------------------ |
+| gateway              | Node.js  | Fast I/O, API Gateway, easy middleware, real-time integration            |
+| auth-service         | Node.js  | JWT, OAuth2, rapid development, easy integration                         |
+| device-service       | Node.js  | Device management, session control, security integration                 |
+| security-service     | Node.js  | Threat detection, security monitoring, real-time alerts                  |
+| user-profile         | Node.js  | CRUD, preferences, easy frontend integration                             |
+| event-management     | Node.js  | Event CRUD, media, search (venue/layout/zone/seat là property của event) |
+| realtime-service     | Node.js  | WebSocket, real-time, pub/sub, fast push                                 |
+| notification-service | Go       | High performance, concurrent notification delivery, retry, scale         |
+| email-worker         | Go       | Max performance for bulk email, goroutines, queue, retry                 |
+| support-service      | Node.js  | Ticket, chat, knowledge base, easy WebSocket integration                 |
+| checkin-service      | Go       | Real-time check-in, validate tickets, scale for large events             |
+| booking-worker       | Go       | High-concurrency queue, 100k+ clients, goroutines, scale                 |
+| booking-service      | Java     | Transaction, business logic, consistency                                 |
+| ticket-service       | Java     | Inventory, concurrency, atomic updates                                   |
+| payment-service      | Java     | Secure transactions, payment gateway integration                         |
+| pricing-service      | Java     | Dynamic pricing, rule engine, promotions                                 |
+| invoice-service      | Java     | Invoice, PDF, compliance, audit                                          |
+| analytics-service    | Java     | Big data, ETL, reporting, Kafka, ClickHouse                              |
+| rate-limiter         | Java     | Distributed rate limiting, Redis/Kafka, API protection                   |
 
 ### Booking Flow (with language)
 

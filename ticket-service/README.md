@@ -8,7 +8,7 @@ The Ticket Service manages event information, ticket types, pricing, and availab
 
 - **Event Management**: Event information and metadata
 - **Ticket Types**: Different ticket categories and pricing
-- **Availability Management**: Real-time seat availability
+- **Availability Management**: Real-time seat availability (theo event, không còn venue_id toàn cục)
 - **Pricing**: Dynamic pricing and discounts
 - **Search & Filtering**: Event search and filtering capabilities
 - **Caching**: High-performance caching for read operations
@@ -184,7 +184,6 @@ CREATE TABLE events (
     title VARCHAR(255) NOT NULL,
     description TEXT,
     category VARCHAR(100) NOT NULL,
-    venue_id UUID REFERENCES venues(id),
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NOT NULL,
     status VARCHAR(20) DEFAULT 'active',
@@ -599,11 +598,50 @@ The **Check-in Service** interacts with Ticket Service to:
   2. Calls Ticket Service to validate and update ticket
   3. On success, records check-in and notifies analytics/notification
 
-# Ticket Service (Java)
+# Ticket Service (Go)
 
-**Language:** Java (Spring Boot)
+## Overview
 
-**Why Java?**
+Ticket Service quản lý booking, seat reservation, ticket issuance cho từng event (event-centric). Service này được viết bằng Go, chuẩn hóa theo mô hình microservice, dễ mở rộng, maintain, test.
 
-- Inventory, concurrency, atomic updates
-- Integrates with check-in, booking, analytics
+## Folder Structure
+
+- main.go # Entrypoint
+- go.mod, go.sum # Go module
+- config/ # Load config, env
+- database/ # Kết nối DB (PostgreSQL)
+- models/ # Định nghĩa struct cho ticket, seat reservation, booking session
+- repositories/ # CRUD cho từng model
+- services/ # Business logic (booking, seat reservation, ticket issuance)
+- grpc/ # gRPC controllers
+- grpcclient/ # gRPC client gọi event-service, payment-service...
+- metrics/ # Prometheus metrics
+- logging/ # Structured logging
+- scripts/ # Script tiện ích
+- tests/ # (Backlog) Unit/integration test
+- migrations/ # DB migration (PostgreSQL)
+- env.example # Mẫu biến môi trường
+- .gitignore # Ignore file
+
+## How to Run
+
+```bash
+cp env.example .env
+# Sửa DATABASE_URL, PORT nếu cần
+
+go mod tidy
+go run main.go
+```
+
+## Main Features
+
+- Booking, seat reservation, ticket issuance (theo event, seat, zone)
+- Tích hợp gRPC client lấy seat/zone/layout từ event-service
+- Tích hợp với payment-service, notification-service, booking-worker
+- Expose Prometheus metrics
+- (Backlog) Unit/integration test
+
+## See also
+
+- event-service/README_EVENT_MODEL.md
+- VENUE_EVENT_TICKET_CHECKLIST.md
