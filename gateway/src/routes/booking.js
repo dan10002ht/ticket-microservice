@@ -7,7 +7,7 @@ import {
   getUserBookingsHandler,
   getBookingHandler,
   cancelBookingHandler,
-} from '../handlers/index.js';
+} from '../handlers/bookingHandlers.js';
 
 const router = express.Router();
 

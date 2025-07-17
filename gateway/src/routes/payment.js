@@ -9,7 +9,7 @@ import {
   refundPaymentHandler,
   getPaymentMethodsHandler,
   addPaymentMethodHandler,
-} from '../handlers/index.js';
+} from '../handlers/paymentHandlers.js';
 
 const router = express.Router();
 

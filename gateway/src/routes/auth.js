@@ -10,7 +10,7 @@ import {
   sendVerificationEmailHandler,
   verifyEmailWithPinHandler,
   resendVerificationEmailHandler,
-} from '../handlers/index.js';
+} from '../handlers/authHandlers.js';
 import {
   validateRegistration,
   validateLogin,

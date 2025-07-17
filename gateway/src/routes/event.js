@@ -11,7 +11,7 @@ import {
   // getEventZonesHandler,
   // getEventSeatsHandler,
   // getEventLayoutHandler,
-} from '../handlers/index.js';
+} from '../handlers/eventHandlers.js';
 
 const router = express.Router();
 

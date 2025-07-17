@@ -8,7 +8,7 @@ import {
   addAddressHandler,
   updateAddressHandler,
   deleteAddressHandler,
-} from '../handlers/index.js';
+} from '../handlers/userHandlers.js';
 
 // Import validation middleware
 import {
