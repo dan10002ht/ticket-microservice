@@ -14,22 +14,23 @@
 ## 2. Event Creation APIs
 
 - [ ] **POST /api/events**
-  - [ ] Route: `/src/routes/event.js`
-  - [ ] Handler: `createEventHandler`
-  - [ ] gRPC: `eventService.createEvent`
-  - [ ] Validation: request body
+  - [x] Route: `/src/routes/event.js`
+  - [x] Handler: `createEventHandler`
+  - [x] gRPC: `eventService.createEvent`
+  - [x] Validation: request body
   - [ ] Swagger docs
   - [ ] Unit tests
-  - [ ] Response: Created event with ID
+  - [x] Response: Created event with ID
+  - [x] Authorization: requireRole(['organization'])
 
 - [ ] **PUT /api/events/:eventId/draft**
-  - [ ] Route: `/src/routes/event.js`
-  - [ ] Handler: `saveEventDraftHandler`
+  - [x] Route: `/src/routes/event.js`
+  - [x] Handler: `saveEventDraftHandler`
   - [ ] gRPC: `eventService.updateEvent`
-  - [ ] Validation: eventId + partial data
+  - [x] Validation: eventId + partial data
   - [ ] Swagger docs
   - [ ] Unit tests
-  - [ ] Response: Updated draft event
+  - [x] Response: Updated draft event
 
 ## 3. Layout Management APIs
 

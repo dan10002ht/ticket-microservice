@@ -8,6 +8,7 @@ import eventRoutes from '../routes/event.js';
 import bookingRoutes from '../routes/booking.js';
 import paymentRoutes from '../routes/payment.js';
 import healthRoutes from '../routes/health.js';
+import organizationRoutes from '../routes/organization.js';
 
 /**
  * Initialize all API routes
@@ -27,4 +28,5 @@ export const initializeRoutes = (app, swaggerSpec) => {
   app.use('/api/events', authMiddleware, eventRoutes);
   app.use('/api/bookings', authMiddleware, bookingRoutes);
   app.use('/api/payments', authMiddleware, paymentRoutes);
+  app.use('/api/organizations', authMiddleware, organizationRoutes);
 };
