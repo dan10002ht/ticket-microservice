@@ -375,23 +375,18 @@ services:
       - NODE_ENV=development
       - PORT=50051
       - HOST=0.0.0.0
-      - DB_MASTER_HOST=postgres-master
-      - DB_MASTER_PORT=5432
-      - DB_MASTER_NAME=booking_system_auth
-      - DB_MASTER_USER=booking_user
-      - DB_MASTER_PASSWORD=booking_pass
-      - DB_SLAVE_HOST=postgres-slave1
-      - DB_SLAVE_PORT=5432
-      - DB_SLAVE_NAME=booking_system_auth
-      - DB_SLAVE_USER=booking_user
-      - DB_SLAVE_PASSWORD=booking_pass
+      # PgPool-II Configuration
+      - PGPOOL_AUTH_HOST=pgpool-auth
+      - PGPOOL_AUTH_PORT=5432
+      - DB_NAME=booking_system_auth
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres_password
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - JWT_SECRET=dev_jwt_secret
       - JWT_REFRESH_SECRET=dev_refresh_secret
     depends_on:
-      - postgres-master
-      - postgres-slave1
+      - pgpool-auth
       - redis
     volumes:
       - ../auth-service:/app

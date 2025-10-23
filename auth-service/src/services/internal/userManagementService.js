@@ -20,9 +20,9 @@ export async function getUserProfile(userId) {
 export async function getUserStats(userId) {
   const [user, totalBookings, totalSpent] = await Promise.all([
     userRepository.findByPublicId(userId),
-    userRepository.getSlaveDb()('bookings').where('user_id', userId).count('* as total').first(),
+    userRepository.db('bookings').where('user_id', userId).count('* as total').first(),
     userRepository
-      .getSlaveDb()('payments')
+      .db('payments')
       .where('user_id', userId)
       .where('status', 'completed')
       .sum('amount as total')
@@ -77,11 +77,7 @@ export async function hardDeleteUser(userId) {
  */
 export async function bulkDeleteUsers(userIds) {
   // First get the internal ids from public_ids
-  const users = await userRepository
-    .getSlaveDb()
-    .select('id')
-    .from('users')
-    .whereIn('public_id', userIds);
+  const users = await userRepository.db.select('id').from('users').whereIn('public_id', userIds);
 
   const internalIds = users.map((user) => user.id);
 

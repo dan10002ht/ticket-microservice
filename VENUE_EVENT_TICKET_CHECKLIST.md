@@ -44,6 +44,47 @@
 - [ ] Expose Prometheus metrics cho booking/ticket
 - [ ] Viết tài liệu hướng dẫn API, flow booking, seat reservation
 
+### 🔄 Hệ thống Kho hàng Thời gian thực & Kiểm soát Đồng thời
+
+- [x] **Hệ thống Kho hàng Thời gian thực**
+
+  - [x] Thêm tracking trạng thái vào bảng event_seats (status, reserved_by, reserved_until, booked_by)
+  - [x] Xây dựng API kiểm tra ghế có sẵn theo thời gian thực
+  - [ ] Thêm WebSocket hỗ trợ cập nhật thời gian thực
+  - [ ] Xây dựng hệ thống đặt chỗ với timeout
+
+- [x] **Kiểm soát Đồng thời**
+
+  - [ ] Triển khai Redis distributed locks cho việc đặt ghế
+  - [x] Thêm optimistic locking với version fields
+  - [ ] Xây dựng cơ chế timeout cho đặt chỗ
+  - [ ] Ngăn chặn race condition
+
+- [ ] **Tính năng Đặt vé Nâng cao**
+  - [ ] Đặt chỗ với thời hạn hết hạn
+  - [ ] Quản lý phiên đặt vé
+  - [ ] Giải phóng ghế khi hết timeout
+  - [ ] Ngăn chặn đặt vé đồng thời
+
+## 🚀 Phase 5: Hiệu suất & Khả năng Mở rộng
+
+- [ ] **Chiến lược Caching**
+
+  - [ ] Redis caching cho tình trạng ghế có sẵn
+  - [ ] Vô hiệu hóa cache khi trạng thái ghế thay đổi
+  - [ ] Cache phân tán cho đồng thời cao
+
+- [x] **Tối ưu hóa Database**
+
+  - [x] Thêm indexes cho truy vấn trạng thái ghế
+  - [x] Triển khai connection pooling (PgPool-II)
+  - [ ] Thêm giám sát database
+
+- [ ] **Cập nhật Thời gian thực**
+  - [ ] Tích hợp WebSocket cho cập nhật ghế
+  - [ ] Redis pub/sub cho thay đổi trạng thái ghế
+  - [ ] Phát sóng kho hàng thời gian thực
+
 ### ⏳ Backlog (sẽ thực hiện sau)
 
 - [ ] Xây dựng unit test, integration test cho các luồng booking, seat reservation

@@ -97,10 +97,19 @@ kill_email_worker
 kill_port 8080 "email-worker"
 kill_port 2112 "email-worker-metrics"
 
-# Start only infrastructure services (no other microservices)
-echo "🐳 Starting infrastructure services only..."
-cd ../deploy
-docker compose -f docker-compose.dev.yml up -d redis postgres-main-master postgres-main-slave1 postgres-main-slave2 kafka zookeeper prometheus grafana elasticsearch kibana node-exporter redis-exporter postgres-exporter
+# Start PgPool-II infrastructure first
+echo "🐳 Starting PgPool-II infrastructure..."
+cd ../deploy/pgpool
+docker compose -f docker-compose.pgpool.yml up -d
+
+# Wait for PgPool-II to be ready
+echo "⏳ Waiting for PgPool-II to be ready..."
+sleep 15
+
+# Go back to deploy directory and start other services
+echo "🐳 Starting other infrastructure services..."
+cd ..
+docker compose -f docker-compose.dev.yml up -d redis kafka zookeeper prometheus grafana elasticsearch kibana node-exporter redis-exporter
 
 # Wait for services to be ready
 echo "⏳ Waiting for infrastructure services to be ready..."
@@ -113,35 +122,28 @@ cd ../email-worker
 echo "📦 Installing Go dependencies..."
 go mod tidy
 
-# # Create .env file for local development
-# echo "📝 Creating .env file for local development..."
-# cat > .env << EOF
-# # Application Configuration
-# APP_NAME=email-worker
-# APP_ENV=development
-# LOG_LEVEL=debug
-# SHUTDOWN_TIMEOUT=30s
+# Create .env file for local development
+echo "📝 Creating .env file for local development..."
+cat > .env << EOF
+# Application Configuration
+APP_NAME=email-worker
+APP_ENV=development
+LOG_LEVEL=debug
+SHUTDOWN_TIMEOUT=30s
 
-# # Database Configuration - Master-Slave Setup
-# # Master Database (for write operations)
-# DB_MASTER_HOST=localhost
-# DB_MASTER_PORT=55435
-# DB_MASTER_NAME=booking_system
-# DB_MASTER_USER=booking_user
-# DB_MASTER_PASSWORD=booking_pass
+# Database Configuration - PgPool-II Setup
+# PgPool-II handles master/slave routing automatically
+DB_HOST=localhost
+DB_PORT=5434
+DB_NAME=booking_system_ticket
+DB_USER=postgres
+DB_PASSWORD=postgres_password
 
-# # Slave Database (for read operations)
-# DB_SLAVE_HOST=localhost
-# DB_SLAVE_PORT=55436
-# DB_SLAVE_NAME=booking_system
-# DB_SLAVE_USER=booking_user
-# DB_SLAVE_PASSWORD=booking_pass
-
-# # Common Database Settings
-# DB_SSL_MODE=disable
-# DB_MAX_OPEN_CONNS=25
-# DB_MAX_IDLE_CONNS=5
-# DB_CONN_MAX_LIFETIME=5m
+# Common Database Settings
+DB_SSL_MODE=disable
+DB_MAX_OPEN_CONNS=25
+DB_MAX_IDLE_CONNS=5
+DB_CONN_MAX_LIFETIME=5m
 
 # # Redis Configuration
 # REDIS_HOST=localhost
@@ -233,14 +235,13 @@ echo "🔧 Development tools:"
 echo "   - Grafana: http://localhost:53001 (admin/admin)"
 echo "   - Prometheus: http://localhost:59090"
 echo "   - Kibana: http://localhost:55601"
-echo "   - PostgreSQL Master: localhost:55435"
-echo "   - PostgreSQL Slave: localhost:55436"
+echo "   - PgPool-II Ticket: localhost:5434"
 echo "   - Redis: localhost:56379"
 echo "   - Kafka: localhost:59092"
 echo ""
 echo "💡 Tips:"
 echo "   - Email Worker will auto-restart when you save changes (if using air)"
-echo "   - Database is configured with Master-Slave pattern"
+echo "   - Database uses PgPool-II for automatic master/slave routing"
 echo "   - Use Ctrl+C to stop the development server"
 echo "   - Test with: curl http://localhost:8080/health"
 echo ""

@@ -66,7 +66,9 @@ func (s *PricingService) ApplyDiscount(ctx context.Context, eventID int64, baseP
 	if discountCode == "PROMO50" {
 		discountAmount = 50000
 		finalPrice = basePrice - discountAmount
-		if finalPrice < 0 { finalPrice = 0 }
+		if finalPrice < 0 {
+			finalPrice = 0
+		}
 		reason = "50k promotion"
 		return
 	}
@@ -93,4 +95,13 @@ func (s *PricingService) CalculatePrice(ctx context.Context, eventID int64, zone
 	basePrice = price * float64(quantity)
 	finalPrice, discountAmount, reason, err = s.ApplyDiscount(ctx, eventID, basePrice, discountCode, userID)
 	return
-} 
+}
+
+// Advanced pricing methods
+func (s *PricingService) GetPricingByEvent(ctx context.Context, eventID string) ([]*models.EventPricing, error) {
+	return s.repo.GetPricingByEvent(ctx, eventID)
+}
+
+func (s *PricingService) GetPricingByZone(ctx context.Context, eventID, zoneID string) ([]*models.EventPricing, error) {
+	return s.repo.GetPricingByZone(ctx, eventID, zoneID)
+}

@@ -1,0 +1,177 @@
+version: '3.8'
+
+services:
+  # PgPool-II cho Auth Database
+  pgpool-auth:
+    image: pgpool/pgpool2:latest
+    container_name: pgpool-auth
+    ports:
+      - "5432:5432"
+      - "9898:9898"  # PCP port
+    environment:
+      - PGPOOL_BACKEND_HOSTS=auth-master:5432,auth-slave:5432
+      - PGPOOL_POSTGRES_USERNAME=postgres
+      - PGPOOL_POSTGRES_PASSWORD=postgres_password
+      - PGPOOL_POSTGRES_DB=booking_system_auth
+    volumes:
+      - ./config/pgpool-auth.conf:/etc/pgpool2/pgpool.conf
+      - ./config/pool_passwd:/etc/pgpool2/pool_passwd
+      - ./config/pool_hba.conf:/etc/pgpool2/pool_hba.conf
+      - ./logs/pgpool-auth:/var/log/pgpool2
+    depends_on:
+      - auth-master
+      - auth-slave
+    networks:
+      - booking-network
+    restart: unless-stopped
+
+  # PgPool-II cho Event Database
+  pgpool-event:
+    image: pgpool/pgpool2:latest
+    container_name: pgpool-event
+    ports:
+      - "5433:5432"
+      - "9899:9898"  # PCP port
+    environment:
+      - PGPOOL_BACKEND_HOSTS=event-master:5432,event-slave:5432
+      - PGPOOL_POSTGRES_USERNAME=postgres
+      - PGPOOL_POSTGRES_PASSWORD=postgres_password
+      - PGPOOL_POSTGRES_DB=booking_system_event
+    volumes:
+      - ./config/pgpool-event.conf:/etc/pgpool2/pgpool.conf
+      - ./config/pool_passwd:/etc/pgpool2/pool_passwd
+      - ./config/pool_hba.conf:/etc/pgpool2/pool_hba.conf
+      - ./logs/pgpool-event:/var/log/pgpool2
+    depends_on:
+      - event-master
+      - event-slave
+    networks:
+      - booking-network
+    restart: unless-stopped
+
+  # PgPool-II cho Ticket Database
+  pgpool-ticket:
+    image: pgpool/pgpool2:latest
+    container_name: pgpool-ticket
+    ports:
+      - "5434:5432"
+      - "9900:9898"  # PCP port
+    environment:
+      - PGPOOL_BACKEND_HOSTS=ticket-master:5432,ticket-slave:5432
+      - PGPOOL_POSTGRES_USERNAME=postgres
+      - PGPOOL_POSTGRES_PASSWORD=postgres_password
+      - PGPOOL_POSTGRES_DB=booking_system_ticket
+    volumes:
+      - ./config/pgpool-ticket.conf:/etc/pgpool2/pgpool.conf
+      - ./config/pool_passwd:/etc/pgpool2/pool_passwd
+      - ./config/pool_hba.conf:/etc/pgpool2/pool_hba.conf
+      - ./logs/pgpool-ticket:/var/log/pgpool2
+    depends_on:
+      - ticket-master
+      - ticket-slave
+    networks:
+      - booking-network
+    restart: unless-stopped
+
+  # PostgreSQL Master/Slave Clusters
+  auth-master:
+    image: postgres:15
+    container_name: auth-master
+    environment:
+      - POSTGRES_DB=booking_system_auth
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_password
+    ports:
+      - "5435:5432"
+    volumes:
+      - auth-master-data:/var/lib/postgresql/data
+    networks:
+      - booking-network
+    restart: unless-stopped
+
+  auth-slave:
+    image: postgres:15
+    container_name: auth-slave
+    environment:
+      - POSTGRES_DB=booking_system_auth
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_password
+    ports:
+      - "5436:5432"
+    volumes:
+      - auth-slave-data:/var/lib/postgresql/data
+    networks:
+      - booking-network
+    restart: unless-stopped
+
+  event-master:
+    image: postgres:15
+    container_name: event-master
+    environment:
+      - POSTGRES_DB=booking_system_event
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_password
+    ports:
+      - "5437:5432"
+    volumes:
+      - event-master-data:/var/lib/postgresql/data
+    networks:
+      - booking-network
+    restart: unless-stopped
+
+  event-slave:
+    image: postgres:15
+    container_name: event-slave
+    environment:
+      - POSTGRES_DB=booking_system_event
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_password
+    ports:
+      - "5438:5432"
+    volumes:
+      - event-slave-data:/var/lib/postgresql/data
+    networks:
+      - booking-network
+    restart: unless-stopped
+
+  ticket-master:
+    image: postgres:15
+    container_name: ticket-master
+    environment:
+      - POSTGRES_DB=booking_system_ticket
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_password
+    ports:
+      - "5439:5432"
+    volumes:
+      - ticket-master-data:/var/lib/postgresql/data
+    networks:
+      - booking-network
+    restart: unless-stopped
+
+  ticket-slave:
+    image: postgres:15
+    container_name: ticket-slave
+    environment:
+      - POSTGRES_DB=booking_system_ticket
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres_password
+    ports:
+      - "5440:5432"
+    volumes:
+      - ticket-slave-data:/var/lib/postgresql/data
+    networks:
+      - booking-network
+    restart: unless-stopped
+
+volumes:
+  auth-master-data:
+  auth-slave-data:
+  event-master-data:
+  event-slave-data:
+  ticket-master-data:
+  ticket-slave-data:
+
+networks:
+  booking-network:
+    driver: bridge

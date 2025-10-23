@@ -43,7 +43,7 @@ class PermissionRepository extends BaseRepository {
    * Lấy role permissions (read từ slave)
    */
   async getRolePermissions(roleId) {
-    return await this.getSlaveDb()
+    return await this.db
       .join('role_permissions', 'permissions.id', 'role_permissions.permission_id')
       .where('role_permissions.role_id', roleId)
       .select('permissions.*');
@@ -53,7 +53,7 @@ class PermissionRepository extends BaseRepository {
    * Lấy user permissions (read từ slave)
    */
   async getUserPermissions(userId) {
-    return await this.getSlaveDb()
+    return await this.db
       .join('user_roles', 'user_roles.role_id', 'role_permissions.role_id')
       .join('role_permissions', 'role_permissions.permission_id', 'permissions.id')
       .where('user_roles.user_id', userId)
@@ -99,7 +99,7 @@ class PermissionRepository extends BaseRepository {
    * Gán permission cho role (write vào master)
    */
   async assignToRole(roleId, permissionId) {
-    return await this.getMasterDb()('role_permissions').insert({
+    return await this.db('role_permissions').insert({
       role_id: roleId,
       permission_id: permissionId,
       created_at: new Date(),
@@ -110,7 +110,7 @@ class PermissionRepository extends BaseRepository {
    * Xóa permission khỏi role (write vào master)
    */
   async removeFromRole(roleId, permissionId) {
-    return await this.getMasterDb()('role_permissions')
+    return await this.db('role_permissions')
       .where({ role_id: roleId, permission_id: permissionId })
       .del();
   }

@@ -15,7 +15,7 @@ class UserRoleRepository extends BaseRepository {
    * Lấy roles của user (read từ slave)
    */
   async getUserRoles(userId) {
-    return await this.getSlaveDb()
+    return await this.db
       .join('roles', 'user_roles.role_id', 'roles.public_id')
       .where('user_roles.user_id', userId)
       .select('roles.*');
@@ -25,7 +25,7 @@ class UserRoleRepository extends BaseRepository {
    * Lấy users của role (read từ slave)
    */
   async getRoleUsers(roleId) {
-    return await this.getSlaveDb()
+    return await this.db
       .join('users', 'user_roles.user_id', 'users.public_id')
       .where('user_roles.role_id', roleId)
       .select('users.*');
@@ -35,7 +35,7 @@ class UserRoleRepository extends BaseRepository {
    * Kiểm tra user có role không (read từ slave)
    */
   async userHasRole(userId, roleId) {
-    const result = await this.getSlaveDb().where({ user_id: userId, role_id: roleId }).first();
+    const result = await this.db.where({ user_id: userId, role_id: roleId }).first();
     return !!result;
   }
 
@@ -43,7 +43,7 @@ class UserRoleRepository extends BaseRepository {
    * Lấy tất cả user-role relationships (read từ slave)
    */
   async getAllUserRoles() {
-    return await this.getSlaveDb()
+    return await this.db
       .join('users', 'user_roles.user_id', 'users.public_id')
       .join('roles', 'user_roles.role_id', 'roles.public_id')
       .select(
@@ -93,7 +93,7 @@ class UserRoleRepository extends BaseRepository {
       created_at: new Date(),
     }));
 
-    return await this.getMasterDb()('user_roles').insert(userRoles);
+    return await this.db('user_roles').insert(userRoles);
   }
 }
 

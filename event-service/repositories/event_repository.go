@@ -3,6 +3,8 @@ package repositories
 import (
 	"context"
 	"event-service/models"
+	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -49,4 +51,141 @@ func (r *EventRepository) List(ctx context.Context, organizationID int64) ([]*mo
 	query := `SELECT * FROM events WHERE organization_id = $1 ORDER BY created_at DESC`
 	err := r.db.SelectContext(ctx, &events, query, organizationID)
 	return events, err
-} 
+}
+
+// Advanced search and filtering methods
+func (r *EventRepository) SearchEvents(ctx context.Context, query, eventType, category string, page, limit int32) ([]*models.Event, int, error) {
+	var events []*models.Event
+	var total int
+
+	// Build search query
+	searchQuery := `SELECT * FROM events WHERE 
+		(name ILIKE $1 OR description ILIKE $1 OR venue_name ILIKE $1)`
+	params := []interface{}{"%" + query + "%"}
+	paramCount := 2
+
+	if eventType != "" {
+		searchQuery += ` AND event_type = $` + fmt.Sprintf("%d", paramCount)
+		params = append(params, eventType)
+		paramCount++
+	}
+
+	if category != "" {
+		searchQuery += ` AND category = $` + fmt.Sprintf("%d", paramCount)
+		params = append(params, category)
+		paramCount++
+	}
+
+	// Count total
+	countQuery := strings.Replace(searchQuery, "SELECT *", "SELECT COUNT(*)", 1)
+	err := r.db.GetContext(ctx, &total, countQuery, params...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Add pagination
+	searchQuery += ` ORDER BY created_at DESC LIMIT $` + fmt.Sprintf("%d", paramCount) + ` OFFSET $` + fmt.Sprintf("%d", paramCount+1)
+	params = append(params, limit, (page-1)*limit)
+
+	err = r.db.SelectContext(ctx, &events, searchQuery, params...)
+	return events, total, err
+}
+
+func (r *EventRepository) GetEventsByVenue(ctx context.Context, venueID, status string, page, limit int32) ([]*models.Event, int, error) {
+	var events []*models.Event
+	var total int
+
+	query := `SELECT * FROM events WHERE venue_id = $1`
+	params := []interface{}{venueID}
+	paramCount := 2
+
+	if status != "" {
+		query += ` AND status = $` + fmt.Sprintf("%d", paramCount)
+		params = append(params, status)
+		paramCount++
+	}
+
+	// Count total
+	countQuery := strings.Replace(query, "SELECT *", "SELECT COUNT(*)", 1)
+	err := r.db.GetContext(ctx, &total, countQuery, params...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Add pagination
+	query += ` ORDER BY created_at DESC LIMIT $` + fmt.Sprintf("%d", paramCount) + ` OFFSET $` + fmt.Sprintf("%d", paramCount+1)
+	params = append(params, limit, (page-1)*limit)
+
+	err = r.db.SelectContext(ctx, &events, query, params...)
+	return events, total, err
+}
+
+func (r *EventRepository) GetUpcomingEvents(ctx context.Context, days int32, eventType, category string, page, limit int32) ([]*models.Event, int, error) {
+	var events []*models.Event
+	var total int
+
+	query := `SELECT * FROM events WHERE start_date > NOW() AND start_date <= NOW() + INTERVAL '%d days'`
+	params := []interface{}{days}
+	paramCount := 2
+
+	if eventType != "" {
+		query += ` AND event_type = $` + fmt.Sprintf("%d", paramCount)
+		params = append(params, eventType)
+		paramCount++
+	}
+
+	if category != "" {
+		query += ` AND category = $` + fmt.Sprintf("%d", paramCount)
+		params = append(params, category)
+		paramCount++
+	}
+
+	// Count total
+	countQuery := strings.Replace(query, "SELECT *", "SELECT COUNT(*)", 1)
+	err := r.db.GetContext(ctx, &total, countQuery, params...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Add pagination
+	query += ` ORDER BY start_date ASC LIMIT $` + fmt.Sprintf("%d", paramCount) + ` OFFSET $` + fmt.Sprintf("%d", paramCount+1)
+	params = append(params, limit, (page-1)*limit)
+
+	err = r.db.SelectContext(ctx, &events, query, params...)
+	return events, total, err
+}
+
+func (r *EventRepository) GetFeaturedEvents(ctx context.Context, eventType, category string, page, limit int32) ([]*models.Event, int, error) {
+	var events []*models.Event
+	var total int
+
+	query := `SELECT * FROM events WHERE is_featured = true`
+	params := []interface{}{}
+	paramCount := 1
+
+	if eventType != "" {
+		query += ` AND event_type = $` + fmt.Sprintf("%d", paramCount)
+		params = append(params, eventType)
+		paramCount++
+	}
+
+	if category != "" {
+		query += ` AND category = $` + fmt.Sprintf("%d", paramCount)
+		params = append(params, category)
+		paramCount++
+	}
+
+	// Count total
+	countQuery := strings.Replace(query, "SELECT *", "SELECT COUNT(*)", 1)
+	err := r.db.GetContext(ctx, &total, countQuery, params...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Add pagination
+	query += ` ORDER BY created_at DESC LIMIT $` + fmt.Sprintf("%d", paramCount) + ` OFFSET $` + fmt.Sprintf("%d", paramCount+1)
+	params = append(params, limit, (page-1)*limit)
+
+	err = r.db.SelectContext(ctx, &events, query, params...)
+	return events, total, err
+}

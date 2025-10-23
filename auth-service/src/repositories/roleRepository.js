@@ -30,7 +30,7 @@ class RoleRepository extends BaseRepository {
     }
 
     // Lấy permissions của role
-    const permissions = await this.getSlaveDb()
+    const permissions = await this.db
       .select(
         'permissions.public_id as id',
         'permissions.name',
@@ -59,7 +59,7 @@ class RoleRepository extends BaseRepository {
    * Lấy user roles (read từ slave)
    */
   async getUserRoles(userId) {
-    return await this.getSlaveDb()
+    return await this.db
       .join('user_roles', 'roles.public_id', 'user_roles.role_id')
       .where('user_roles.user_id', userId)
       .select('roles.*');
@@ -69,7 +69,7 @@ class RoleRepository extends BaseRepository {
    * Tìm roles theo user ID (read từ slave)
    */
   async findByUserId(userId) {
-    return await this.getSlaveDb()
+    return await this.db
       .join('user_roles', 'roles.public_id', 'user_roles.role_id')
       .where('user_roles.user_id', userId)
       .select('roles.*');

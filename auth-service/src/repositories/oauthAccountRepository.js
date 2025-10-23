@@ -42,7 +42,7 @@ class OAuthAccountRepository extends BaseRepository {
    * Tìm OAuth account với user info (read từ slave)
    */
   async findWithUser(id) {
-    return await this.getSlaveDb()
+    return await this.db
       .join('users', 'oauth_accounts.user_id', 'users.id')
       .where('oauth_accounts.id', id)
       .select('oauth_accounts.*', 'users.email', 'users.username', 'users.status')

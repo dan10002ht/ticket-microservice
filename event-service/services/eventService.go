@@ -32,4 +32,21 @@ func (s *EventService) DeleteEvent(ctx context.Context, publicID string) error {
 
 func (s *EventService) ListByOrganizationID(ctx context.Context, organizationID int64) ([]*models.Event, error) {
 	return s.repo.List(ctx, organizationID)
-} 
+}
+
+// Advanced search and filtering methods
+func (s *EventService) SearchEvents(ctx context.Context, query, eventType, category string, page, limit int32) ([]*models.Event, int, error) {
+	return s.repo.SearchEvents(ctx, query, eventType, category, page, limit)
+}
+
+func (s *EventService) GetEventsByVenue(ctx context.Context, venueID, status string, page, limit int32) ([]*models.Event, int, error) {
+	return s.repo.GetEventsByVenue(ctx, venueID, status, page, limit)
+}
+
+func (s *EventService) GetUpcomingEvents(ctx context.Context, days int32, eventType, category string, page, limit int32) ([]*models.Event, int, error) {
+	return s.repo.GetUpcomingEvents(ctx, days, eventType, category, page, limit)
+}
+
+func (s *EventService) GetFeaturedEvents(ctx context.Context, eventType, category string, page, limit int32) ([]*models.Event, int, error) {
+	return s.repo.GetFeaturedEvents(ctx, eventType, category, page, limit)
+}

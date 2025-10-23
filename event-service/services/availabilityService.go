@@ -48,4 +48,29 @@ func (s *AvailabilityService) ValidateAvailability(avail *models.EventSeatAvaila
 		return fmt.Errorf("invalid seat availability data")
 	}
 	return nil
-} 
+}
+
+// Advanced availability methods
+func (s *AvailabilityService) GetEventAvailability(ctx context.Context, eventID string) (*models.EventAvailability, error) {
+	return s.repo.GetEventAvailability(ctx, eventID)
+}
+
+func (s *AvailabilityService) GetZoneAvailability(ctx context.Context, eventID, zoneID string) (*models.ZoneAvailability, error) {
+	return s.repo.GetZoneAvailability(ctx, eventID, zoneID)
+}
+
+func (s *AvailabilityService) GetSeatAvailability(ctx context.Context, eventID, seatID string) (*models.SeatAvailability, error) {
+	return s.repo.GetSeatAvailability(ctx, eventID, seatID)
+}
+
+func (s *AvailabilityService) UpdateSeatAvailability(ctx context.Context, eventID, seatID, status, userID, bookingID string) error {
+	return s.repo.UpdateSeatAvailability(ctx, eventID, seatID, status, userID, bookingID)
+}
+
+func (s *AvailabilityService) BlockSeats(ctx context.Context, eventID string, seatIDs []string, userID, bookingID, expiresAt string) (*models.BlockSeatsResult, error) {
+	return s.repo.BlockSeats(ctx, eventID, seatIDs, userID, bookingID, expiresAt)
+}
+
+func (s *AvailabilityService) ReleaseSeats(ctx context.Context, eventID string, seatIDs []string, userID, reason string) (*models.ReleaseSeatsResult, error) {
+	return s.repo.ReleaseSeats(ctx, eventID, seatIDs, userID, reason)
+}

@@ -30,7 +30,7 @@ type Config struct {
 func LoadConfig() (*Config, error) {
 	cfg := &Config{
 		Database: DatabaseConfig{
-			URL: getEnv("EVENT_DB_URL", "postgres://user:password@localhost:5432/event_db?sslmode=disable"),
+			URL: getEnv("EVENT_DB_URL", "postgres://postgres:postgres_password@pgpool-event:5432/booking_system_event?sslmode=disable"),
 		},
 		Redis: RedisConfig{
 			Host:     getEnv("REDIS_HOST", "localhost"),
@@ -62,4 +62,4 @@ func getEnvInt(key string, defaultVal int) int {
 		}
 	}
 	return defaultVal
-} 
+}

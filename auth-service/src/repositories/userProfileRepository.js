@@ -42,21 +42,21 @@ class UserProfileRepository extends BaseRepository {
       updated_at: new Date(),
     };
 
-    return await this.getMasterDb().where('user_id', userId).update(normalizedData).returning('*');
+    return await this.db.where('user_id', userId).update(normalizedData).returning('*');
   }
 
   /**
    * Xóa user profile (write vào master)
    */
   async deleteByUserId(userId) {
-    return await this.getMasterDb().where('user_id', userId).del();
+    return await this.db.where('user_id', userId).del();
   }
 
   /**
    * Lấy user với profile (read từ slave)
    */
   async findUserWithProfile(userId) {
-    return await this.getSlaveDb()
+    return await this.db
       .select(
         'users.*',
         'user_profiles.bio',

@@ -91,10 +91,19 @@ echo "🧹 Cleaning up existing processes..."
 kill_auth_service
 kill_port 50051 "auth-service"
 
-# Start only infrastructure services (no other microservices)
-echo "🐳 Starting infrastructure services only..."
-cd ../deploy
-docker compose -f docker-compose.dev.yml up -d redis postgres-master postgres-slave1 postgres-slave2 kafka zookeeper prometheus grafana elasticsearch kibana node-exporter redis-exporter postgres-exporter
+# Start PgPool-II infrastructure first
+echo "🐳 Starting PgPool-II infrastructure..."
+cd ../deploy/pgpool
+docker compose -f docker-compose.pgpool.yml up -d
+
+# Wait for PgPool-II to be ready
+echo "⏳ Waiting for PgPool-II to be ready..."
+sleep 15
+
+# Go back to deploy directory and start other services
+echo "🐳 Starting other infrastructure services..."
+cd ..
+docker compose -f docker-compose.dev.yml up -d redis kafka zookeeper prometheus grafana elasticsearch kibana node-exporter redis-exporter
 
 # Wait for services to be ready
 echo "⏳ Waiting for infrastructure services to be ready..."
@@ -117,24 +126,12 @@ PORT=50051
 HOST=0.0.0.0
 NODE_ENV=development
 
-# Database Configuration (Master-Slave Pattern)
-DB_MASTER_HOST=localhost
-DB_MASTER_PORT=55432
-DB_MASTER_NAME=booking_system_auth
-DB_MASTER_USER=booking_user
-DB_MASTER_PASSWORD=booking_pass
-
-DB_SLAVE1_HOST=localhost
-DB_SLAVE1_PORT=55433
-DB_SLAVE1_NAME=booking_system_auth
-DB_SLAVE1_USER=booking_user
-DB_SLAVE1_PASSWORD=booking_pass
-
-DB_SLAVE2_HOST=localhost
-DB_SLAVE2_PORT=55434
-DB_SLAVE2_NAME=booking_system_auth
-DB_SLAVE2_USER=booking_user
-DB_SLAVE2_PASSWORD=booking_pass
+# Database Configuration (PgPool-II Pattern)
+PGPOOL_AUTH_HOST=localhost
+PGPOOL_AUTH_PORT=5432
+DB_NAME=booking_system_auth
+DB_USER=postgres
+DB_PASSWORD=postgres_password
 
 # Redis Configuration
 REDIS_HOST=localhost
@@ -186,11 +183,9 @@ DB_POOL_MAX=10
 DB_POOL_ACQUIRE_TIMEOUT=30000
 DB_POOL_IDLE_TIMEOUT=10000
 
-# Master-Slave Configuration
-DB_READ_PREFERENCE=slave
-DB_WRITE_PREFERENCE=master
-DB_FAILOVER_ENABLED=true
-DB_FAILOVER_TIMEOUT=5000
+# PgPool-II Configuration (automatic master/slave routing)
+# PgPool-II handles read/write routing automatically
+DB_SSL_MODE=disable
 
 # gRPC Configuration
 GRPC_MAX_RECEIVE_MESSAGE_LENGTH=4194304
@@ -263,12 +258,12 @@ echo "🔧 Development tools:"
 echo "   - Grafana: http://localhost:53001 (admin/admin)"
 echo "   - Prometheus: http://localhost:59090"
 echo "   - Kibana: http://localhost:55601"
-echo "   - PostgreSQL: localhost:5432"
-echo "   - Redis: localhost:6379"
+echo "   - PgPool-II Auth: localhost:5432"
+echo "   - Redis: localhost:56379"
 echo ""
 echo "💡 Tips:"
 echo "   - Auth Service will auto-restart when you save changes"
-echo "   - Database is configured with Master-Slave pattern"
+echo "   - Database uses PgPool-II for automatic master/slave routing"
 echo "   - Use Ctrl+C to stop the development server"
 echo "   - Test with: node test-grpc.js"
 echo ""

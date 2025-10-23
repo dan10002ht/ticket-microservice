@@ -1,4 +1,4 @@
-import { masterDb, getSlaveDb } from '../config/databaseConfig.js';
+import { db } from '../config/databaseConfig.js';
 import IRepository from './interfaces/IRepository.js';
 
 /**
@@ -10,22 +10,11 @@ class BaseRepository extends IRepository {
   constructor(tableName) {
     super();
     this.tableName = tableName;
-  }
-
-  /**
-   * Lấy master database connection cho write operations
-   */
-  getMasterDb() {
-    return masterDb(this.tableName);
-  }
-
-  /**
-   * Lấy slave database connection cho read operations
-   */
-  getSlaveDb() {
-    // for testing before master-slave pattern
-    // return masterDb(this.tableName);
-    return getSlaveDb()(this.tableName);
+    // PgPool-II sẽ tự động route queries dựa trên loại operation:
+    // - SELECT queries → slave databases
+    // - INSERT/UPDATE/DELETE queries → master database
+    // - Transactions → master database
+    this.db = db(tableName);
   }
 
   // ========== READ OPERATIONS (Sử dụng Slave) ==========
@@ -35,7 +24,7 @@ class BaseRepository extends IRepository {
    */
   async findAll(options = {}) {
     const { limit, offset, orderBy, orderDirection = 'asc' } = options;
-    let query = this.getSlaveDb().select('*');
+    let query = this.db.select('*');
 
     if (orderBy) {
       query = query.orderBy(orderBy, orderDirection);
@@ -56,7 +45,7 @@ class BaseRepository extends IRepository {
    * Tìm record theo ID (internal)
    */
   async findById(id) {
-    const results = await this.getSlaveDb().select('*').where('id', id).limit(1);
+    const results = await this.db.select('*').where('id', id).limit(1);
 
     return results[0] || null;
   }
@@ -65,7 +54,7 @@ class BaseRepository extends IRepository {
    * Tìm record theo điều kiện
    */
   async findOne(conditions) {
-    const results = await this.getSlaveDb().select('*').where(conditions).limit(1);
+    const results = await this.db.select('*').where(conditions).limit(1);
 
     return results[0] || null;
   }
@@ -75,7 +64,7 @@ class BaseRepository extends IRepository {
    */
   async findMany(conditions, options = {}) {
     const { limit, offset, orderBy, orderDirection = 'asc' } = options;
-    let query = this.getSlaveDb().select('*').where(conditions);
+    let query = this.db.select('*').where(conditions);
 
     if (orderBy) {
       query = query.orderBy(orderBy, orderDirection);
@@ -96,7 +85,7 @@ class BaseRepository extends IRepository {
    * Đếm số records theo điều kiện
    */
   async count(conditions = {}) {
-    const result = await this.getSlaveDb().count('* as total').where(conditions);
+    const result = await this.db.count('* as total').where(conditions);
 
     return parseInt(result[0].total);
   }
@@ -105,7 +94,7 @@ class BaseRepository extends IRepository {
    * Kiểm tra record có tồn tại không
    */
   async exists(conditions) {
-    const result = await this.getSlaveDb().select('id').where(conditions).limit(1);
+    const result = await this.db.select('id').where(conditions).limit(1);
 
     return result.length > 0;
   }
@@ -114,7 +103,7 @@ class BaseRepository extends IRepository {
    * Tìm record theo public_id (external)
    */
   async findByPublicId(publicId) {
-    const results = await this.getSlaveDb().select('*').where('public_id', publicId).limit(1);
+    const results = await this.db.select('*').where('public_id', publicId).limit(1);
 
     return results[0] || null;
   }
@@ -125,7 +114,7 @@ class BaseRepository extends IRepository {
    * Tạo record mới
    */
   async create(data) {
-    const [result] = await this.getMasterDb().insert(data).returning('*');
+    const [result] = await this.db.insert(data).returning('*');
 
     return result;
   }
@@ -134,7 +123,7 @@ class BaseRepository extends IRepository {
    * Tạo nhiều records cùng lúc
    */
   async createMany(dataArray) {
-    const results = await this.getMasterDb().insert(dataArray).returning('*');
+    const results = await this.db.insert(dataArray).returning('*');
 
     return results;
   }
@@ -143,7 +132,7 @@ class BaseRepository extends IRepository {
    * Cập nhật record theo ID
    */
   async updateById(id, data) {
-    const [result] = await this.getMasterDb().where('id', id).update(data).returning('*');
+    const [result] = await this.db.where('id', id).update(data).returning('*');
 
     return result;
   }
@@ -152,7 +141,7 @@ class BaseRepository extends IRepository {
    * Cập nhật records theo điều kiện
    */
   async update(conditions, data) {
-    const results = await this.getMasterDb().where(conditions).update(data).returning('*');
+    const results = await this.db.where(conditions).update(data).returning('*');
 
     return results;
   }
@@ -161,10 +150,7 @@ class BaseRepository extends IRepository {
    * Cập nhật record theo public_id
    */
   async updateByPublicId(publicId, data) {
-    const [result] = await this.getMasterDb()
-      .where('public_id', publicId)
-      .update(data)
-      .returning('*');
+    const [result] = await this.db.where('public_id', publicId).update(data).returning('*');
 
     return result;
   }
@@ -173,7 +159,7 @@ class BaseRepository extends IRepository {
    * Xóa record theo ID
    */
   async deleteById(id) {
-    const [result] = await this.getMasterDb().where('id', id).del().returning('*');
+    const [result] = await this.db.where('id', id).del().returning('*');
 
     return result;
   }
@@ -182,7 +168,7 @@ class BaseRepository extends IRepository {
    * Xóa records theo điều kiện
    */
   async delete(conditions) {
-    const results = await this.getMasterDb().where(conditions).del().returning('*');
+    const results = await this.db.where(conditions).del().returning('*');
 
     return results;
   }
@@ -191,7 +177,7 @@ class BaseRepository extends IRepository {
    * Xóa record theo public_id
    */
   async deleteByPublicId(publicId) {
-    const [result] = await this.getMasterDb().where('public_id', publicId).del().returning('*');
+    const [result] = await this.db.where('public_id', publicId).del().returning('*');
 
     return result;
   }
@@ -201,11 +187,7 @@ class BaseRepository extends IRepository {
    */
   async upsert(data, uniqueColumns = ['id']) {
     const conflictColumns = uniqueColumns.join(', ');
-    const [result] = await this.getMasterDb()
-      .insert(data)
-      .onConflict(conflictColumns)
-      .merge()
-      .returning('*');
+    const [result] = await this.db.insert(data).onConflict(conflictColumns).merge().returning('*');
 
     return result;
   }
@@ -216,23 +198,16 @@ class BaseRepository extends IRepository {
    * Thực hiện transaction với master database
    */
   async transaction(callback) {
-    return await this.getMasterDb().transaction(callback);
+    return await this.db.transaction(callback);
   }
 
   // ========== ADVANCED QUERY OPERATIONS ==========
 
   /**
-   * Raw query với slave database
+   * Raw query - PgPool-II sẽ tự động route queries
    */
   async rawQuery(sql, params = []) {
-    return await getSlaveDb().raw(sql, params);
-  }
-
-  /**
-   * Raw query với master database
-   */
-  async rawQueryMaster(sql, params = []) {
-    return await masterDb.raw(sql, params);
+    return await db.raw(sql, params);
   }
 
   /**
@@ -241,7 +216,7 @@ class BaseRepository extends IRepository {
   async join(joinTable, joinCondition, options = {}) {
     const { select = '*', where = {}, limit, offset, orderBy, orderDirection = 'asc' } = options;
 
-    let query = this.getSlaveDb().select(select).join(joinTable, joinCondition).where(where);
+    let query = this.db.select(select).join(joinTable, joinCondition).where(where);
 
     if (orderBy) {
       query = query.orderBy(orderBy, orderDirection);

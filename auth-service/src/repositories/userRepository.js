@@ -47,7 +47,7 @@ class UserRepository extends BaseRepository {
   async searchUsers(searchTerm, options = {}) {
     const { limit = 20, offset = 0, orderBy = 'created_at', orderDirection = 'desc' } = options;
 
-    return await this.getSlaveDb()
+    return await this.db
       .select('*')
       .where(function () {
         this.where('email', 'ilike', `%${searchTerm}%`)
@@ -72,7 +72,7 @@ class UserRepository extends BaseRepository {
     }
 
     // Lấy roles của user bằng internal id
-    const roles = await this.getSlaveDb()
+    const roles = await this.db
       .select('roles.public_id as id', 'roles.name', 'roles.description')
       .from('roles')
       .join('user_roles', 'roles.id', 'user_roles.role_id')
@@ -92,7 +92,7 @@ class UserRepository extends BaseRepository {
     const user = await this.findByPublicId(publicId);
     if (!user) return null;
 
-    return await this.getSlaveDb()
+    return await this.db
       .leftJoin('organizations', 'users.id', 'organizations.user_id')
       .where('users.id', user.id)
       .select('users.*', 'organizations.*')
@@ -226,7 +226,7 @@ class UserRepository extends BaseRepository {
    * Bulk update users (write vào master)
    */
   async bulkUpdateUsers(userIds, updateData) {
-    return await this.getMasterDb()
+    return await this.db
       .whereIn('id', userIds)
       .update({
         ...updateData,
@@ -239,7 +239,7 @@ class UserRepository extends BaseRepository {
    * Bulk delete users (write vào master)
    */
   async bulkDeleteUsers(userIds) {
-    return await this.getMasterDb().whereIn('id', userIds).del().returning('*');
+    return await this.db.whereIn('id', userIds).del().returning('*');
   }
 }
 

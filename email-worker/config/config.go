@@ -29,23 +29,9 @@ type QueueConfig struct {
 	PollInterval time.Duration `mapstructure:"poll_interval"`
 }
 
-// DatabaseConfig holds database configuration
+// DatabaseConfig holds database configuration for PgPool-II
 type DatabaseConfig struct {
-	// Master database configuration
-	MasterHost     string `mapstructure:"master_host"`
-	MasterPort     int    `mapstructure:"master_port"`
-	MasterName     string `mapstructure:"master_name"`
-	MasterUser     string `mapstructure:"master_user"`
-	MasterPassword string `mapstructure:"master_password"`
-
-	// Slave database configuration (for read operations)
-	SlaveHost     string `mapstructure:"slave_host"`
-	SlavePort     int    `mapstructure:"slave_port"`
-	SlaveName     string `mapstructure:"slave_name"`
-	SlaveUser     string `mapstructure:"slave_user"`
-	SlavePassword string `mapstructure:"slave_password"`
-
-	// Legacy single database configuration (for backward compatibility)
+	// PgPool-II configuration - handles master/slave routing automatically
 	Host     string `mapstructure:"host"`
 	Port     int    `mapstructure:"port"`
 	Name     string `mapstructure:"name"`
@@ -147,17 +133,12 @@ func setDefaults() {
 	// App defaults
 	viper.SetDefault("logging.level", "info")
 
-	// Database defaults
-	viper.SetDefault("database.master_host", "localhost")
-	viper.SetDefault("database.master_port", 5432)
-	viper.SetDefault("database.master_name", "booking_system")
-	viper.SetDefault("database.master_user", "postgres")
-	viper.SetDefault("database.master_password", "postgres")
-	viper.SetDefault("database.slave_host", "localhost")
-	viper.SetDefault("database.slave_port", 5433)
-	viper.SetDefault("database.slave_name", "booking_system_slave")
-	viper.SetDefault("database.slave_user", "postgres")
-	viper.SetDefault("database.slave_password", "postgres")
+	// Database defaults - PgPool-II configuration
+	viper.SetDefault("database.host", "pgpool-ticket")
+	viper.SetDefault("database.port", 5432)
+	viper.SetDefault("database.name", "booking_system_ticket")
+	viper.SetDefault("database.user", "postgres")
+	viper.SetDefault("database.password", "postgres_password")
 	viper.SetDefault("database.ssl_mode", "disable")
 	viper.SetDefault("database.max_open_conns", 25)
 	viper.SetDefault("database.max_idle_conns", 5)
@@ -206,21 +187,7 @@ func setDefaults() {
 
 // bindEnvVars binds environment variables to configuration
 func bindEnvVars() {
-	// Master database
-	viper.BindEnv("database.master_host", "DB_MASTER_HOST")
-	viper.BindEnv("database.master_port", "DB_MASTER_PORT")
-	viper.BindEnv("database.master_name", "DB_MASTER_NAME")
-	viper.BindEnv("database.master_user", "DB_MASTER_USER")
-	viper.BindEnv("database.master_password", "DB_MASTER_PASSWORD")
-
-	// Slave database
-	viper.BindEnv("database.slave_host", "DB_SLAVE_HOST")
-	viper.BindEnv("database.slave_port", "DB_SLAVE_PORT")
-	viper.BindEnv("database.slave_name", "DB_SLAVE_NAME")
-	viper.BindEnv("database.slave_user", "DB_SLAVE_USER")
-	viper.BindEnv("database.slave_password", "DB_SLAVE_PASSWORD")
-
-	// Legacy database (for backward compatibility)
+	// PgPool-II database configuration
 	viper.BindEnv("database.host", "DB_HOST")
 	viper.BindEnv("database.port", "DB_PORT")
 	viper.BindEnv("database.name", "DB_NAME")
@@ -257,22 +224,12 @@ func bindEnvVars() {
 
 // validateConfig validates the configuration
 func validateConfig(config *Config) error {
-	// Check if master-slave configuration is provided
-	if config.Database.MasterHost != "" {
-		// Master-slave configuration
-		if config.Database.MasterName == "" {
-			return fmt.Errorf("master database name is required")
-		}
-		if config.Database.SlaveHost != "" && config.Database.SlaveName == "" {
-			return fmt.Errorf("slave database name is required when slave host is provided")
-		}
-	} else if config.Database.Host != "" {
-		// Legacy single database configuration
-		if config.Database.Name == "" {
-			return fmt.Errorf("database name is required")
-		}
-	} else {
-		return fmt.Errorf("either master database host or legacy database host is required")
+	// Check PgPool-II configuration
+	if config.Database.Host == "" {
+		return fmt.Errorf("database host is required")
+	}
+	if config.Database.Name == "" {
+		return fmt.Errorf("database name is required")
 	}
 
 	if config.Email.DefaultProvider == "" {

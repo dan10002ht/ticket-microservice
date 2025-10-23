@@ -42,6 +42,49 @@ CREATE TABLE event_seats (
     seat_number VARCHAR(20) NOT NULL,
     row_number VARCHAR(10),
     coordinates JSONB NOT NULL,
+    -- Status tracking for concurrency control
+    status VARCHAR(20) DEFAULT 'available',
+    reserved_by BIGINT,
+    reserved_until TIMESTAMP,
+    booked_by BIGINT,
+    booking_id BIGINT,
+    version INTEGER DEFAULT 1,
+    -- Pricing information
+    pricing_category VARCHAR(50),
+    base_price DECIMAL(10,2),
+    final_price DECIMAL(10,2),
+    currency VARCHAR(3) DEFAULT 'USD',
+    -- Metadata and audit
+    metadata JSONB,
+    created_by BIGINT,
+    updated_by BIGINT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-); 
+);
+
+-- Indexes for performance
+CREATE INDEX idx_event_seats_status ON event_seats(status);
+CREATE INDEX idx_event_seats_event_status ON event_seats(event_id, status);
+CREATE INDEX idx_event_seats_reserved_by ON event_seats(reserved_by);
+CREATE INDEX idx_event_seats_booked_by ON event_seats(booked_by);
+CREATE INDEX idx_event_seats_pricing_category ON event_seats(pricing_category);
+CREATE INDEX idx_event_seats_zone_id ON event_seats(zone_id);
+CREATE INDEX idx_event_seats_event_id ON event_seats(event_id);
+
+-- Constraints
+ALTER TABLE event_seats 
+ADD CONSTRAINT check_status CHECK (status IN ('available', 'reserved', 'sold', 'blocked')),
+ADD CONSTRAINT check_final_price CHECK (final_price >= 0),
+ADD CONSTRAINT check_base_price CHECK (base_price >= 0);
+
+-- Comments
+COMMENT ON COLUMN event_seats.status IS 'Seat status: available, reserved, sold, blocked';
+COMMENT ON COLUMN event_seats.reserved_by IS 'User ID who reserved this seat';
+COMMENT ON COLUMN event_seats.reserved_until IS 'Reservation expiration time';
+COMMENT ON COLUMN event_seats.booked_by IS 'User ID who booked this seat';
+COMMENT ON COLUMN event_seats.booking_id IS 'Booking ID for this seat';
+COMMENT ON COLUMN event_seats.version IS 'Version for optimistic locking';
+COMMENT ON COLUMN event_seats.pricing_category IS 'Pricing category: premium, standard, economy, vip';
+COMMENT ON COLUMN event_seats.base_price IS 'Base price for this seat';
+COMMENT ON COLUMN event_seats.final_price IS 'Final price after discounts';
+COMMENT ON COLUMN event_seats.metadata IS 'Additional seat metadata'; 

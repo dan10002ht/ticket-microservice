@@ -29,7 +29,7 @@ class UserSessionRepository extends BaseRepository {
    * Lấy user sessions (read từ slave)
    */
   async findByUserId(userId) {
-    return await this.getSlaveDb()
+    return await this.db
       .where('user_id', userId)
       .where('expires_at', '>', new Date())
       .orderBy('created_at', 'desc');
@@ -46,21 +46,21 @@ class UserSessionRepository extends BaseRepository {
    * Xóa user session (write vào master)
    */
   async deleteBySessionId(sessionId) {
-    return await this.getMasterDb().where('session_id', sessionId).del();
+    return await this.db.where('session_id', sessionId).del();
   }
 
   /**
    * Xóa tất cả sessions của user (write vào master)
    */
   async deleteAllByUserId(userId) {
-    return await this.getMasterDb().where('user_id', userId).del();
+    return await this.db.where('user_id', userId).del();
   }
 
   /**
    * Xóa expired sessions (write vào master)
    */
   async deleteExpired() {
-    return await this.getMasterDb().where('expires_at', '<', new Date()).del();
+    return await this.db.where('expires_at', '<', new Date()).del();
   }
 
   /**

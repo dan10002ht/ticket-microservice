@@ -22,7 +22,7 @@ class OrganizationRepository extends BaseRepository {
    * Tìm organization với user info (read từ slave)
    */
   async findWithUser(id) {
-    return await this.getSlaveDb()
+    return await this.db
       .join('users', 'organizations.user_id', 'users.id')
       .where('organizations.id', id)
       .select(
@@ -41,7 +41,7 @@ class OrganizationRepository extends BaseRepository {
   async searchOrganizations(searchTerm, options = {}) {
     const { limit = 20, offset = 0, orderBy = 'created_at', orderDirection = 'desc' } = options;
 
-    return await this.getSlaveDb()
+    return await this.db
       .select('*')
       .where(function () {
         this.where('name', 'ilike', `%${searchTerm}%`).orWhere(

@@ -48,7 +48,7 @@ class RefreshTokenRepository extends BaseRepository {
    * Tìm valid refresh tokens (read từ slave)
    */
   async findValid() {
-    return await this.getSlaveDb().where('is_revoked', false).where('expires_at', '>', new Date());
+    return await this.db.where('is_revoked', false).where('expires_at', '>', new Date());
   }
 
   /**
@@ -83,7 +83,7 @@ class RefreshTokenRepository extends BaseRepository {
    * Tìm valid refresh tokens của user (read từ slave)
    */
   async findValidByUserId(userId) {
-    return await this.getSlaveDb()
+    return await this.db
       .where({ user_id: userId, is_revoked: false })
       .where('expires_at', '>', new Date());
   }
@@ -92,7 +92,7 @@ class RefreshTokenRepository extends BaseRepository {
    * Tìm valid refresh tokens theo session ID (read từ slave)
    */
   async findValidBySessionId(sessionId) {
-    return await this.getSlaveDb()
+    return await this.db
       .where({ session_id: sessionId, is_revoked: false })
       .where('expires_at', '>', new Date());
   }
@@ -126,7 +126,7 @@ class RefreshTokenRepository extends BaseRepository {
    * Sử dụng cho selective logout
    */
   async revokeBySessionId(sessionId) {
-    return await this.getMasterDb()
+    return await this.db
       .where({ session_id: sessionId })
       .update({ is_revoked: true, updated_at: new Date() });
   }
@@ -135,7 +135,7 @@ class RefreshTokenRepository extends BaseRepository {
    * Revoke tất cả tokens của user (write vào master)
    */
   async revokeAllByUserId(userId) {
-    return await this.getMasterDb()
+    return await this.db
       .where({ user_id: userId })
       .update({ is_revoked: true, updated_at: new Date() });
   }
@@ -151,7 +151,7 @@ class RefreshTokenRepository extends BaseRepository {
    * Xóa expired tokens (write vào master)
    */
   async deleteExpired() {
-    return await this.getMasterDb().where('expires_at', '<', new Date()).del();
+    return await this.db.where('expires_at', '<', new Date()).del();
   }
 
   /**
@@ -165,7 +165,7 @@ class RefreshTokenRepository extends BaseRepository {
    * Đếm số lượng refresh tokens (read từ slave)
    */
   async count() {
-    const result = await this.getSlaveDb().count('* as count').first();
+    const result = await this.db.count('* as count').first();
     return parseInt(result.count);
   }
 
@@ -174,13 +174,13 @@ class RefreshTokenRepository extends BaseRepository {
    */
   async getUserTokenStats(userId) {
     const [total, active, revoked] = await Promise.all([
-      this.getSlaveDb().where('user_id', userId).count('* as count').first(),
-      this.getSlaveDb()
+      this.db.where('user_id', userId).count('* as count').first(),
+      this.db
         .where({ user_id: userId, is_revoked: false })
         .where('expires_at', '>', new Date())
         .count('* as count')
         .first(),
-      this.getSlaveDb().where({ user_id: userId, is_revoked: true }).count('* as count').first(),
+      this.db.where({ user_id: userId, is_revoked: true }).count('* as count').first(),
     ]);
 
     return {
