@@ -434,6 +434,51 @@ services:
       - booking-net
     restart: unless-stopped
 
+  payment-service:
+    build:
+      context: ../payment-service
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+      - "50056:9090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SERVER_PORT=8080
+      - GRPC_PORT=9090
+      # Database
+      - DB_HOST=postgres-main-master
+      - DB_PORT=5432
+      - DB_NAME=payment_db
+      - DB_USER=booking_user
+      - DB_PASSWORD=booking_pass
+      # JWT
+      - JWT_SECRET=dev_jwt_secret
+      # Stripe
+      - STRIPE_API_KEY=${STRIPE_API_KEY:-sk_test_dev_xxx}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-whsec_dev_xxx}
+      - STRIPE_PUBLIC_KEY=${STRIPE_PUBLIC_KEY:-pk_test_dev_xxx}
+      # PayPal
+      - PAYPAL_MODE=sandbox
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID:-xxx}
+      - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET:-xxx}
+      # VNPay
+      - VNPAY_MERCHANT_ID=${VNPAY_MERCHANT_ID:-xxx}
+      - VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET:-xxx}
+      # Momo
+      - MOMO_PARTNER_CODE=${MOMO_PARTNER_CODE:-xxx}
+      - MOMO_ACCESS_KEY=${MOMO_ACCESS_KEY:-xxx}
+      - MOMO_SECRET_KEY=${MOMO_SECRET_KEY:-xxx}
+    depends_on:
+      - postgres-main-master
+      - redis
+      - kafka
+    volumes:
+      - ../payment-service:/app
+      - /app/target
+    networks:
+      - booking-net
+    restart: unless-stopped
+
 volumes:
   postgres_master_data:
   postgres_slave1_data:

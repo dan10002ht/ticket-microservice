@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment_db_dev
+    username: postgres
+    password: postgres_password
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
+payment:
+  stripe:
+    api-key: sk_test_dev_xxx
+    webhook-secret: whsec_dev_xxx
+    public-key: pk_test_dev_xxx
+
+  paypal:
+    mode: sandbox
+
+logging:
+  level:
+    root: INFO
+    com.ticketing.payment: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

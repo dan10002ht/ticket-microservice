@@ -1,0 +1,124 @@
+spring:
+  application:
+    name: payment-service
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:payment_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: false
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+  security:
+    jwt:
+      secret: ${JWT_SECRET:your-secret-key-change-in-production}
+      expiration: 86400000 # 24 hours
+
+# gRPC Configuration
+grpc:
+  server:
+    port: ${GRPC_PORT:9090}
+
+# Server Configuration
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# Payment Gateway Configuration
+payment:
+  stripe:
+    api-key: ${STRIPE_API_KEY:sk_test_xxx}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_xxx}
+    public-key: ${STRIPE_PUBLIC_KEY:pk_test_xxx}
+
+  paypal:
+    mode: ${PAYPAL_MODE:sandbox}
+    client-id: ${PAYPAL_CLIENT_ID:xxx}
+    client-secret: ${PAYPAL_CLIENT_SECRET:xxx}
+
+  vnpay:
+    merchant-id: ${VNPAY_MERCHANT_ID:xxx}
+    hash-secret: ${VNPAY_HASH_SECRET:xxx}
+    vnp-url: ${VNPAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+    return-url: ${VNPAY_RETURN_URL:http://localhost:8080/api/payments/vnpay/callback}
+
+  momo:
+    partner-code: ${MOMO_PARTNER_CODE:xxx}
+    access-key: ${MOMO_ACCESS_KEY:xxx}
+    secret-key: ${MOMO_SECRET_KEY:xxx}
+    endpoint: ${MOMO_ENDPOINT:https://test-payment.momo.vn}
+
+  idempotency:
+    ttl-hours: 24
+
+# Management & Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus,info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.ticketing.payment: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/payment-service.log
+    max-size: 10MB
+    max-history: 30
+    total-size-cap: 1GB
