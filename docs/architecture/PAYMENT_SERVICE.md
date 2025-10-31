@@ -1016,23 +1016,23 @@ Payment Service với Java Spring Boot sẽ cung cấp:
 
 #### **Database Setup**
 
-- [ ] Create PostgreSQL database `payment_db`
-- [ ] Write Flyway migration V1: `payments` table
-- [ ] Write Flyway migration V2: `refunds` table
-- [ ] Write Flyway migration V3: `transaction_logs` table
-- [ ] Write Flyway migration V4: `idempotency_keys` table
-- [ ] Test migrations locally
-- [ ] Create database indexes
+- [x] Create PostgreSQL database `payment_db`
+- [x] Write Flyway migration V1: `payments` table
+- [x] Write Flyway migration V2: `refunds` table
+- [x] Write Flyway migration V3: `transaction_logs` table
+- [x] Write Flyway migration V4: `idempotency_keys` table
+- [x] Test migrations locally
+- [x] Create database indexes
 
 #### **Entity Models**
 
-- [ ] Create `Payment` entity với JPA annotations
-- [ ] Create `Refund` entity với relationships
-- [ ] Create `TransactionLog` entity
-- [ ] Create `IdempotencyKey` entity
-- [ ] Add validation annotations (@NotNull, @Size, etc.)
-- [ ] Add business logic methods (canBeRefunded, isPending, etc.)
-- [ ] Create enums (PaymentStatus, PaymentMethod, PaymentGateway)
+- [x] Create `Payment` entity với JPA annotations
+- [x] Create `Refund` entity với relationships
+- [x] Create `TransactionLog` entity
+- [x] Create `IdempotencyKey` entity
+- [x] Add validation annotations (@NotNull, @Size, etc.)
+- [x] Add business logic methods (canBeRefunded, isPending, etc.)
+- [x] Create enums (PaymentStatus, PaymentMethod, PaymentGateway)
 
 #### **Repository Layer**
 

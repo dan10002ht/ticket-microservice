@@ -9,6 +9,9 @@ echo "🔧 Initializing main database master..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
     CREATE USER replicator WITH REPLICATION PASSWORD 'replicator_pass';
     
+    -- Create payment_db database for Payment Service
+    CREATE DATABASE payment_db WITH OWNER = booking_user;
+    
     -- Create email-worker tables
     CREATE TABLE IF NOT EXISTS email_jobs (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
