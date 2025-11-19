@@ -21,6 +21,7 @@ CREATE TABLE refunds (
     -- External references
     external_reference VARCHAR(255), -- Gateway refund transaction ID
     gateway_provider VARCHAR(50), -- stripe, paypal, vnpay, momo
+    provider_reference VARCHAR(255), -- Gateway-specific refund identifier
 
     -- Gateway response
     gateway_response JSONB, -- Full response from payment gateway
@@ -53,6 +54,7 @@ CREATE INDEX idx_refunds_status ON refunds(status);
 CREATE INDEX idx_refunds_refund_id ON refunds(refund_id);
 CREATE INDEX idx_refunds_external_reference ON refunds(external_reference);
 CREATE INDEX idx_refunds_gateway_provider ON refunds(gateway_provider);
+CREATE INDEX idx_refunds_provider_reference ON refunds(provider_reference);
 CREATE INDEX idx_refunds_created_at ON refunds(created_at);
 
 -- Composite indexes for common queries
@@ -67,6 +69,7 @@ COMMENT ON COLUMN refunds.payment_uuid IS 'Denormalized payment UUID for quick l
 COMMENT ON COLUMN refunds.refund_type IS 'Refund type: full, partial';
 COMMENT ON COLUMN refunds.status IS 'Refund status: pending, processing, success, failed, cancelled';
 COMMENT ON COLUMN refunds.gateway_provider IS 'Payment gateway: stripe, paypal, vnpay, momo';
+COMMENT ON COLUMN refunds.provider_reference IS 'Gateway refund identifier for webhook mapping';
 COMMENT ON COLUMN refunds.gateway_response IS 'Full JSON response from payment gateway';
 COMMENT ON COLUMN refunds.reason IS 'Short reason for refund';
 COMMENT ON COLUMN refunds.description IS 'Detailed description of refund';

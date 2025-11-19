@@ -9,6 +9,7 @@ import bookingRoutes from '../routes/booking.js';
 import paymentRoutes from '../routes/payment.js';
 import healthRoutes from '../routes/health.js';
 import organizationRoutes from '../routes/organization.js';
+import webhookRoutes from '../routes/webhook.js';
 
 /**
  * Initialize all API routes
@@ -18,6 +19,9 @@ import organizationRoutes from '../routes/organization.js';
 export const initializeRoutes = (app, swaggerSpec) => {
   // Health check route (no authentication required)
   app.use('/health', healthRoutes);
+
+  // Webhooks (public endpoint, signature verification handled downstream)
+  app.use('/webhooks', webhookRoutes);
 
   // API documentation
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

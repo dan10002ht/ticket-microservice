@@ -91,6 +91,10 @@ public class Refund {
     @Column(name = "gateway_provider", length = 50)
     private PaymentGateway gatewayProvider;
 
+    @Size(max = 255)
+    @Column(name = "provider_reference", length = 255)
+    private String providerReference;
+
     // Gateway response (stored as JSONB)
     @Type(JsonBinaryType.class)
     @Column(name = "gateway_response", columnDefinition = "jsonb")
