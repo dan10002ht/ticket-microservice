@@ -48,7 +48,7 @@ Complete documentation for Payment Service implementation.
 |                                | REST API            | ⏳ Not Started | -                                                                                                                                          |
 |                                | gRPC API            | ✅ Complete    | [`shared-lib/protos/payment.proto`](../../shared-lib/protos/payment.proto) + gRPC adapter (`src/main/java/com/ticketing/payment/grpc`)     |
 | **Phase 3: Webhook & Refunds** |                     |                |                                                                                                                                            |
-|                                | Webhook Handling    | ⏳ Not Started | -                                                                                                                                          |
+|                                | Webhook Handling    | 🚧 In Progress | gRPC `ProcessWebhook` + Stripe handler + gateway `/webhooks/payment/:gateway`                                                              |
 |                                | Refund Service      | ✅ Complete    | `PaymentService` / `RefundService` implementations                                                                                         |
 |                                | Transaction Logging | 🚧 In Progress | `TransactionLogService` + logging hooks                                                                                                    |
 
@@ -132,9 +132,9 @@ See [Database Schema](./03_DATABASE_SCHEMA.md) for details.
 
 ## 🔜 Immediate Next Steps
 
-1. Hoàn thiện Stripe capture/refund workflow (dùng `providerReference`, xử lý async webhook)
+1. Hoàn thiện Stripe capture/refund workflow (sử dụng `providerReference`, fallback lookup trong webhook)
 2. Bổ sung REST controller hoặc gateway client để truyền `IdempotencyKeyContext`/headers vào service layer
-3. Hoàn thiện logging/webhook flow (update `TransactionLogService`, chuẩn bị Stripe webhook handler)
+3. Hoàn thiện logging/webhook flow (verify signature tất cả provider, mapping refundId đầy đủ)
 4. Sau khi adapter hoạt động ổn định, thêm integration/unit tests cho service + adapter layer
 
 ---

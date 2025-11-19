@@ -65,6 +65,13 @@ public class StripeWebhookHandler implements PaymentWebhookHandler {
                 refundRepository.findByProviderReference(providerRef)
                         .ifPresent(refund -> builder.refundId(refund.getRefundId().toString()));
             }
+            case "charge.refund.failed" -> {
+                builder.type(WebhookEvent.EventType.REFUND_FAILED)
+                        .providerReference(paymentIntentId)
+                        .status("FAILED");
+                refundRepository.findByProviderReference(providerRef)
+                        .ifPresent(refund -> builder.refundId(refund.getRefundId().toString()));
+            }
             default -> {
                 log.info("Unhandled Stripe event type {}", type);
                 builder.type(null);

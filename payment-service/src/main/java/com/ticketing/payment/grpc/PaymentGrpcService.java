@@ -1,11 +1,15 @@
 package com.ticketing.payment.grpc;
 
 import com.google.protobuf.Timestamp;
+import com.ticketing.payment.entity.Payment;
+import com.ticketing.payment.entity.Refund;
 import com.ticketing.payment.entity.enums.PaymentGateway;
 import com.ticketing.payment.entity.enums.PaymentMethod;
 import com.ticketing.payment.entity.enums.PaymentStatus;
 import com.ticketing.payment.entity.enums.RefundStatus;
 import com.ticketing.payment.entity.enums.RefundType;
+import com.ticketing.payment.repository.PaymentRepository;
+import com.ticketing.payment.repository.RefundRepository;
 import com.ticketing.payment.service.PaymentService;
 import com.ticketing.payment.service.RefundService;
 import com.ticketing.payment.service.dto.IdempotencyKeyContext;
@@ -45,6 +49,8 @@ public class PaymentGrpcService extends PaymentServiceGrpc.PaymentServiceImplBas
 
     private final PaymentService paymentService;
     private final RefundService refundService;
+    private final PaymentRepository paymentRepository;
+    private final RefundRepository refundRepository;
     private final WebhookHandlerRegistry webhookHandlerRegistry;
 
     @Override
@@ -272,28 +278,50 @@ public class PaymentGrpcService extends PaymentServiceGrpc.PaymentServiceImplBas
     }
 
     private void handlePaymentSuccess(WebhookEvent event) {
-        if (StringUtils.isBlank(event.getPaymentId())) {
-            log.warn("Received payment success webhook without paymentId: {}", event);
+        Payment payment = resolvePayment(event);
+        if (payment == null) {
+            log.warn("Unable to resolve payment for success event {}", event);
             return;
         }
-        paymentService.markPaymentSuccess(UUID.fromString(event.getPaymentId()), event.getProviderReference());
+        paymentService.markPaymentSuccess(payment.getPaymentId(), event.getProviderReference());
     }
 
     private void handlePaymentFailure(WebhookEvent event) {
-        if (StringUtils.isBlank(event.getPaymentId())) {
-            log.warn("Received payment failure webhook without paymentId: {}", event);
+        Payment payment = resolvePayment(event);
+        if (payment == null) {
+            log.warn("Unable to resolve payment for failure event {}", event);
             return;
         }
-        paymentService.markPaymentFailed(UUID.fromString(event.getPaymentId()), "Gateway failure");
+        paymentService.markPaymentFailed(payment.getPaymentId(), "Gateway failure");
     }
 
     private void handleRefund(WebhookEvent event, RefundStatus status, String failureReason) {
-        if (StringUtils.isBlank(event.getRefundId())) {
-            log.warn("Received refund webhook without refundId: {}", event);
+        Refund refund = resolveRefund(event);
+        if (refund == null) {
+            log.warn("Unable to resolve refund for event {}", event);
             return;
         }
-        refundService.markRefundStatus(UUID.fromString(event.getRefundId()), status, event.getProviderReference(),
-                failureReason);
+        refundService.markRefundStatus(refund.getRefundId(), status, event.getProviderReference(), failureReason);
+    }
+
+    private Payment resolvePayment(WebhookEvent event) {
+        if (StringUtils.isNotBlank(event.getPaymentId())) {
+            return paymentRepository.findByPaymentId(UUID.fromString(event.getPaymentId())).orElse(null);
+        }
+        if (StringUtils.isNotBlank(event.getProviderReference())) {
+            return paymentRepository.findByProviderReference(event.getProviderReference()).orElse(null);
+        }
+        return null;
+    }
+
+    private Refund resolveRefund(WebhookEvent event) {
+        if (StringUtils.isNotBlank(event.getRefundId())) {
+            return refundRepository.findByRefundId(UUID.fromString(event.getRefundId())).orElse(null);
+        }
+        if (StringUtils.isNotBlank(event.getProviderReference())) {
+            return refundRepository.findByProviderReference(event.getProviderReference()).orElse(null);
+        }
+        return null;
     }
 
     @Override
