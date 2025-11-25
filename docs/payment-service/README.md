@@ -35,22 +35,22 @@ Complete documentation for Payment Service implementation.
 
 ## 🎯 Implementation Progress
 
-| Phase                          | Section             | Status         | Documents                                                                                                                                  |
-| ------------------------------ | ------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Phase 1: Core Setup**        |                     |                |                                                                                                                                            |
-|                                | Project Setup       | ✅ Complete    | [01_SETUP_COMPLETE.md](./01_SETUP_COMPLETE.md)                                                                                             |
-|                                | Database Setup      | ✅ Complete    | [02_DATABASE_SETUP_COMPLETE.md](./02_DATABASE_SETUP_COMPLETE.md)                                                                           |
-|                                | Entity Models       | ✅ Complete    | Source code (`src/main/java/com/ticketing/payment/entity`)                                                                                 |
-|                                | Repository Layer    | ✅ Complete    | Source code (`src/main/java/com/ticketing/payment/repository`)                                                                             |
-| **Phase 2: Payment Flow**      |                     |                |                                                                                                                                            |
-|                                | Service Layer       | ✅ Complete    | Source code (`src/main/java/com/ticketing/payment/service`)                                                                                |
-|                                | Stripe Adapter      | 🚧 In Progress | `StripeGatewayAdapter` (`src/main/java/com/ticketing/payment/adapter/stripe`) - authorize + provider refs wired, capture/refund hooking up |
-|                                | REST API            | ⏳ Not Started | -                                                                                                                                          |
-|                                | gRPC API            | ✅ Complete    | [`shared-lib/protos/payment.proto`](../../shared-lib/protos/payment.proto) + gRPC adapter (`src/main/java/com/ticketing/payment/grpc`)     |
-| **Phase 3: Webhook & Refunds** |                     |                |                                                                                                                                            |
-|                                | Webhook Handling    | 🚧 In Progress | gRPC `ProcessWebhook` + Stripe handler + gateway `/webhooks/payment/:gateway`                                                              |
-|                                | Refund Service      | ✅ Complete    | `PaymentService` / `RefundService` implementations                                                                                         |
-|                                | Transaction Logging | 🚧 In Progress | `TransactionLogService` + logging hooks                                                                                                    |
+| Phase                          | Section             | Status         | Documents                                                                                                                              |
+| ------------------------------ | ------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 1: Core Setup**        |                     |                |                                                                                                                                        |
+|                                | Project Setup       | ✅ Complete    | [01_SETUP_COMPLETE.md](./01_SETUP_COMPLETE.md)                                                                                         |
+|                                | Database Setup      | ✅ Complete    | [02_DATABASE_SETUP_COMPLETE.md](./02_DATABASE_SETUP_COMPLETE.md)                                                                       |
+|                                | Entity Models       | ✅ Complete    | Source code (`src/main/java/com/ticketing/payment/entity`)                                                                             |
+|                                | Repository Layer    | ✅ Complete    | Source code (`src/main/java/com/ticketing/payment/repository`)                                                                         |
+| **Phase 2: Payment Flow**      |                     |                |                                                                                                                                        |
+|                                | Service Layer       | ✅ Complete    | Source code (`src/main/java/com/ticketing/payment/service`) - includes `capturePayment`, `cancelPayment`                               |
+|                                | Stripe Adapter      | ✅ Complete    | `StripeGatewayAdapter` (`src/main/java/com/ticketing/payment/adapter/stripe`) - authorize, capture, refund, cancel fully implemented   |
+|                                | REST API            | ⏳ Not Started | -                                                                                                                                      |
+|                                | gRPC API            | ✅ Complete    | [`shared-lib/protos/payment.proto`](../../shared-lib/protos/payment.proto) + gRPC adapter (`src/main/java/com/ticketing/payment/grpc`) |
+| **Phase 3: Webhook & Refunds** |                     |                |                                                                                                                                        |
+|                                | Webhook Handling    | ✅ Complete    | gRPC `ProcessWebhook` + Stripe handler (signature verification + mapping) + gateway `/webhooks/payment/:gateway`                       |
+|                                | Refund Service      | ✅ Complete    | `PaymentService` / `RefundService` implementations                                                                                     |
+|                                | Transaction Logging | ✅ Complete    | `TransactionLogService` + logging hooks integrated in all payment/refund flows                                                         |
 
 ---
 
@@ -132,10 +132,12 @@ See [Database Schema](./03_DATABASE_SCHEMA.md) for details.
 
 ## 🔜 Immediate Next Steps
 
-1. Hoàn thiện Stripe capture/refund workflow (sử dụng `providerReference`, fallback lookup trong webhook)
-2. Bổ sung REST controller hoặc gateway client để truyền `IdempotencyKeyContext`/headers vào service layer
-3. Hoàn thiện logging/webhook flow (verify signature tất cả provider, mapping refundId đầy đủ)
-4. Sau khi adapter hoạt động ổn định, thêm integration/unit tests cho service + adapter layer
+1. ✅ **Hoàn thiện Stripe capture/refund workflow** - Đã implement `capturePayment` và `cancelPayment` trong `PaymentService`, tích hợp với gateway adapter
+2. ✅ **Hoàn thiện webhook mapping** - Stripe webhook handler đã verify signature và map events đầy đủ (payment + refund)
+3. ✅ **Transaction logging** - Đã tích hợp logging hooks vào tất cả payment/refund flows
+4. ✅ **gRPC endpoints cho capture/cancel** - Đã thêm `CapturePayment` và `CancelPayment` RPCs vào proto và implement handlers
+5. **Mở rộng gateway adapters** - Thêm handlers cho PayPal, VNPay, MoMo (tận dụng registry pattern đã có)
+6. **Integration tests** - Viết tests cho service + adapter layer sau khi adapter hoạt động ổn định
 
 ---
 

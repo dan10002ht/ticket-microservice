@@ -16,6 +16,8 @@ service PaymentService {
   rpc ListPayments(ListPaymentsRequest) returns (ListPaymentsResponse);
   rpc MarkPaymentSuccess(MarkPaymentSuccessRequest) returns (PaymentResponse);
   rpc MarkPaymentFailed(MarkPaymentFailedRequest) returns (PaymentResponse);
+  rpc CapturePayment(CapturePaymentRequest) returns (PaymentResponse);
+  rpc CancelPayment(CancelPaymentRequest) returns (PaymentResponse);
 
   rpc CreateRefund(CreateRefundRequest) returns (RefundResponse);
   rpc ListRefunds(ListRefundsRequest) returns (ListRefundsResponse);
@@ -65,6 +67,15 @@ message MarkPaymentSuccessRequest {
 message MarkPaymentFailedRequest {
   string payment_id = 1;
   string failure_reason = 2;
+}
+
+message CapturePaymentRequest {
+  string payment_id = 1;
+}
+
+message CancelPaymentRequest {
+  string payment_id = 1;
+  string reason = 2;
 }
 
 message CreateRefundRequest {

@@ -176,6 +176,44 @@ public class PaymentGrpcService extends PaymentServiceGrpc.PaymentServiceImplBas
     }
 
     @Override
+    public void capturePayment(CapturePaymentRequest request, StreamObserver<PaymentResponse> responseObserver) {
+        try {
+            UUID paymentId = parseUuid(requireNonBlank(request.getPaymentId(), "payment_id"), "payment_id");
+            com.ticketing.payment.service.dto.PaymentResponse serviceResponse = paymentService
+                    .capturePayment(paymentId);
+            responseObserver.onNext(PaymentResponse.newBuilder()
+                    .setPayment(toProtoPayment(serviceResponse))
+                    .build());
+            responseObserver.onCompleted();
+        } catch (StatusRuntimeException e) {
+            responseObserver.onError(e);
+        } catch (Exception e) {
+            log.error("Failed to capture payment {}", request.getPaymentId(), e);
+            responseObserver.onError(Status.INTERNAL.withDescription(e.getMessage()).withCause(e).asRuntimeException());
+        }
+    }
+
+    @Override
+    public void cancelPayment(CancelPaymentRequest request, StreamObserver<PaymentResponse> responseObserver) {
+        try {
+            UUID paymentId = parseUuid(requireNonBlank(request.getPaymentId(), "payment_id"), "payment_id");
+            String reason = emptyToNull(request.getReason());
+            com.ticketing.payment.service.dto.PaymentResponse serviceResponse = paymentService.cancelPayment(
+                    paymentId,
+                    reason != null ? reason : "Payment cancelled via gRPC");
+            responseObserver.onNext(PaymentResponse.newBuilder()
+                    .setPayment(toProtoPayment(serviceResponse))
+                    .build());
+            responseObserver.onCompleted();
+        } catch (StatusRuntimeException e) {
+            responseObserver.onError(e);
+        } catch (Exception e) {
+            log.error("Failed to cancel payment {}", request.getPaymentId(), e);
+            responseObserver.onError(Status.INTERNAL.withDescription(e.getMessage()).withCause(e).asRuntimeException());
+        }
+    }
+
+    @Override
     public void createRefund(CreateRefundRequest request, StreamObserver<RefundResponse> responseObserver) {
         try {
             String idempotencyKey = requireNonBlank(request.getIdempotencyKey(), "idempotency_key");

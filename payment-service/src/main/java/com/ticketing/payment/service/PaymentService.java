@@ -170,6 +170,116 @@ public class PaymentService {
         return paymentMapper.toResponse(payment);
     }
 
+    /**
+     * Capture a previously authorized payment. This is used for manual capture
+     * flows where payment was authorized but not yet captured.
+     */
+    @Transactional
+    public PaymentResponse capturePayment(UUID paymentId) {
+        Payment payment = paymentRepository.findByPaymentId(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
+
+        if (payment.getProviderReference() == null) {
+            throw new IllegalStateException("Payment does not have a provider reference");
+        }
+
+        if (payment.getStatus() != PaymentStatus.PROCESSING) {
+            throw new IllegalStateException("Payment must be in PROCESSING status to capture");
+        }
+
+        GatewayRequestContext gatewayContext = GatewayRequestContext.builder()
+                .providerReference(payment.getProviderReference())
+                .build();
+
+        PaymentCreateCommand dummyCommand = PaymentCreateCommand.builder()
+                .gatewayProvider(payment.getGatewayProvider())
+                .build();
+
+        GatewayResponse gatewayResponse = gatewayRegistry.resolve(payment.getGatewayProvider())
+                .capture(dummyCommand, gatewayContext);
+
+        payment.setGatewayResponse(gatewayResponse.getRawPayload());
+
+        if (gatewayResponse.isSuccessful()) {
+            payment.markAsSuccess(LocalDateTime.now());
+            transactionLogService.logPaymentEvent(
+                    TransactionType.PAYMENT_CAPTURED,
+                    TransactionStatus.SUCCESS,
+                    payment,
+                    "payment.captured",
+                    gatewayResponse.getProviderReference(),
+                    null,
+                    null);
+        } else {
+            payment.markAsFailed(gatewayResponse.getErrorMessage());
+            transactionLogService.logPaymentEvent(
+                    TransactionType.PAYMENT_FAILED,
+                    TransactionStatus.FAILED,
+                    payment,
+                    "payment.capture.failed",
+                    gatewayResponse.getProviderReference(),
+                    gatewayResponse.getErrorCode(),
+                    gatewayResponse.getErrorMessage());
+        }
+
+        paymentRepository.save(payment);
+        log.info("Payment {} capture attempted, status: {}", paymentId, gatewayResponse.isSuccessful());
+        return paymentMapper.toResponse(payment);
+    }
+
+    /**
+     * Cancel a payment that is in PROCESSING status. This releases any held
+     * funds or authorization.
+     */
+    @Transactional
+    public PaymentResponse cancelPayment(UUID paymentId, String reason) {
+        Payment payment = paymentRepository.findByPaymentId(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("Payment not found"));
+
+        if (payment.getProviderReference() == null) {
+            throw new IllegalStateException("Payment does not have a provider reference");
+        }
+
+        if (payment.getStatus() != PaymentStatus.PROCESSING) {
+            throw new IllegalStateException("Payment must be in PROCESSING status to cancel");
+        }
+
+        GatewayRequestContext gatewayContext = GatewayRequestContext.builder()
+                .providerReference(payment.getProviderReference())
+                .build();
+
+        GatewayResponse gatewayResponse = gatewayRegistry.resolve(payment.getGatewayProvider())
+                .cancelPayment(payment.getProviderReference(), reason, gatewayContext);
+
+        payment.setGatewayResponse(gatewayResponse.getRawPayload());
+
+        if (gatewayResponse.isSuccessful()) {
+            payment.markAsCancelled("system", reason != null ? reason : "Payment cancelled via gateway");
+            transactionLogService.logPaymentEvent(
+                    TransactionType.PAYMENT_CANCELLED,
+                    TransactionStatus.SUCCESS,
+                    payment,
+                    "payment.cancelled",
+                    gatewayResponse.getProviderReference(),
+                    null,
+                    null);
+        } else {
+            transactionLogService.logPaymentEvent(
+                    TransactionType.PAYMENT_FAILED,
+                    TransactionStatus.FAILED,
+                    payment,
+                    "payment.cancel.failed",
+                    gatewayResponse.getProviderReference(),
+                    gatewayResponse.getErrorCode(),
+                    gatewayResponse.getErrorMessage());
+            throw new IllegalStateException("Failed to cancel payment: " + gatewayResponse.getErrorMessage());
+        }
+
+        paymentRepository.save(payment);
+        log.info("Payment {} cancelled", paymentId);
+        return paymentMapper.toResponse(payment);
+    }
+
     // Legacy helper kept for future use (e.g., when context not available)
     private void verifyIdempotency(String idempotencyKey) {
         if (idempotencyKey == null) {

@@ -12,6 +12,8 @@ public enum TransactionType {
     PAYMENT_INITIATED("payment_initiated", "Payment Initiated", true, false),
     PAYMENT_SUCCESS("payment_success", "Payment Success", true, false),
     PAYMENT_FAILED("payment_failed", "Payment Failed", true, false),
+    PAYMENT_CAPTURED("payment_captured", "Payment Captured", true, false),
+    PAYMENT_CANCELLED("payment_cancelled", "Payment Cancelled", true, false),
     REFUND_INITIATED("refund_initiated", "Refund Initiated", false, true),
     REFUND_SUCCESS("refund_success", "Refund Success", false, true),
     REFUND_FAILED("refund_failed", "Refund Failed", false, true),
