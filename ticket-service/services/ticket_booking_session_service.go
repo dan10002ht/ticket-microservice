@@ -7,14 +7,17 @@ import (
 
 	"go.uber.org/zap"
 
+	paymentpb "shared-lib/protos/payment"
 	"ticket-service/grpcclient"
 	"ticket-service/metrics"
 	"ticket-service/models"
 	"ticket-service/repositories"
 )
 
-// BookingService handles booking session business logic
-type BookingService struct {
+// TicketBookingSessionService handles booking session business logic within
+// ticket-service. It is intentionally named to distinguish it from the Booking
+// Service microservice that orchestrates cross-service workflows.
+type TicketBookingSessionService struct {
 	bookingRepo     *repositories.BookingSessionRepository
 	reservationRepo *repositories.SeatReservationRepository
 	eventClient     *grpcclient.EventServiceClient
@@ -22,15 +25,15 @@ type BookingService struct {
 	logger          *zap.Logger
 }
 
-// NewBookingService creates a new booking service
-func NewBookingService(
+// NewTicketBookingSessionService creates a new ticket booking session service
+func NewTicketBookingSessionService(
 	bookingRepo *repositories.BookingSessionRepository,
 	reservationRepo *repositories.SeatReservationRepository,
 	eventClient *grpcclient.EventServiceClient,
 	paymentClient *grpcclient.PaymentServiceClient,
 	logger *zap.Logger,
-) *BookingService {
-	return &BookingService{
+) *TicketBookingSessionService {
+	return &TicketBookingSessionService{
 		bookingRepo:     bookingRepo,
 		reservationRepo: reservationRepo,
 		eventClient:     eventClient,
@@ -40,7 +43,7 @@ func NewBookingService(
 }
 
 // CreateBookingSession creates a new booking session
-func (s *BookingService) CreateBookingSession(ctx context.Context, req *CreateBookingSessionRequest) (*models.BookingSession, error) {
+func (s *TicketBookingSessionService) CreateBookingSession(ctx context.Context, req *BookingSessionCreateCommand) (*models.BookingSession, error) {
 	// Validate request
 	if err := s.validateCreateBookingSessionRequest(req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -91,7 +94,7 @@ func (s *BookingService) CreateBookingSession(ctx context.Context, req *CreateBo
 }
 
 // GetBookingSession retrieves a booking session by ID
-func (s *BookingService) GetBookingSession(ctx context.Context, sessionID string) (*models.BookingSession, error) {
+func (s *TicketBookingSessionService) GetBookingSession(ctx context.Context, sessionID string) (*models.BookingSession, error) {
 	session, err := s.bookingRepo.GetByID(ctx, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get booking session: %w", err)
@@ -101,7 +104,7 @@ func (s *BookingService) GetBookingSession(ctx context.Context, sessionID string
 }
 
 // GetBookingSessionByToken retrieves a booking session by token
-func (s *BookingService) GetBookingSessionByToken(ctx context.Context, sessionToken string) (*models.BookingSession, error) {
+func (s *TicketBookingSessionService) GetBookingSessionByToken(ctx context.Context, sessionToken string) (*models.BookingSession, error) {
 	session, err := s.bookingRepo.GetBySessionToken(ctx, sessionToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get booking session: %w", err)
@@ -111,7 +114,7 @@ func (s *BookingService) GetBookingSessionByToken(ctx context.Context, sessionTo
 }
 
 // AddSeatToSession adds a seat to the booking session
-func (s *BookingService) AddSeatToSession(ctx context.Context, req *AddSeatToSessionRequest) error {
+func (s *TicketBookingSessionService) AddSeatToSession(ctx context.Context, req *BookingSessionAddSeatCommand) error {
 	// Get booking session
 	session, err := s.bookingRepo.GetByID(ctx, req.SessionID)
 	if err != nil {
@@ -191,7 +194,7 @@ func (s *BookingService) AddSeatToSession(ctx context.Context, req *AddSeatToSes
 }
 
 // RemoveSeatFromSession removes a seat from the booking session
-func (s *BookingService) RemoveSeatFromSession(ctx context.Context, req *RemoveSeatFromSessionRequest) error {
+func (s *TicketBookingSessionService) RemoveSeatFromSession(ctx context.Context, req *BookingSessionRemoveSeatCommand) error {
 	// Get booking session
 	session, err := s.bookingRepo.GetByID(ctx, req.SessionID)
 	if err != nil {
@@ -262,7 +265,7 @@ func (s *BookingService) RemoveSeatFromSession(ctx context.Context, req *RemoveS
 }
 
 // CompleteBookingSession completes a booking session
-func (s *BookingService) CompleteBookingSession(ctx context.Context, req *CompleteBookingSessionRequest) (*CompleteBookingSessionResponse, error) {
+func (s *TicketBookingSessionService) CompleteBookingSession(ctx context.Context, req *BookingSessionCompleteCommand) (*BookingSessionCompleteResult, error) {
 	// Get booking session
 	session, err := s.bookingRepo.GetByID(ctx, req.SessionID)
 	if err != nil {
@@ -287,7 +290,7 @@ func (s *BookingService) CompleteBookingSession(ctx context.Context, req *Comple
 	// Process payment if required
 	var paymentID string
 	if session.TotalAmount > 0 && s.paymentClient != nil {
-		paymentReq := &grpcclient.ProcessPaymentRequest{
+		paymentReq := &paymentpb.ProcessPaymentRequest{
 			BookingId:     req.SessionID,
 			Amount:        session.TotalAmount,
 			Currency:      session.Currency,
@@ -331,7 +334,7 @@ func (s *BookingService) CompleteBookingSession(ctx context.Context, req *Comple
 		zap.Int("seat_count", len(reservations)),
 	)
 
-	return &CompleteBookingSessionResponse{
+	return &BookingSessionCompleteResult{
 		Success:     true,
 		PaymentID:   paymentID,
 		SeatCount:   len(reservations),
@@ -340,7 +343,7 @@ func (s *BookingService) CompleteBookingSession(ctx context.Context, req *Comple
 }
 
 // CancelBookingSession cancels a booking session
-func (s *BookingService) CancelBookingSession(ctx context.Context, req *CancelBookingSessionRequest) error {
+func (s *TicketBookingSessionService) CancelBookingSession(ctx context.Context, req *BookingSessionCancelCommand) error {
 	// Get booking session
 	session, err := s.bookingRepo.GetByID(ctx, req.SessionID)
 	if err != nil {
@@ -399,7 +402,7 @@ func (s *BookingService) CancelBookingSession(ctx context.Context, req *CancelBo
 }
 
 // GetSessionReservations gets seat reservations for a session
-func (s *BookingService) GetSessionReservations(ctx context.Context, sessionID string) ([]*models.SeatReservation, error) {
+func (s *TicketBookingSessionService) GetSessionReservations(ctx context.Context, sessionID string) ([]*models.SeatReservation, error) {
 	reservations, err := s.reservationRepo.GetByBookingSessionID(ctx, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session reservations: %w", err)
@@ -409,14 +412,14 @@ func (s *BookingService) GetSessionReservations(ctx context.Context, sessionID s
 }
 
 // CleanupExpiredSessions cleans up expired booking sessions
-func (s *BookingService) CleanupExpiredSessions(ctx context.Context) error {
+func (s *TicketBookingSessionService) CleanupExpiredSessions(ctx context.Context) error {
 	expiredSessions, err := s.bookingRepo.GetExpiredSessions(ctx, time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to get expired sessions: %w", err)
 	}
 
 	for _, session := range expiredSessions {
-		req := &CancelBookingSessionRequest{
+		req := &BookingSessionCancelCommand{
 			SessionID:   session.ID,
 			Reason:      "Session expired",
 			CancelledBy: "system",
@@ -439,7 +442,7 @@ func (s *BookingService) CleanupExpiredSessions(ctx context.Context) error {
 
 // Helper methods
 
-func (s *BookingService) validateCreateBookingSessionRequest(req *CreateBookingSessionRequest) error {
+func (s *TicketBookingSessionService) validateCreateBookingSessionRequest(req *BookingSessionCreateCommand) error {
 	if req.UserID == "" {
 		return fmt.Errorf("user_id is required")
 	}
@@ -455,17 +458,17 @@ func (s *BookingService) validateCreateBookingSessionRequest(req *CreateBookingS
 	return nil
 }
 
-func (s *BookingService) generateSessionToken(userID string) string {
+func (s *TicketBookingSessionService) generateSessionToken(userID string) string {
 	timestamp := time.Now().Unix()
 	return fmt.Sprintf("BKG-%s-%d", userID[:8], timestamp)
 }
 
-func (s *BookingService) generateReservationToken(sessionID, seatID string) string {
+func (s *TicketBookingSessionService) generateReservationToken(sessionID, seatID string) string {
 	timestamp := time.Now().Unix()
 	return fmt.Sprintf("RSV-%s-%s-%d", sessionID[:8], seatID[:8], timestamp)
 }
 
-func (s *BookingService) checkSeatAvailability(ctx context.Context, eventID, seatID string) (bool, error) {
+func (s *TicketBookingSessionService) checkSeatAvailability(ctx context.Context, eventID, seatID string) (bool, error) {
 	resp, err := s.eventClient.GetSeatAvailability(ctx, eventID, seatID)
 	if err != nil {
 		return false, err
@@ -475,7 +478,7 @@ func (s *BookingService) checkSeatAvailability(ctx context.Context, eventID, sea
 
 // Request/Response types
 
-type CreateBookingSessionRequest struct {
+type BookingSessionCreateCommand struct {
 	UserID         string `json:"user_id"`
 	EventID        string `json:"event_id"`
 	Currency       string `json:"currency"`
@@ -485,7 +488,7 @@ type CreateBookingSessionRequest struct {
 	CreatedBy      string `json:"created_by,omitempty"`
 }
 
-type AddSeatToSessionRequest struct {
+type BookingSessionAddSeatCommand struct {
 	SessionID       string  `json:"session_id"`
 	EventID         string  `json:"event_id"`
 	SeatID          string  `json:"seat_id"`
@@ -497,27 +500,27 @@ type AddSeatToSessionRequest struct {
 	CreatedBy       string  `json:"created_by,omitempty"`
 }
 
-type RemoveSeatFromSessionRequest struct {
+type BookingSessionRemoveSeatCommand struct {
 	SessionID string `json:"session_id"`
 	SeatID    string `json:"seat_id"`
 	Reason    string `json:"reason"`
 	RemovedBy string `json:"removed_by"`
 }
 
-type CompleteBookingSessionRequest struct {
+type BookingSessionCompleteCommand struct {
 	SessionID     string `json:"session_id"`
 	PaymentMethod string `json:"payment_method"`
 	CompletedBy   string `json:"completed_by"`
 }
 
-type CompleteBookingSessionResponse struct {
+type BookingSessionCompleteResult struct {
 	Success     bool    `json:"success"`
 	PaymentID   string  `json:"payment_id"`
 	SeatCount   int     `json:"seat_count"`
 	TotalAmount float64 `json:"total_amount"`
 }
 
-type CancelBookingSessionRequest struct {
+type BookingSessionCancelCommand struct {
 	SessionID   string `json:"session_id"`
 	Reason      string `json:"reason"`
 	CancelledBy string `json:"cancelled_by"`

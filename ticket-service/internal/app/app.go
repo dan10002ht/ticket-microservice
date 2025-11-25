@@ -23,7 +23,7 @@ type App struct {
 	config             *config.Config
 	db                 *database.Connection
 	ticketService      *services.TicketService
-	bookingService     *services.BookingService
+	bookingService     *services.TicketBookingSessionService
 	reservationService *services.ReservationService
 	eventClient        *grpcclient.EventServiceClient
 	paymentClient      *grpcclient.PaymentServiceClient
@@ -79,7 +79,7 @@ func (a *App) Initialize() error {
 
 	// Initialize services
 	ticketService := services.NewTicketService(ticketRepo, eventClient, a.logger)
-	bookingService := services.NewBookingService(bookingRepo, reservationRepo, eventClient, a.logger)
+	bookingService := services.NewTicketBookingSessionService(bookingRepo, reservationRepo, eventClient, a.paymentClient, a.logger)
 	reservationService := services.NewReservationService(reservationRepo, eventClient, a.logger)
 
 	a.ticketService = ticketService
@@ -145,7 +145,7 @@ func (a *App) GetTicketService() *services.TicketService {
 }
 
 // GetBookingService returns the booking service instance
-func (a *App) GetBookingService() *services.BookingService {
+func (a *App) GetBookingService() *services.TicketBookingSessionService {
 	return a.bookingService
 }
 

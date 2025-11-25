@@ -7,6 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
+	paymentpb "shared-lib/protos/payment"
 	"ticket-service/grpcclient"
 	"ticket-service/metrics"
 	"ticket-service/models"
@@ -207,7 +208,7 @@ func (s *TicketService) ProcessPayment(ctx context.Context, req *ProcessPaymentR
 
 	// Process payment via Payment Service
 	if s.paymentClient != nil {
-		paymentReq := &grpcclient.ProcessPaymentRequest{
+		paymentReq := &paymentpb.ProcessPaymentRequest{
 			TicketId:      req.TicketID,
 			Amount:        ticket.FinalPrice,
 			Currency:      ticket.Currency,

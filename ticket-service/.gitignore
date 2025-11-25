@@ -28,4 +28,9 @@ vendor/
 *.log
 
 # Misc
-.DS_Store 
+.DS_Store
+
+# Generated protobuf artifacts
+internal/protos/
+temp-protos/
+*.pb.go

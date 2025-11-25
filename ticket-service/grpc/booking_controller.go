@@ -18,12 +18,12 @@ import (
 // BookingController handles gRPC requests for booking operations
 type BookingController struct {
 	ticketpb.UnimplementedBookingServiceServer
-	bookingService *services.BookingService
+	bookingService *services.TicketBookingSessionService
 	logger         *zap.Logger
 }
 
 // NewBookingController creates a new booking controller
-func NewBookingController(bookingService *services.BookingService, logger *zap.Logger) *BookingController {
+func NewBookingController(bookingService *services.TicketBookingSessionService, logger *zap.Logger) *BookingController {
 	return &BookingController{
 		bookingService: bookingService,
 		logger:         logger,
@@ -38,7 +38,7 @@ func (c *BookingController) CreateBookingSession(ctx context.Context, req *ticke
 		zap.Int32("timeout_minutes", req.TimeoutMinutes),
 	)
 
-	serviceReq := &services.CreateBookingSessionRequest{
+	serviceReq := &services.BookingSessionCreateCommand{
 		UserID:         req.UserId,
 		EventID:        req.EventId,
 		Currency:       req.Currency,
@@ -127,7 +127,7 @@ func (c *BookingController) AddSeatToSession(ctx context.Context, req *ticketpb.
 		zap.String("seat_id", req.SeatId),
 	)
 
-	serviceReq := &services.AddSeatToSessionRequest{
+	serviceReq := &services.BookingSessionAddSeatCommand{
 		SessionID:       req.SessionId,
 		EventID:         req.EventId,
 		SeatID:          req.SeatId,
@@ -165,7 +165,7 @@ func (c *BookingController) RemoveSeatFromSession(ctx context.Context, req *tick
 		zap.String("seat_id", req.SeatId),
 	)
 
-	serviceReq := &services.RemoveSeatFromSessionRequest{
+	serviceReq := &services.BookingSessionRemoveSeatCommand{
 		SessionID: req.SessionId,
 		SeatID:    req.SeatId,
 		Reason:    req.Reason,
@@ -204,7 +204,7 @@ func (c *BookingController) CompleteBookingSession(ctx context.Context, req *tic
 		zap.String("payment_method", req.PaymentMethod),
 	)
 
-	serviceReq := &services.CompleteBookingSessionRequest{
+	serviceReq := &services.BookingSessionCompleteCommand{
 		SessionID:     req.SessionId,
 		PaymentMethod: req.PaymentMethod,
 		CompletedBy:   req.CompletedBy,
@@ -238,7 +238,7 @@ func (c *BookingController) CancelBookingSession(ctx context.Context, req *ticke
 		zap.String("reason", req.Reason),
 	)
 
-	serviceReq := &services.CancelBookingSessionRequest{
+	serviceReq := &services.BookingSessionCancelCommand{
 		SessionID:   req.SessionId,
 		Reason:      req.Reason,
 		CancelledBy: req.CancelledBy,

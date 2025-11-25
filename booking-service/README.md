@@ -11,6 +11,27 @@
 
 The Booking Service is the core component of the ticket booking system, responsible for managing ticket reservations, seat allocation, and booking lifecycle. It implements the Saga pattern for distributed transactions and uses Redis for distributed locking to prevent race conditions during high-concurrency booking scenarios.
 
+---
+
+## Current Implementation Status (Boilerplate)
+
+The initial Spring Boot scaffolding is now in place and mirrors the conventions used in `payment-service`:
+
+| Layer            | Path                                                                                 | Notes                                           |
+| ---------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| Application boot | `src/main/java/com/ticketing/booking/BookingServiceApplication.java`                 | Spring Boot entrypoint                          |
+| Config           | `config/RedisConfig.java`, `config/KafkaConfig.java`                                 | Redis + Kafka bootstrap beans                   |
+| Domain           | `entity/Booking.java`, `entity/BookingItem.java`, `entity/enums/*`                   | JPA entities & enums                            |
+| Repositories     | `repository/BookingRepository.java`, `BookingItemRepository.java`                    | Spring Data JPA repositories                    |
+| Services         | `service/BookingService.java`, `BookingLockService.java`, `BookingEventPublisher.java` | Core orchestration stubs                        |
+| DTO/Mapper       | `service/dto/*`, `dto/request/*`, `dto/response/*`, `service/mapper/BookingMapper.java` | Request/response contracts                      |
+| API              | `controller/BookingController.java`, `grpc/BookingGrpcService.java`                  | REST + gRPC entrypoints (using shared protos)   |
+| Persistence      | `src/main/resources/db/migration/V1__*.sql`                                          | Flyway migrations for bookings & items          |
+| Configuration    | `application.yml`, `application-dev.yml`, `application-prod.yml`                     | Environment-aware settings                      |
+| Build            | `pom.xml`, `Dockerfile`                                                              | Maven modules + multi-stage image (like payment)|
+
+> The service currently exposes only scaffolding logic (happy-path booking creation/lookup). Saga orchestration, queue integration, and advanced validation will be layered on in subsequent phases.
+
 ## 🎯 Responsibilities
 
 - **Ticket Reservation**: Handle ticket booking requests with concurrency control

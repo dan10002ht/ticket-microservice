@@ -187,5 +187,17 @@ restore/
 generated/
 protos/generated/
 
+# Build artifacts (multi-language)
+**/target/
+**/build/
+**/dist/
+**/out/
+**/.mvn/wrapper/maven-wrapper.jar
+
+# Generated protobuf sources
+**/*.pb.go
+**/internal/protos/
+temp-protos/
+
 # Lock files (keep yarn.lock for consistency)
 # yarn.lock is kept for dependency consistency 

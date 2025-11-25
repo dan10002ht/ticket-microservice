@@ -18,7 +18,7 @@ import (
 type Server struct {
 	server             *grpc.Server
 	ticketService      *services.TicketService
-	bookingService     *services.BookingService
+	bookingService     *services.TicketBookingSessionService
 	reservationService *services.ReservationService
 	logger             *zap.Logger
 }
@@ -26,7 +26,7 @@ type Server struct {
 // NewServer creates a new gRPC server
 func NewServer(
 	ticketService *services.TicketService,
-	bookingService *services.BookingService,
+	bookingService *services.TicketBookingSessionService,
 	reservationService *services.ReservationService,
 	logger *zap.Logger,
 ) *Server {
