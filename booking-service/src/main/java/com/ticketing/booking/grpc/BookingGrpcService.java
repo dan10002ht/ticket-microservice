@@ -78,5 +78,3 @@ public class BookingGrpcService extends BookingServiceImplBase {
     }
 }
 package com.ticketing.booking.grpc;
-
-
