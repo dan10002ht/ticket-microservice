@@ -12,10 +12,13 @@ import org.springframework.util.StringUtils;
 import com.ticketing.booking.entity.Booking;
 import com.ticketing.booking.entity.enums.BookingStatus;
 import com.ticketing.booking.entity.enums.PaymentStatus;
+import com.ticketing.booking.exception.BookingNotFoundException;
+import com.ticketing.booking.metrics.BookingMetricsService;
 import com.ticketing.booking.repository.BookingRepository;
 import com.ticketing.booking.service.dto.BookingCreateCommand;
 import com.ticketing.booking.service.dto.BookingResult;
 import com.ticketing.booking.service.mapper.BookingMapper;
+import com.ticketing.booking.service.saga.BookingSagaOrchestrator;
 import com.ticketing.booking.util.ReferenceGenerator;
 
 import lombok.RequiredArgsConstructor;
@@ -28,30 +31,28 @@ public class BookingService {
     private final BookingMapper bookingMapper;
     private final BookingLockService lockService;
     private final BookingEventPublisher eventPublisher;
+    private final BookingSagaOrchestrator sagaOrchestrator;
+    private final BookingMetricsService metricsService;
 
+    /**
+     * Create booking using saga orchestrator
+     * This method orchestrates the full booking flow:
+     * 1. Reserve seats (Ticket Service)
+     * 2. Process payment (Payment Service)
+     * 3. Confirm booking or compensate on failure
+     */
     @Transactional
     public BookingResult createBooking(BookingCreateCommand command) {
         validate(command);
-
-        RLock lock = null;
-        try {
-            lock = lockService.acquireLock(command.getEventId());
-            Booking booking = buildBooking(command);
-            booking = bookingRepository.save(booking);
-            eventPublisher.publishBookingCreated(booking);
-            return bookingMapper.toResult(booking);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while acquiring booking lock", e);
-        } finally {
-            lockService.releaseLock(lock);
-        }
+        BookingResult result = sagaOrchestrator.executeBookingSaga(command);
+        metricsService.recordBookingCreated(command.getEventId());
+        return result;
     }
 
     @Transactional(readOnly = true)
     public Booking getBooking(UUID bookingId) {
         return bookingRepository.findByBookingId(bookingId)
-                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+                .orElseThrow(() -> new BookingNotFoundException(bookingId));
     }
 
     @Transactional
@@ -60,6 +61,7 @@ public class BookingService {
         booking.confirm(paymentReference);
         bookingRepository.save(booking);
         eventPublisher.publishBookingConfirmed(booking);
+        metricsService.recordBookingConfirmed(booking.getEventId());
         return bookingMapper.toResult(booking);
     }
 
@@ -69,6 +71,7 @@ public class BookingService {
         booking.cancel(reason);
         bookingRepository.save(booking);
         eventPublisher.publishBookingCancelled(booking);
+        metricsService.recordBookingCancelled(booking.getEventId(), reason);
         return bookingMapper.toResult(booking);
     }
 

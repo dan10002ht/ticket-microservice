@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package ticket;
 
+option java_multiple_files = true;
+option java_package = "com.ticketing.booking.grpc";
+option java_outer_classname = "TicketProto";
 
 import "google/protobuf/timestamp.proto";
 
