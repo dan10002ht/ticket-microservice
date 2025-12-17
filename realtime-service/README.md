@@ -1,680 +1,332 @@
-# Realtime Service (Node.js)
+# Realtime Service (Go + Gorilla WebSocket)
 
-**Language:** Node.js
+**Language:** Go
 
-**Why Node.js?**
-
-- WebSocket, real-time, pub/sub
-- Fast push, easy integration with frontend
+**Why Go + Gorilla WebSocket?**
+- Performance: Go handles 100k+ concurrent connections per instance
+- Memory efficiency: ~30MB per 10k connections (vs ~100MB for Node.js)
+- Native concurrency: Goroutines are ideal for WebSocket connections
+- Consistency: Matches existing Go workers (booking-worker, email-worker)
+- Production-proven: Gorilla WebSocket is widely used in production systems
 
 ## Overview
 
-The Realtime Service provides real-time communication capabilities for the booking system using WebSocket connections. It handles live updates for ticket availability, booking confirmations, payment status, and user notifications. The service uses Redis Pub/Sub for scalable message distribution.
+The Realtime Service handles real-time notifications and WebSocket broadcasting for the ticketing system. It enables instant updates for booking status, payment confirmations, ticket availability, and queue positions.
 
-## 🎯 Responsibilities
+## Responsibilities
 
-- **WebSocket Management**: Handle WebSocket connections and lifecycle
-- **Real-time Updates**: Push live updates to connected clients
-- **Event Broadcasting**: Distribute events across multiple instances
-- **Connection Scaling**: Scale WebSocket connections horizontally
-- **Message Routing**: Route messages to appropriate clients
-- **Presence Management**: Track user online status
-- **Room Management**: Manage event-specific chat rooms
-- **Redis Pub/Sub**: Subscribe to events from other services
+- **WebSocket Connections**: Manage client WebSocket connections with authentication
+- **Real-time Notifications**: Push booking, payment, and ticket updates to clients
+- **Room Management**: Group clients by event for targeted broadcasts
+- **Redis Pub/Sub**: Horizontal scaling across multiple instances
+- **gRPC API**: Internal service communication for sending notifications
 
-## 🏗️ Architecture
+## Architecture
 
 ### Technology Stack
 
-- **Runtime**: Node.js 18+
-- **Framework**: Socket.io for WebSocket management
-- **Cache**: Redis (Pub/Sub, session storage)
-- **Message Queue**: Redis Pub/Sub for event distribution
-- **Load Balancer**: Sticky sessions for WebSocket connections
+- **Runtime**: Go 1.22+
+- **WebSocket**: Gorilla WebSocket
+- **Message Broker**: Redis Pub/Sub
+- **Internal API**: gRPC
 - **Monitoring**: Prometheus + Grafana
-- **Authentication**: JWT token validation
 
 ### Key Components
 
 ```
-Realtime Service
-├── WebSocket Server
-├── Connection Manager
-├── Event Subscriber
-├── Message Router
-├── Presence Manager
-├── Room Manager
-├── Authentication Middleware
-├── Rate Limiter
-└── Health Checker
+realtime-service/
+├── config/                  # Configuration management
+├── internal/
+│   ├── grpc/               # gRPC server and handlers
+│   │   └── handlers/       # Notification handlers
+│   ├── websocket/          # WebSocket components
+│   │   ├── hub.go          # Connection hub (broadcast)
+│   │   ├── client.go       # Client connection handler
+│   │   ├── server.go       # HTTP upgrade handler
+│   │   └── message.go      # Message types
+│   ├── pubsub/             # Redis Pub/Sub
+│   │   ├── subscriber.go   # Event subscriber
+│   │   └── publisher.go    # Event publisher
+│   ├── service/            # Business logic
+│   └── middleware/         # Auth middleware
+├── pkg/logger/             # Zap logger
+├── metrics/                # Prometheus metrics
+├── main.go                 # Main entry point
+├── go.mod
+├── Dockerfile
+└── env.example
 ```
 
-## 🔄 Real-time Flow
+## API Endpoints
 
-### Connection Flow
-
-```
-Client WebSocket Connection
-    ↓
-Authentication (JWT)
-    ↓
-Connection Establishment
-    ↓
-User Session Creation
-    ↓
-Join Default Rooms
-    ↓
-Send Connection Confirmation
-    ↓
-Subscribe to User Events
-```
-
-### Event Broadcasting Flow
+### WebSocket Endpoint
 
 ```
-Service Event (Redis Pub/Sub)
-    ↓
-Event Subscriber
-    ↓
-Message Processing
-    ↓
-Target Client Identification
-    ↓
-Message Routing
-    ↓
-WebSocket Message Send
-    ↓
-Delivery Confirmation
+ws://localhost:3003/ws?token=<JWT>
 ```
 
-### Room Management Flow
+### HTTP Endpoints
 
-```
-User Joins Event Room
-    ↓
-Room Validation
-    ↓
-Permission Check
-    ↓
-Room Join
-    ↓
-Presence Update
-    ↓
-Room Notification
-    ↓
-Event Subscription
-```
+| Endpoint | Description |
+|----------|-------------|
+| `GET /ws` | WebSocket upgrade endpoint |
+| `GET /health` | Basic health check |
+| `GET /ready` | Readiness check (includes Redis) |
+| `GET /metrics` | Prometheus metrics |
 
-## 📡 WebSocket Events
+### gRPC Methods (Internal)
 
-### Client to Server Events
+| Method | Description |
+|--------|-------------|
+| `NotifyBookingResult` | Push booking result to user |
+| `NotifyQueuePosition` | Update queue position |
+| `NotifyPaymentStatus` | Push payment status update |
+| `BroadcastEvent` | Broadcast to room |
+| `SendToUser` | Send to specific user |
+| `GetConnectionStats` | Get connection statistics |
 
-```javascript
-// Connection events
-"socket:connect"; // Client connects
-"socket:disconnect"; // Client disconnects
-"socket:reconnect"; // Client reconnects
+## WebSocket Message Protocol
 
-// Authentication events
-"auth:login"; // User login
-"auth:logout"; // User logout
-"auth:token_refresh"; // Token refresh
+### Message Format
 
-// Room events
-"room:join"; // Join a room
-"room:leave"; // Leave a room
-"room:message"; // Send room message
-
-// User events
-"user:typing"; // User typing indicator
-"user:presence"; // Update presence status
-"user:preferences"; // Update user preferences
+```json
+{
+  "type": "booking:confirmed",
+  "payload": { ... }
+}
 ```
 
-### Server to Client Events
+### Event Types
 
-```javascript
-// System events
-"system:connected"; // Connection confirmed
-"system:error"; // Error message
-"system:maintenance"; // Maintenance notification
+| Type | Direction | Description |
+|------|-----------|-------------|
+| `system:connected` | Server->Client | Connection established |
+| `system:ping` | Client->Server | Keep-alive ping |
+| `system:pong` | Server->Client | Ping response |
+| `room:join` | Client->Server | Join event room |
+| `room:leave` | Client->Server | Leave event room |
+| `booking:queue_position` | Server->Client | Queue position update |
+| `booking:processing` | Server->Client | Booking being processed |
+| `booking:confirmed` | Server->Client | Booking confirmed |
+| `booking:failed` | Server->Client | Booking failed |
+| `payment:processing` | Server->Client | Payment processing |
+| `payment:success` | Server->Client | Payment successful |
+| `payment:failed` | Server->Client | Payment failed |
+| `ticket:availability` | Server->Client | Ticket availability changed |
 
-// Booking events
-"booking:created"; // New booking created
-"booking:confirmed"; // Booking confirmed
-"booking:cancelled"; // Booking cancelled
-"booking:updated"; // Booking updated
+### Example Messages
 
-// Payment events
-"payment:processed"; // Payment processed
-"payment:failed"; // Payment failed
-"payment:refunded"; // Payment refunded
-
-// Ticket events
-"ticket:available"; // Ticket available
-"ticket:sold"; // Ticket sold
-"ticket:reserved"; // Ticket reserved
-"ticket:released"; // Ticket released
-
-// Notification events
-"notification:new"; // New notification
-"notification:read"; // Notification read
-"notification:deleted"; // Notification deleted
-
-// Room events
-"room:joined"; // Successfully joined room
-"room:left"; // Successfully left room
-"room:message"; // Room message received
-"room:user_joined"; // User joined room
-"room:user_left"; // User left room
-"room:typing"; // User typing in room
+**Server -> Client (Booking Confirmed)**
+```json
+{
+  "type": "booking:confirmed",
+  "payload": {
+    "booking_id": "uuid-here",
+    "booking_reference": "BK12345",
+    "event_id": "event-uuid",
+    "seat_numbers": ["A1", "A2"],
+    "total_amount": "100.00",
+    "currency": "USD"
+  }
+}
 ```
 
-## 🔐 Security Features
-
-### Authentication & Authorization
-
-- **JWT Validation**: Validate tokens on connection
-- **Token Refresh**: Automatic token refresh handling
-- **Connection Limits**: Limit connections per user
-- **Rate Limiting**: Prevent message flooding
-
-### Connection Security
-
-- **CORS Configuration**: Secure cross-origin requests
-- **Origin Validation**: Validate connection origins
-- **SSL/TLS**: Secure WebSocket connections
-- **Session Management**: Secure session handling
-
-### Message Security
-
-- **Input Validation**: Validate all incoming messages
-- **Message Size Limits**: Prevent large message attacks
-- **Content Filtering**: Filter inappropriate content
-- **Spam Prevention**: Prevent message spam
-
-## 📊 Redis Pub/Sub Channels
-
-### Event Channels
-
-```javascript
-// Booking events
-"booking:created"; // New booking
-"booking:confirmed"; // Booking confirmed
-"booking:cancelled"; // Booking cancelled
-"booking:updated"; // Booking updated
-
-// Payment events
-"payment:processed"; // Payment processed
-"payment:failed"; // Payment failed
-"payment:refunded"; // Payment refunded
-
-// Ticket events
-"ticket:available"; // Ticket available
-"ticket:sold"; // Ticket sold
-"ticket:reserved"; // Ticket reserved
-"ticket:released"; // Ticket released
-
-// User events
-"user:online"; // User came online
-"user:offline"; // User went offline
-"user:status_change"; // User status changed
-
-// System events
-"system:maintenance"; // System maintenance
-"system:announcement"; // System announcement
-"system:error"; // System error
+**Client -> Server (Join Room)**
+```json
+{
+  "type": "room:join",
+  "payload": {
+    "room": "event:event-uuid"
+  }
+}
 ```
 
-### Channel Structure
-
-```javascript
-// Event channel format
-`${service}:${action}` // User-specific channel format
-`user:${userId}:${event}` // Event-specific channel format
-`event:${eventId}:${action}` // Room-specific channel format
-`room:${roomId}:${action}`;
-```
-
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
 ```bash
-# Server Configuration
-PORT=3003
-NODE_ENV=production
+# HTTP Configuration
+HTTP_PORT=3003
+HTTP_READ_TIMEOUT=15s
+HTTP_WRITE_TIMEOUT=15s
 
-# Redis Configuration
-REDIS_URL=redis://localhost:6379
-REDIS_PASSWORD=your_redis_password
-REDIS_DATABASE=3
+# gRPC Configuration
+GRPC_PORT=50057
 
 # WebSocket Configuration
-WS_PATH=/socket.io
-WS_CORS_ORIGIN=https://yourdomain.com
-WS_ALLOWED_ORIGINS=https://yourdomain.com,https://admin.yourdomain.com
-WS_MAX_CONNECTIONS=10000
-WS_CONNECTION_TIMEOUT=30000
-WS_PING_TIMEOUT=60000
-WS_PING_INTERVAL=25000
+WS_PING_INTERVAL=30s
+WS_PONG_TIMEOUT=60s
+WS_ALLOW_ANONYMOUS=true
 
-# Authentication Configuration
-JWT_SECRET=your_jwt_secret
-JWT_REFRESH_SECRET=your_refresh_secret
-TOKEN_REFRESH_THRESHOLD=300000
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+REDIS_POOL_SIZE=100
 
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=60000
-RATE_LIMIT_MAX_MESSAGES=100
-RATE_LIMIT_MAX_CONNECTIONS=5
+# JWT Configuration
+JWT_SECRET=your-jwt-secret
 
-# Room Configuration
-MAX_ROOM_MEMBERS=1000
-ROOM_MESSAGE_HISTORY=100
-ROOM_TYPING_TIMEOUT=3000
+# Metrics Configuration
+METRICS_ENABLED=true
+METRICS_PORT=9057
 
-# Presence Configuration
-PRESENCE_TIMEOUT=300000
-PRESENCE_INTERVAL=60000
-PRESENCE_CLEANUP_INTERVAL=300000
-
-# Monitoring Configuration
-METRICS_PORT=9090
-HEALTH_CHECK_PORT=8080
+# Logging Configuration
+LOG_LEVEL=info
+LOG_FORMAT=json
 ```
 
-## 🚀 Performance Optimizations
+## Development
 
-### Connection Optimization
+### Prerequisites
 
-- **Connection Pooling**: Reuse Redis connections
-- **Message Batching**: Batch multiple messages
-- **Compression**: Enable message compression
-- **Keep-Alive**: Maintain persistent connections
+- Go 1.22+
+- Redis 7+
+- protoc (Protocol Buffers compiler)
+- protoc-gen-go
+- protoc-gen-go-grpc
 
-### Scaling Strategy
+### Setup
 
-- **Horizontal Scaling**: Multiple service instances
-- **Load Balancing**: Sticky session load balancing
-- **Redis Clustering**: Redis cluster for high availability
-- **Message Partitioning**: Partition messages by user/event
+1. Clone the repository
+2. Copy environment file:
+   ```bash
+   cp env.example .env
+   ```
+3. Start Redis:
+   ```bash
+   docker run -d -p 6379:6379 redis:7-alpine
+   ```
+4. Generate protobuf files:
+   ```bash
+   ./scripts/generate-proto.sh
+   ```
+5. Run the service:
+   ```bash
+   go run main.go
+   ```
 
-### Memory Optimization
+### Building
 
-- **Connection Limits**: Limit connections per instance
-- **Message Cleanup**: Clean up old messages
-- **Session Cleanup**: Clean up expired sessions
-- **Memory Monitoring**: Monitor memory usage
+```bash
+go build -o bin/realtime-service .
+```
 
-## 📊 Monitoring & Observability
+### Testing WebSocket
 
-### Metrics
+```bash
+# Using wscat
+npm install -g wscat
+wscat -c "ws://localhost:3003/ws?token=<JWT>"
 
-- **Connection Count**: Active WebSocket connections
-- **Message Rate**: Messages per second
-- **Event Processing**: Event processing rate
-- **Room Activity**: Active rooms and members
-- **Error Rates**: Connection and message errors
-- **Latency**: Message delivery latency
+# Send ping
+> {"type":"system:ping"}
 
-### Logging
+# Join room
+> {"type":"room:join","payload":{"room":"event:123"}}
+```
 
-- **Connection Logs**: Connection events
-- **Message Logs**: Message processing
-- **Error Logs**: Errors and failures
-- **Performance Logs**: Slow operations
-- **Security Logs**: Authentication and authorization
+### Testing gRPC
+
+```bash
+# Notify booking result
+grpcurl -plaintext -d '{
+  "user_id": "user-uuid",
+  "booking_id": "booking-uuid",
+  "success": true,
+  "message": "Booking confirmed",
+  "booking_reference": "BK12345"
+}' localhost:50057 realtime.RealtimeService/NotifyBookingResult
+
+# Get connection stats
+grpcurl -plaintext localhost:50057 realtime.RealtimeService/GetConnectionStats
+```
+
+## Docker
+
+### Build
+
+```bash
+docker build -t realtime-service .
+```
+
+### Run
+
+```bash
+docker run -p 3003:3003 -p 50057:50057 -p 9057:9057 \
+  -e REDIS_HOST=host.docker.internal \
+  -e JWT_SECRET=your-secret \
+  realtime-service
+```
+
+## Monitoring
+
+### Prometheus Metrics
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `realtime_websocket_connections_total` | Gauge | Total active connections |
+| `realtime_websocket_connections_authenticated` | Gauge | Authenticated connections |
+| `realtime_websocket_connections_per_room` | GaugeVec | Connections per room |
+| `realtime_messages_sent_total` | CounterVec | Messages sent by type |
+| `realtime_messages_received_total` | CounterVec | Messages received by type |
+| `realtime_notifications_delivered_total` | CounterVec | Notifications delivered |
+| `realtime_grpc_requests_total` | CounterVec | gRPC requests by method |
+| `realtime_grpc_request_duration_seconds` | HistogramVec | gRPC request duration |
+| `realtime_errors_total` | CounterVec | Errors by type |
 
 ### Health Checks
 
-- **Service Health**: Service availability
-- **Redis Health**: Redis connectivity
-- **Connection Health**: WebSocket connection health
-- **Memory Health**: Memory usage monitoring
+- `GET /health` - Basic health check (always returns 200 if server is running)
+- `GET /ready` - Readiness check (returns 503 if Redis is unavailable)
 
-## 🧪 Testing
+## Scaling
 
-### Unit Tests
+### Horizontal Scaling with Redis Pub/Sub
 
-```bash
-npm run test:unit
-```
+The service uses Redis Pub/Sub for horizontal scaling:
 
-### Integration Tests
+1. All instances subscribe to the same Redis channels
+2. When a notification is sent via gRPC, it's published to Redis
+3. All instances receive the message and deliver to connected clients
+4. Only instances with the target user connected will deliver
 
-```bash
-npm run test:integration
-```
-
-### WebSocket Tests
-
-```bash
-npm run test:websocket
-```
-
-### Load Tests
-
-```bash
-npm run test:load
-```
-
-### Connection Tests
-
-```bash
-npm run test:connection
-```
-
-## 🚀 Deployment
-
-### Docker
-
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY . .
-EXPOSE 3003 9090 8080
-CMD ["npm", "start"]
-```
-
-### Kubernetes
+### Recommended Configuration for Production
 
 ```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: realtime-service
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: realtime-service
-  template:
-    metadata:
-      labels:
-        app: realtime-service
-    spec:
-      containers:
-        - name: realtime
-          image: booking-system/realtime-service:latest
-          ports:
-            - containerPort: 3003
-            - containerPort: 9090
-            - containerPort: 8080
-          env:
-            - name: REDIS_URL
-              value: "redis://redis-service:6379"
-            - name: JWT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: auth-secrets
-                  key: jwt-secret
-          resources:
-            requests:
-              memory: "512Mi"
-              cpu: "250m"
-            limits:
-              memory: "1Gi"
-              cpu: "500m"
+replicas: 3-10  # Scale based on connection count
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
 ```
 
-### Load Balancer Configuration
+## Integration Points
 
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: realtime-service
-spec:
-  selector:
-    app: realtime-service
-  ports:
-    - port: 3003
-      targetPort: 3003
-      protocol: TCP
-  type: LoadBalancer
-  sessionAffinity: ClientIP
-  sessionAffinityConfig:
-    clientIP:
-      timeoutSeconds: 3600
-```
+### Inbound (gRPC Callers)
 
-## 🔄 WebSocket Implementation
+- **Booking Worker**: Calls `NotifyBookingResult` when booking completes
+- **Payment Service**: Calls `NotifyPaymentStatus` for payment updates
+- **Ticket Service**: Calls `BroadcastEvent` for availability changes
 
-### Connection Management
+### Outbound
 
-```javascript
-class ConnectionManager {
-  constructor() {
-    this.io = new Server(server, {
-      path: process.env.WS_PATH,
-      cors: {
-        origin: process.env.WS_ALLOWED_ORIGINS.split(","),
-        credentials: true,
-      },
-      maxHttpBufferSize: 1e6,
-      pingTimeout: parseInt(process.env.WS_PING_TIMEOUT),
-      pingInterval: parseInt(process.env.WS_PING_INTERVAL),
-    });
+- **Redis Pub/Sub**: Subscribe/publish for horizontal scaling
+- **No database**: Stateless service, all state in Redis
 
-    this.connections = new Map();
-    this.rooms = new Map();
-    this.presence = new PresenceManager();
-  }
+## Dependencies
 
-  async handleConnection(socket) {
-    try {
-      // Authenticate connection
-      const user = await this.authenticateSocket(socket);
-      if (!user) {
-        socket.disconnect();
-        return;
-      }
+### Go Dependencies
 
-      // Store connection
-      this.connections.set(socket.id, {
-        socket,
-        user,
-        rooms: new Set(),
-        connectedAt: Date.now(),
-      });
-
-      // Join user to default rooms
-      await this.joinDefaultRooms(socket, user);
-
-      // Update presence
-      await this.presence.userOnline(user.id);
-
-      // Send connection confirmation
-      socket.emit("system:connected", {
-        userId: user.id,
-        timestamp: Date.now(),
-      });
-
-      // Handle disconnection
-      socket.on("disconnect", () => this.handleDisconnection(socket));
-    } catch (error) {
-      console.error("Connection error:", error);
-      socket.disconnect();
-    }
-  }
-
-  async authenticateSocket(socket) {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-      return null;
-    }
-
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      return decoded;
-    } catch (error) {
-      return null;
-    }
-  }
-}
-```
-
-### Event Broadcasting
-
-```javascript
-class EventBroadcaster {
-  constructor(redis, connectionManager) {
-    this.redis = redis;
-    this.connectionManager = connectionManager;
-    this.subscribers = new Map();
-  }
-
-  async start() {
-    // Subscribe to Redis channels
-    const channels = [
-      "booking:*",
-      "payment:*",
-      "ticket:*",
-      "user:*",
-      "system:*",
-    ];
-
-    for (const channel of channels) {
-      const subscriber = this.redis.duplicate();
-      await subscriber.subscribe(channel);
-
-      subscriber.on("message", (channel, message) => {
-        this.handleEvent(channel, JSON.parse(message));
-      });
-
-      this.subscribers.set(channel, subscriber);
-    }
-  }
-
-  async handleEvent(channel, event) {
-    try {
-      const [service, action] = channel.split(":");
-
-      switch (service) {
-        case "booking":
-          await this.broadcastBookingEvent(action, event);
-          break;
-        case "payment":
-          await this.broadcastPaymentEvent(action, event);
-          break;
-        case "ticket":
-          await this.broadcastTicketEvent(action, event);
-          break;
-        case "user":
-          await this.broadcastUserEvent(action, event);
-          break;
-        case "system":
-          await this.broadcastSystemEvent(action, event);
-          break;
-      }
-    } catch (error) {
-      console.error("Event handling error:", error);
-    }
-  }
-
-  async broadcastBookingEvent(action, event) {
-    const eventName = `booking:${action}`;
-
-    // Broadcast to all users
-    this.connectionManager.io.emit(eventName, {
-      ...event,
-      timestamp: Date.now(),
-    });
-
-    // Send to specific user if applicable
-    if (event.userId) {
-      const userSocket = this.connectionManager.getUserSocket(event.userId);
-      if (userSocket) {
-        userSocket.emit(eventName, {
-          ...event,
-          timestamp: Date.now(),
-        });
-      }
-    }
-  }
-}
-```
-
-## 🆕 Integration with Booking Worker Service (Go)
-
-The **Booking Worker Service** (written in Go) leverages Go's concurrency for real-time queue updates:
-
-- **Goroutines**: Efficiently handle thousands of concurrent queue updates.
-- **gRPC & WebSocket**: Booking Worker (Go) sends queue events to Realtime Service for client notification.
-
-### Real-time Booking Queue Flow
-
-1. **Client joins queue** → 2. **Realtime Service notifies position** → 3. **Booking Worker processes request** → 4. **Realtime Service notifies client to proceed**
-
----
-
-## 🛡️ Security Best Practices
-
-### Connection Security
-
-- **Authentication**: Validate all connections
-- **Origin Validation**: Check connection origins
-- **Rate Limiting**: Limit connection attempts
-- **Session Management**: Secure session handling
-
-### Message Security
-
-- **Input Validation**: Validate all messages
-- **Content Filtering**: Filter inappropriate content
-- **Size Limits**: Limit message sizes
-- **Spam Prevention**: Prevent message spam
-
-### Infrastructure Security
-
-- **SSL/TLS**: Secure all connections
-- **Firewall Rules**: Restrict access
-- **Monitoring**: Monitor for attacks
-- **Backup**: Regular data backups
-
-## 📞 Troubleshooting
-
-### Common Issues
-
-1. **Connection Drops**: Check network stability
-2. **High Memory Usage**: Monitor connection limits
-3. **Redis Connectivity**: Verify Redis service health
-4. **Authentication Failures**: Check JWT configuration
-5. **Load Balancer Issues**: Verify sticky sessions
-
-### Debug Commands
-
-```bash
-# Check service health
-curl http://realtime-service:8080/health
-
-# Check Redis connectivity
-redis-cli ping
-
-# Monitor WebSocket connections
-netstat -an | grep :3003
-
-# Check memory usage
-docker stats realtime-service
-
-# Monitor Redis Pub/Sub
-redis-cli monitor
-```
-
-## 🔗 Dependencies
-
-### External Services
-
-- **Auth Service**: User authentication and token validation
-- **Redis**: Pub/Sub messaging and session storage
-- **Load Balancer**: Connection distribution
-
-### Infrastructure
-
-- **Redis**: Pub/Sub messaging
-- **Load Balancer**: WebSocket connection distribution
-- **Monitoring**: Prometheus and Grafana
+- `github.com/gorilla/websocket` - WebSocket implementation
+- `github.com/redis/go-redis/v9` - Redis client
+- `google.golang.org/grpc` - gRPC framework
+- `google.golang.org/protobuf` - Protocol Buffers
+- `github.com/golang-jwt/jwt/v5` - JWT validation
+- `go.uber.org/zap` - Structured logging
+- `github.com/prometheus/client_golang` - Prometheus metrics

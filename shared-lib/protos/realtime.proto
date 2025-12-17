@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package realtime;
+
+option go_package = "github.com/ticketing/shared-lib/proto/realtime";
+
+// RealtimeService handles real-time notifications and WebSocket broadcasting
+// Called by internal services (booking-worker, payment-service) to push updates to clients
+service RealtimeService {
+  // NotifyBookingResult - Called by booking-worker when booking processing completes
+  rpc NotifyBookingResult (NotifyBookingResultRequest) returns (NotifyBookingResultResponse);
+
+  // NotifyQueuePosition - Called to update user's position in booking queue
+  rpc NotifyQueuePosition (NotifyQueuePositionRequest) returns (NotifyQueuePositionResponse);
+
+  // NotifyPaymentStatus - Called by payment-service for payment status updates
+  rpc NotifyPaymentStatus (NotifyPaymentStatusRequest) returns (NotifyPaymentStatusResponse);
+
+  // BroadcastEvent - Broadcast event to a room (e.g., ticket availability changes)
+  rpc BroadcastEvent (BroadcastEventRequest) returns (BroadcastEventResponse);
+
+  // SendToUser - Send notification to a specific user
+  rpc SendToUser (SendToUserRequest) returns (SendToUserResponse);
+
+  // GetConnectionStats - Get current connection statistics (for monitoring)
+  rpc GetConnectionStats (GetConnectionStatsRequest) returns (GetConnectionStatsResponse);
+}
+
+// ============================================
+// Booking Notification Messages
+// ============================================
+
+message NotifyBookingResultRequest {
+  string user_id = 1;
+  string booking_id = 2;
+  bool success = 3;
+  string message = 4;
+  string booking_reference = 5;
+  string event_id = 6;
+  repeated string seat_numbers = 7;
+  string total_amount = 8;
+  string currency = 9;
+}
+
+message NotifyBookingResultResponse {
+  bool delivered = 1;
+  int32 active_connections = 2;  // Number of user's active connections that received the message
+}
+
+message NotifyQueuePositionRequest {
+  string user_id = 1;
+  string event_id = 2;
+  int32 position = 3;
+  int32 estimated_wait_seconds = 4;
+  int32 total_in_queue = 5;
+}
+
+message NotifyQueuePositionResponse {
+  bool delivered = 1;
+}
+
+// ============================================
+// Payment Notification Messages
+// ============================================
+
+message NotifyPaymentStatusRequest {
+  string user_id = 1;
+  string booking_id = 2;
+  string payment_id = 3;
+  PaymentStatus status = 4;
+  string message = 5;
+  string amount = 6;
+  string currency = 7;
+}
+
+enum PaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  PAYMENT_STATUS_PROCESSING = 1;
+  PAYMENT_STATUS_SUCCESS = 2;
+  PAYMENT_STATUS_FAILED = 3;
+  PAYMENT_STATUS_REFUNDED = 4;
+}
+
+message NotifyPaymentStatusResponse {
+  bool delivered = 1;
+}
+
+// ============================================
+// Broadcast Messages
+// ============================================
+
+message BroadcastEventRequest {
+  string event_type = 1;     // e.g., "ticket:availability", "booking:confirmed"
+  string room = 2;           // Room to broadcast to (event_id, "all", etc.)
+  string payload = 3;        // JSON payload
+  bool exclude_sender = 4;   // Exclude sender from broadcast
+  string sender_user_id = 5; // Sender's user ID (optional)
+}
+
+message BroadcastEventResponse {
+  int32 recipients = 1;      // Number of clients that received the message
+}
+
+// ============================================
+// Direct User Messages
+// ============================================
+
+message SendToUserRequest {
+  string user_id = 1;
+  string event_type = 2;     // e.g., "notification:new", "system:message"
+  string payload = 3;        // JSON payload
+  bool require_ack = 4;      // Whether to require acknowledgment
+}
+
+message SendToUserResponse {
+  bool delivered = 1;
+  int32 connections_notified = 2;  // User may have multiple connections
+}
+
+// ============================================
+// Connection Statistics Messages
+// ============================================
+
+message GetConnectionStatsRequest {
+  string room = 1;           // Optional: get stats for specific room
+}
+
+message GetConnectionStatsResponse {
+  int32 total_connections = 1;
+  int32 authenticated_connections = 2;
+  int32 anonymous_connections = 3;
+  map<string, int32> connections_per_room = 4;
+  int64 uptime_seconds = 5;
+  int64 messages_sent_total = 6;
+  int64 messages_received_total = 7;
+}

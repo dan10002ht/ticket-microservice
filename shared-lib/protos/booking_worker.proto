@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package booking_worker;
+
+option go_package = "booking-worker/internal/protos/booking_worker";
+option java_multiple_files = true;
+option java_package = "com.ticketing.bookingworker.grpc";
+option java_outer_classname = "BookingWorkerProto";
+
+// Booking Worker Service - Queue-based booking request processing
+service BookingWorkerService {
+  // Queue Operations
+  rpc EnqueueBooking(EnqueueBookingRequest) returns (EnqueueBookingResponse);
+  rpc GetQueuePosition(GetQueuePositionRequest) returns (GetQueuePositionResponse);
+  rpc GetQueueStatus(GetQueueStatusRequest) returns (GetQueueStatusResponse);
+  rpc CancelQueueItem(CancelQueueItemRequest) returns (CancelQueueItemResponse);
+  
+  // Health Check
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+// Queue Operation Messages
+message EnqueueBookingRequest {
+  string user_id = 1;
+  string event_id = 2;
+  repeated string seat_numbers = 3;
+  int32 seat_count = 4;
+  double total_amount = 5;
+  string currency = 6;
+  map<string, string> metadata = 7;
+}
+
+message EnqueueBookingResponse {
+  bool success = 1;
+  string queue_item_id = 2;
+  int32 queue_position = 3;
+  int32 estimated_wait_seconds = 4;
+  string message = 5;
+}
+
+message GetQueuePositionRequest {
+  string queue_item_id = 1;
+  string user_id = 2;
+}
+
+message GetQueuePositionResponse {
+  bool success = 1;
+  int32 position = 2;
+  int32 queue_length = 3;
+  int32 estimated_wait_seconds = 4;
+  string status = 5; // "waiting", "processing", "completed", "expired"
+  string message = 6;
+}
+
+message GetQueueStatusRequest {
+  string event_id = 1;
+}
+
+message GetQueueStatusResponse {
+  bool success = 1;
+  int32 queue_length = 2;
+  int32 active_workers = 3;
+  double processing_rate = 4; // items per second
+  string message = 5;
+}
+
+message CancelQueueItemRequest {
+  string queue_item_id = 1;
+  string user_id = 2;
+  string reason = 3;
+}
+
+message CancelQueueItemResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Health Check Messages
+message HealthRequest {
+  string service = 1;
+}
+
+message HealthResponse {
+  string status = 1;
+  string message = 2;
+  map<string, string> details = 3;
+}
+

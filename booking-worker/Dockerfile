@@ -11,3 +11,4 @@ EXPOSE 50059
 EXPOSE 9091
 CMD ["./booking-worker"]
 
+

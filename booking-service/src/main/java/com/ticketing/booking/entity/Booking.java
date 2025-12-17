@@ -38,7 +38,8 @@ import lombok.Setter;
         @Index(name = "idx_booking_reference", columnList = "booking_reference", unique = true),
         @Index(name = "idx_booking_user", columnList = "user_id"),
         @Index(name = "idx_booking_event", columnList = "event_id"),
-        @Index(name = "idx_booking_status", columnList = "status")
+        @Index(name = "idx_booking_status", columnList = "status"),
+        @Index(name = "idx_booking_idempotency", columnList = "idempotency_key", unique = true)
 })
 @Getter
 @Setter
@@ -62,6 +63,9 @@ public class Booking {
 
     @Column(name = "event_id", nullable = false, length = 36)
     private String eventId;
+
+    @Column(name = "idempotency_key", length = 64, unique = true)
+    private String idempotencyKey;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)

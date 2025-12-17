@@ -36,7 +36,14 @@ type QueueManager interface {
 	// Remove removes an item from the queue
 	Remove(ctx context.Context, itemID string) error
 
+	// GetItem retrieves a queue item by ID without removing it (for authorization checks)
+	GetItem(ctx context.Context, itemID string) (*QueueItem, error)
+
+	// RemoveWithAuthorization removes an item only if the user is authorized
+	RemoveWithAuthorization(ctx context.Context, itemID, userID string) error
+
 	// Close closes the queue connection
 	Close() error
 }
+
 

@@ -1,77 +1,62 @@
-# Integration Flows Documentation
+# Auth Service Integration Flows
 
-## 🔗 Overview
+## Overview
 
-This document describes the integrated business flows between `auth-service`, `device-service`, and `security-service` in the booking system microservices architecture.
+This document describes the integration flows between Auth Service and other microservices in the ticketing system.
 
-## 🏗️ Architecture
+## Architecture
 
 ### Service Connections
 
 ```
-Auth Service (Port: 50051)
-├── Device Service Client (Port: 50052)
-└── Security Service Client (Port: 50053)
-
-Device Service (Port: 50052)
-└── Security Service Client (Port: 50053)
-
-Security Service (Port: 50053)
-├── Auth Service Client (Port: 50051)
-└── Device Service Client (Port: 50052)
+                         ┌─────────────────┐
+                         │     Gateway     │
+                         │   (Port 3000)   │
+                         └────────┬────────┘
+                                  │ gRPC
+                                  ▼
+                         ┌─────────────────┐
+                         │  Auth Service   │
+                         │  (Port 50051)   │
+                         └────────┬────────┘
+                                  │
+              ┌───────────────────┼───────────────────┐
+              │                   │                   │
+              ▼                   ▼                   ▼
+     ┌────────────────┐  ┌────────────────┐  ┌────────────────┐
+     │  User Service  │  │ Booking Service│  │ Realtime Svc   │
+     │  (Port 50052)  │  │  (Port 50056)  │  │  (Port 50057)  │
+     └────────────────┘  └────────────────┘  └────────────────┘
 ```
 
 ### Communication Protocol
 
-- **Protocol**: gRPC (gRPC Remote Procedure Call)
+- **Protocol**: gRPC (Remote Procedure Call)
 - **Serialization**: Protocol Buffers (protobuf)
 - **Transport**: HTTP/2
-- **Security**: Insecure (for development)
+- **Security**: JWT tokens for authentication
 
-## 🔄 Business Flows
+## Business Flows
 
-### 1. User Login Flow
+### 1. User Authentication Flow
 
-**Flow**: `Auth Service → Device Service → Security Service`
+**Flow**: `Client → Gateway → Auth Service`
 
 ```
-1. User submits login credentials
-2. Auth Service validates credentials
-3. Auth Service calls Device Service to register/validate device
-4. Auth Service calls Security Service to submit login event
-5. Security Service analyzes login for threats
-6. Auth Service returns tokens to user
+1. User submits login credentials (email/password)
+2. Gateway forwards request to Auth Service via gRPC
+3. Auth Service validates credentials against database
+4. Auth Service generates JWT access token + refresh token
+5. Gateway returns tokens to client
 ```
 
-**Implementation**: `integrationService.handleUserLogin()`
-
-**API Endpoint**: `POST /integration/login/enhanced`
+**API Endpoint**: `POST /api/auth/login`
 
 **Request Body**:
 ```json
 {
   "email": "user@example.com",
-  "password": "password123",
-  "device_info": {
-    "device_hash": "device-fingerprint-hash",
-    "device_name": "My Device",
-    "device_type": "desktop",
-    "browser": "Chrome",
-    "browser_version": "120.0.0.0",
-    "os": "Windows",
-    "os_version": "10",
-    "screen_resolution": "1920x1080",
-    "timezone": "UTC",
-    "language": "en-US",
-    "location_data": {
-      "country": "US",
-      "city": "New York"
-    },
-    "fingerprint_data": {
-      "canvas": "canvas-fingerprint",
-      "webgl": "webgl-fingerprint"
-    }
-  }
+  "password": "password123"
 }
 ```
 
@@ -79,391 +64,258 @@ Security Service (Port: 50053)
 ```json
 {
   "success": true,
-  "message": "Login successful",
   "data": {
     "user": {
-      "id": "user-123",
+      "id": "user-uuid",
       "email": "user@example.com",
-      "status": "active"
+      "role": "user"
     },
-    "device": {
-      "device_id": "device-456",
-      "trust_score": 85,
-      "trust_level": "trusted"
-    },
-    "session": {
-      "session_id": "session-789",
-      "refresh_token": "refresh-token",
-      "expires_at": "2024-01-01T12:00:00Z"
-    },
-    "security": {
-      "risk_score": 15,
-      "risk_level": "low",
-      "threat_detected": false,
-      "threat_level": null
-    }
+    "access_token": "eyJhbGciOiJIUzI1NiIs...",
+    "refresh_token": "refresh-token-uuid",
+    "expires_in": 3600
   }
 }
 ```
 
-### 2. Device Registration Flow
+### 2. User Registration Flow
 
-**Flow**: `Auth Service → Device Service → Security Service`
+**Flow**: `Client → Gateway → Auth Service`
 
 ```
-1. User logs in from new device
-2. Auth Service calls Device Service to register device
-3. Device Service generates device fingerprint
-4. Device Service calls Security Service to submit device event
-5. Security Service assesses device risk
-6. Device Service returns device trust score
+1. User submits registration data
+2. Gateway forwards to Auth Service
+3. Auth Service validates email uniqueness
+4. Auth Service hashes password and creates user
+5. Auth Service generates verification token (optional)
+6. Gateway returns success response
 ```
 
-**Implementation**: `integrationService.handleDeviceRegistration()`
-
-**API Endpoint**: `POST /integration/device/register`
+**API Endpoint**: `POST /api/auth/register`
 
 **Request Body**:
 ```json
 {
-  "user_id": "user-123",
-  "device_info": {
-    "device_hash": "new-device-hash",
-    "device_name": "New Device",
-    "device_type": "mobile",
-    "browser": "Safari",
-    "browser_version": "17.0.0.0",
-    "os": "iOS",
-    "os_version": "17.0",
-    "screen_resolution": "390x844",
-    "timezone": "America/New_York",
-    "language": "en-US",
-    "location_data": {
-      "country": "US",
-      "city": "Los Angeles"
-    },
-    "fingerprint_data": {
-      "canvas": "mobile-canvas-fingerprint",
-      "webgl": "mobile-webgl-fingerprint"
-    }
-  }
+  "email": "newuser@example.com",
+  "password": "securePassword123",
+  "name": "John Doe"
 }
 ```
 
-### 3. Security Monitoring Flow
+### 3. Token Refresh Flow
 
-**Flow**: `Auth Service → Security Service → Device Service`
-
-```
-1. Security Service receives events from all services
-2. Security Service analyzes patterns and detects threats
-3. Security Service calls Auth Service to get user context
-4. Security Service calls Device Service to get device analytics
-5. Security Service creates alerts if threats detected
-6. Security Service updates user risk scores
-```
-
-**Implementation**: `integrationService.handleSecurityMonitoring()`
-
-**API Endpoint**: `POST /integration/security/event`
-
-**Request Body**:
-```json
-{
-  "user_id": "user-123",
-  "event_data": {
-    "service_name": "auth-service",
-    "event_type": "suspicious_activity",
-    "event_category": "security",
-    "severity": "high",
-    "event_data": {
-      "activity_type": "multiple_failed_logins",
-      "attempts": 5,
-      "timeframe": "5_minutes"
-    },
-    "location_data": {
-      "country": "US",
-      "city": "New York"
-    }
-  }
-}
-```
-
-### 4. Device Validation Flow
-
-**Flow**: `Auth Service → Device Service → Security Service`
+**Flow**: `Client → Gateway → Auth Service`
 
 ```
-1. Auth Service calls Device Service to validate device
-2. Device Service checks device trust score and status
-3. Device Service calls Security Service to submit validation event
-4. Security Service analyzes device behavior
-5. Security Service creates alerts if suspicious activity detected
+1. Client sends refresh token
+2. Gateway forwards to Auth Service
+3. Auth Service validates refresh token
+4. Auth Service generates new access token
+5. Gateway returns new token to client
 ```
 
-**Implementation**: `integrationService.handleDeviceValidation()`
+**API Endpoint**: `POST /api/auth/refresh`
 
-**API Endpoint**: `GET /integration/device/validate/:device_id`
+### 4. Protected Resource Access Flow
 
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Device validation completed",
-  "data": {
-    "is_valid": true,
-    "trust_score": 75,
-    "trust_level": "trusted"
-  }
-}
+**Flow**: `Client → Gateway → Target Service`
+
+```
+1. Client sends request with JWT in Authorization header
+2. Gateway validates JWT using Auth Service's public key
+3. Gateway extracts user_id from JWT
+4. Gateway forwards request to target service with user context
+5. Target service processes request and returns response
+```
+
+**Authentication Header**:
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
 
 ### 5. User Logout Flow
 
-**Flow**: `Auth Service → Device Service → Security Service`
+**Flow**: `Client → Gateway → Auth Service`
 
 ```
 1. User initiates logout
-2. Auth Service calls Device Service to revoke session
-3. Auth Service calls Security Service to submit logout event
-4. Security Service logs the logout activity
+2. Gateway forwards to Auth Service
+3. Auth Service invalidates refresh token
+4. Auth Service removes session (if applicable)
+5. Gateway returns success
 ```
 
-**Implementation**: `integrationService.handleUserLogout()`
+**API Endpoint**: `POST /api/auth/logout`
 
-**API Endpoint**: `POST /integration/logout/enhanced`
+## Integration with Other Services
 
-**Request Body**:
-```json
-{
-  "user_id": "user-123",
-  "session_id": "session-789",
-  "device_id": "device-456"
-}
+### Auth Service → User Service
+
+When a user registers, Auth Service creates the auth record, and User Service can be called to create the profile:
+
+```
+Auth Service                    User Service
+     │                               │
+     │ ──── CreateProfile ────────▶  │
+     │                               │
+     │ ◀──── Profile Created ─────   │
 ```
 
-## 🛠️ Implementation Details
+### Gateway → Auth Service (JWT Validation)
 
-### Service Files
+Gateway uses Auth Service for token validation on protected routes:
 
-#### Auth Service
-- `src/proto/device.proto` - Device service interface
-- `src/proto/security.proto` - Security service interface
-- `src/services/deviceService.js` - Device service client
-- `src/services/securityService.js` - Security service client
-- `src/services/integrationService.js` - Business flow orchestration
-- `src/controllers/integrationController.js` - HTTP request handlers
-- `src/routes/integrationRoutes.js` - API routes
+```javascript
+// Gateway middleware
+const validateToken = async (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
 
-#### Device Service
-- `src/proto/security.proto` - Security service interface
-- `src/services/securityService.js` - Security service client
+  try {
+    // Validate with Auth Service or verify locally with public key
+    const decoded = await authService.validateToken(token);
+    req.userId = decoded.user_id;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Unauthorized' });
+  }
+};
+```
 
-#### Security Service
-- `src/proto/auth.proto` - Auth service interface
-- `src/proto/device.proto` - Device service interface
-- `src/services/authService.js` - Auth service client
-- `src/services/deviceService.js` - Device service client
+### Booking Service → Auth Context
 
-### Environment Variables
+Booking Service receives user context from Gateway headers:
+
+```java
+// Booking Service receives user_id from Gateway
+String userId = metadata.get("x-user-id");
+```
+
+## gRPC Methods
+
+### Auth Service Proto
+
+Location: `shared-lib/protos/auth.proto`
+
+| Method | Description |
+|--------|-------------|
+| `Login` | Authenticate user with email/password |
+| `Register` | Create new user account |
+| `ValidateToken` | Validate JWT access token |
+| `RefreshToken` | Generate new access token |
+| `Logout` | Invalidate refresh token |
+| `GetUser` | Get user by ID |
+| `UpdatePassword` | Change user password |
+
+## Environment Variables
 
 ```bash
 # Auth Service
-AUTH_SERVICE_URL=localhost:50051
-DEVICE_SERVICE_URL=localhost:50052
-SECURITY_SERVICE_URL=localhost:50053
+GRPC_PORT=50051
+JWT_SECRET=your-jwt-secret
+JWT_EXPIRY=3600
+REFRESH_TOKEN_EXPIRY=604800
 
-# Device Service
-AUTH_SERVICE_URL=localhost:50051
-SECURITY_SERVICE_URL=localhost:50053
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=auth_service
+DB_USER=postgres
+DB_PASSWORD=postgres
 
-# Security Service
-AUTH_SERVICE_URL=localhost:50051
-DEVICE_SERVICE_URL=localhost:50052
+# Redis (session storage)
+REDIS_HOST=localhost
+REDIS_PORT=6379
 ```
 
-## 🧪 Testing
+## Security Features
 
-### Run Integration Tests
+### JWT Configuration
+
+- **Algorithm**: HS256 (or RS256 for asymmetric)
+- **Access Token Expiry**: 1 hour (configurable)
+- **Refresh Token Expiry**: 7 days (configurable)
+- **Token Storage**: Refresh tokens stored in database
+
+### Password Security
+
+- **Hashing**: bcrypt with salt rounds = 10
+- **Validation**: Minimum 8 characters, complexity requirements
+
+### Rate Limiting
+
+- **Login attempts**: 5 per minute per IP
+- **Registration**: 3 per hour per IP
+- **Token refresh**: 10 per minute per user
+
+## Testing
+
+### Test gRPC Connection
 
 ```bash
-# Test all integration flows
-node test-integration-flows.js
+# List services
+grpcurl -plaintext localhost:50051 list
 
-# Test individual flows
-node -e "
-import { testUserLoginFlow, testDeviceRegistrationFlow } from './test-integration-flows.js';
-testUserLoginFlow();
-testDeviceRegistrationFlow();
-"
+# Test login
+grpcurl -plaintext -d '{
+  "email": "test@example.com",
+  "password": "password123"
+}' localhost:50051 auth.AuthService/Login
 ```
 
-### Test Individual Services
+### Test via Gateway
 
 ```bash
-# Test service connections
-node test-service-connections.js
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "password123"}'
 
-# Test inter-service communication
-node test-inter-service-communication.js
+# Access protected route
+curl http://localhost:3000/api/users/profile \
+  -H "Authorization: Bearer <access_token>"
 ```
 
-## 📊 Monitoring & Health Checks
-
-### Health Check Endpoint
-
-**API Endpoint**: `GET /integration/health`
-
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Service health check completed",
-  "data": {
-    "auth_service": { "status": "healthy" },
-    "device_service": { "status": "healthy" },
-    "security_service": { "status": "healthy" },
-    "overall_status": "healthy"
-  }
-}
-```
-
-### User Security Status
-
-**API Endpoint**: `GET /integration/security/status/:userId`
-
-**Response**:
-```json
-{
-  "success": true,
-  "message": "Security status retrieved successfully",
-  "data": {
-    "user_id": "user-123",
-    "risk_score": 25,
-    "risk_level": "low",
-    "active_sessions": 2,
-    "recent_events": 15,
-    "open_alerts": 0
-  }
-}
-```
-
-## 🔒 Security Features
-
-### Risk Assessment
-
-- **User Risk Scoring**: Dynamic risk assessment based on behavior patterns
-- **Device Trust Scoring**: Device fingerprinting and trust evaluation
-- **Threat Detection**: Real-time threat detection and alerting
-- **Session Management**: Secure session creation and validation
-
-### Event Logging
-
-- **Security Events**: Comprehensive logging of all security-related activities
-- **Device Events**: Device registration, validation, and analytics
-- **Authentication Events**: Login, logout, and session management events
-
-### Alert System
-
-- **Suspicious Activity**: Automatic alerts for suspicious behavior
-- **Threat Alerts**: Real-time threat detection and notification
-- **Risk Alerts**: High-risk user and device notifications
-
-## 🚀 Deployment
-
-### Starting Services
+## Health Checks
 
 ```bash
-# Start Auth Service
-cd auth-service && npm start
+# gRPC health check
+grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check
 
-# Start Device Service
-cd device-service && npm start
-
-# Start Security Service
-cd security-service && npm start
+# HTTP health check (if enabled)
+curl http://localhost:50051/health
 ```
 
-### Docker Deployment
+## Error Handling
 
-```bash
-# Build and run with Docker Compose
-docker-compose up -d auth-service device-service security-service
-```
+### Common Error Codes
 
-## 📝 API Documentation
+| Code | Description |
+|------|-------------|
+| `INVALID_CREDENTIALS` | Email or password incorrect |
+| `USER_NOT_FOUND` | User does not exist |
+| `EMAIL_EXISTS` | Email already registered |
+| `TOKEN_EXPIRED` | JWT has expired |
+| `TOKEN_INVALID` | JWT signature invalid |
+| `REFRESH_TOKEN_INVALID` | Refresh token not found or expired |
 
-### Integration Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/integration/login/enhanced` | Enhanced login with device and security integration |
-| POST | `/integration/device/register` | Register new device |
-| GET | `/integration/device/validate/:device_id` | Validate device |
-| POST | `/integration/security/event` | Submit security event |
-| GET | `/integration/security/status/:userId` | Get user security status |
-| POST | `/integration/logout/enhanced` | Enhanced logout |
-| GET | `/integration/health` | Service health check |
-
-### Error Handling
-
-All endpoints return consistent error responses:
+### Error Response Format
 
 ```json
 {
   "success": false,
-  "message": "Error description",
-  "error": "Detailed error message"
+  "error": {
+    "code": "INVALID_CREDENTIALS",
+    "message": "Invalid email or password"
+  }
 }
 ```
 
-## 🔧 Troubleshooting
+## Related Documentation
 
-### Common Issues
+- [Auth Service README](../../auth-service/README.md)
+- [Gateway Documentation](../../gateway/README.md)
+- [Service Connections](../../architecture/SERVICE_CONNECTIONS.md)
+- [User Service](../../user-service/README.md)
 
-1. **Service Not Found**
-   - Check if all services are running on correct ports
-   - Verify environment variables are set correctly
-   - Check service URLs in configuration
+---
 
-2. **gRPC Connection Errors**
-   - Ensure proto files are present in all services
-   - Check network connectivity between services
-   - Verify gRPC credentials configuration
-
-3. **Integration Flow Failures**
-   - Check individual service health
-   - Review logs for specific error messages
-   - Verify data format and required fields
-
-### Debug Commands
-
-```bash
-# Test gRPC connectivity
-grpcurl -plaintext localhost:50051 list
-grpcurl -plaintext localhost:50052 list
-grpcurl -plaintext localhost:50053 list
-
-# Test health checks
-grpcurl -plaintext localhost:50051 auth.AuthService/health
-grpcurl -plaintext localhost:50052 device.DeviceService/health
-grpcurl -plaintext localhost:50053 security.SecurityService/health
-```
-
-## 📈 Future Enhancements
-
-### Planned Improvements
-
-1. **Service Mesh**: Implement Istio or Linkerd for better service communication
-2. **Circuit Breaker**: Add circuit breaker patterns for fault tolerance
-3. **Retry Logic**: Implement exponential backoff for failed requests
-4. **Caching**: Add Redis caching for frequently accessed data
-5. **Metrics**: Enhanced monitoring and metrics collection
-6. **TLS**: Implement TLS encryption for production security
-
-### Missing Features
-
-- **Bidirectional Communication**: Real-time updates via WebSocket
-- **Event Streaming**: Kafka integration for event-driven architecture
-- **Load Balancing**: Client-side load balancing across service instances
-- **Rate Limiting**: Service-level rate limiting and throttling 
+**Last Updated**: December 2024

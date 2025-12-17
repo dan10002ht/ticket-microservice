@@ -36,5 +36,11 @@ public class BookingCreateCommand {
     Integer seatCount;
 
     Map<String, String> metadata;
+
+    /**
+     * Idempotency key to prevent duplicate bookings on retry.
+     * Typically the queue item ID from booking-worker.
+     */
+    String idempotencyKey;
 }
 

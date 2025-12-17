@@ -33,6 +33,12 @@ public class BookingGrpcService extends BookingServiceImplBase {
     public void createBooking(BookingProto.CreateBookingRequest request,
             StreamObserver<BookingProto.BookingResponse> responseObserver) {
         try {
+            // Extract idempotency key from request (for duplicate detection)
+            String idempotencyKey = request.getIdempotencyKey();
+            if (idempotencyKey != null && idempotencyKey.isEmpty()) {
+                idempotencyKey = null;
+            }
+
             BookingCreateCommand command = BookingCreateCommand.builder()
                     .userId(request.getUserId())
                     .eventId(request.getEventId())
@@ -41,6 +47,7 @@ public class BookingGrpcService extends BookingServiceImplBase {
                     .currency("USD")
                     .totalAmount(BigDecimal.valueOf(Math.max(request.getTicketQuantity(), 1)))
                     .metadata(request.getMetadataMap())
+                    .idempotencyKey(idempotencyKey) // Pass idempotency key for duplicate prevention
                     .build();
 
             var result = bookingService.createBooking(command);

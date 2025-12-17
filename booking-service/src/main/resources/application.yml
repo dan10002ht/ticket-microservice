@@ -65,11 +65,18 @@ kafka:
   bootstrapServers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   topics:
     booking-events: ${KAFKA_TOPIC_BOOKING_EVENTS:booking-events}
+    payment-events: ${KAFKA_TOPIC_PAYMENT_EVENTS:payment-events}
+  consumer:
+    group-id: ${KAFKA_CONSUMER_GROUP_ID:booking-service}
+    auto-offset-reset: earliest
+    enable-auto-commit: false
 
 # Booking Configuration
 booking:
   lock:
     ttl-seconds: ${BOOKING_LOCK_TTL_SECONDS:120}
+    wait-time-seconds: ${BOOKING_LOCK_WAIT_SECONDS:10}
+    lease-time-seconds: ${BOOKING_LOCK_LEASE_SECONDS:120}
   expiry:
     minutes: ${BOOKING_EXPIRY_MINUTES:15}
   grpc:
@@ -78,6 +85,20 @@ booking:
       initial-interval-ms: ${GRPC_RETRY_INITIAL_INTERVAL_MS:500}
       multiplier: ${GRPC_RETRY_MULTIPLIER:2.0}
       max-interval-ms: ${GRPC_RETRY_MAX_INTERVAL_MS:5000}
+
+# Outbox Configuration (Transactional Outbox Pattern)
+outbox:
+  processor:
+    # How often to poll for pending events (ms)
+    poll-interval-ms: ${OUTBOX_POLL_INTERVAL_MS:100}
+    # Number of events to process per batch
+    batch-size: ${OUTBOX_BATCH_SIZE:100}
+    # How often to retry failed events (ms)
+    retry-interval-ms: ${OUTBOX_RETRY_INTERVAL_MS:30000}
+    # How often to cleanup old published events (ms)
+    cleanup-interval-ms: ${OUTBOX_CLEANUP_INTERVAL_MS:3600000}
+    # Days to retain published events
+    retention-days: ${OUTBOX_RETENTION_DAYS:7}
 
 # Management & Monitoring
 management:

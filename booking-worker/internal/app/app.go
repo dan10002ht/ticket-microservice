@@ -5,12 +5,14 @@ import (
 	"net"
 
 	"booking-worker/config"
+	grpchandler "booking-worker/grpc"
+	pb "booking-worker/internal/protos/booking_worker"
 	"booking-worker/internal/queue"
 	"booking-worker/internal/worker"
 	"booking-worker/metrics"
 
-	"go.uber.org/zap"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -62,6 +64,18 @@ func (a *App) Initialize() error {
 	}
 	a.processor = processor
 	a.logger.Info("Worker processor initialized")
+
+	// Initialize timeout handler (if queue is Redis-based)
+	if redisQueue, ok := a.queue.(*queue.RedisQueueManager); ok {
+		timeoutHandler, err := queue.NewTimeoutHandler(a.config, redisQueue.GetClient(), a.logger)
+		if err != nil {
+			return fmt.Errorf("failed to initialize timeout handler: %w", err)
+		}
+		
+		// Start timeout handler in background
+		go timeoutHandler.Start()
+		a.logger.Info("Timeout handler initialized")
+	}
 
 	// Initialize gRPC server
 	grpcServer, err := a.initGRPCServer()
@@ -136,10 +150,9 @@ func (a *App) initGRPCServer() (*grpc.Server, error) {
 
 	s := grpc.NewServer(opts...)
 
-	// Register gRPC services
-	// TODO: Register BookingWorkerService when protobuf is defined
-	// bookingWorkerService := grpcservice.NewBookingWorkerService(a.queue, a.processor, a.logger)
-	// bookingpb.RegisterBookingWorkerServiceServer(s, bookingWorkerService)
+	// Register BookingWorkerService
+	bookingWorkerService := grpchandler.NewBookingWorkerService(a.queue, a.processor, a.config, a.logger)
+	pb.RegisterBookingWorkerServiceServer(s, bookingWorkerService)
 
 	// Enable reflection for development
 	reflection.Register(s)

@@ -92,7 +92,7 @@ type RedisQueue struct {
 
 // NewRedisQueue creates a new RedisQueue instance
 func NewRedisQueue(addr, password string, database int, queueName string, logger *zap.Logger) *RedisQueue {
-	logger.Info("Creating RedisQueue", zap.String("addr", addr), zap.String("password", password), zap.Int("database", database), zap.String("queueName", queueName))
+	logger.Info("Creating RedisQueue", zap.String("addr", addr), zap.Int("database", database), zap.String("queueName", queueName))
 	client := redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: password,

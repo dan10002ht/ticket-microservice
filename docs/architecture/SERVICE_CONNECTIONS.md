@@ -1,348 +1,298 @@
 # Service Connections Documentation
 
-## 🔗 Overview
+## Overview
 
-This document describes the inter-service communication setup between `auth-service`, `device-service`, and `security-service` in the booking system microservices architecture.
+This document describes the inter-service communication setup in the ticket booking microservices architecture.
 
-## 📊 Connection Matrix
+## Service Inventory
 
-| Service              | Auth Service | Device Service | Security Service |
-| -------------------- | ------------ | -------------- | ---------------- |
-| **Auth Service**     | -            | ✅ Client      | ✅ Client        |
-| **Device Service**   | ❌ Client    | -              | ✅ Client        |
-| **Security Service** | ✅ Client    | ✅ Client      | -                |
+| Service | Language | gRPC Port | HTTP Port | Description |
+|---------|----------|-----------|-----------|-------------|
+| Gateway | Node.js | - | 3000 | API Gateway, routing |
+| Auth Service | Node.js | 50051 | - | Authentication, JWT |
+| Event Service | Node.js | 50054 | - | Event management |
+| Ticket Service | Node.js | 50055 | - | Ticket/seat management |
+| Booking Service | Java | 50056 | 8080 | Booking orchestration (Saga) |
+| Payment Service | Java | 50058 | 8081 | Payment processing (Stripe) |
+| User Service | Go | 50052 | - | User profiles, addresses |
+| Booking Worker | Go | - | - | Queue processing |
+| Email Worker | Go | - | - | Email delivery |
+| Realtime Service | Go | 50057 | 3003 | WebSocket notifications |
 
-## 🏗️ Architecture
+## Architecture Diagram
 
-### Service Ports
+```
+                                    ┌─────────────────────┐
+                                    │      Frontend       │
+                                    │   (React/Next.js)   │
+                                    └─────────┬───────────┘
+                                              │ HTTP/WebSocket
+                                              ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            API Gateway (Node.js)                             │
+│                              Port: 3000                                      │
+└────┬──────────┬──────────┬──────────┬──────────┬──────────┬────────────────┘
+     │          │          │          │          │          │
+     │ gRPC     │ gRPC     │ gRPC     │ gRPC     │ gRPC     │ gRPC
+     ▼          ▼          ▼          ▼          ▼          ▼
+┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+│  Auth   │ │  Event  │ │ Ticket  │ │ Booking │ │ Payment │ │  User   │
+│ Service │ │ Service │ │ Service │ │ Service │ │ Service │ │ Service │
+│ :50051  │ │ :50054  │ │ :50055  │ │ :50056  │ │ :50058  │ │ :50052  │
+│ Node.js │ │ Node.js │ │ Node.js │ │  Java   │ │  Java   │ │   Go    │
+└─────────┘ └─────────┘ └────┬────┘ └────┬────┘ └────┬────┘ └─────────┘
+                             │           │           │
+                             │    ┌──────┴───────────┘
+                             │    │ gRPC calls
+                             ▼    ▼
+                        ┌─────────────┐
+                        │   Booking   │      ┌─────────────┐
+                        │   Worker    │─────▶│  Realtime   │
+                        │    (Go)     │ gRPC │  Service    │
+                        └──────┬──────┘      │ :50057/:3003│
+                               │             │    (Go)     │
+                               │             └──────┬──────┘
+                               │                    │ WebSocket
+                               │                    ▼
+                               │             ┌─────────────┐
+                               │             │  Frontend   │
+                               │             │ (Real-time) │
+                               │             └─────────────┘
+                               │
+                               ▼
+                        ┌─────────────┐
+                        │   Email     │
+                        │   Worker    │
+                        │    (Go)     │
+                        └─────────────┘
 
-- **Auth Service**: `localhost:50051`
-- **Device Service**: `localhost:50052`
-- **Security Service**: `localhost:50053`
+Infrastructure:
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│ PostgreSQL  │  │    Redis    │  │    Kafka    │
+│   (DB)      │  │ (Cache/Queue)│  │  (Events)   │
+└─────────────┘  └─────────────┘  └─────────────┘
+```
 
-### Communication Protocol
+## Connection Matrix
 
-- **Protocol**: gRPC (gRPC Remote Procedure Call)
-- **Serialization**: Protocol Buffers (protobuf)
-- **Transport**: HTTP/2
-- **Security**: Insecure (for development)
+### Gateway → Services (gRPC)
 
-## 🔧 Implementation Details
+| Target Service | Purpose | Proto File |
+|----------------|---------|------------|
+| Auth Service | Login, register, token validation | `auth.proto` |
+| Event Service | Event CRUD, search | `event.proto` |
+| Ticket Service | Seat availability, pricing | `ticket.proto` |
+| Booking Service | Create/cancel bookings | `booking.proto` |
+| Payment Service | Payment processing | `payment.proto` |
+| User Service | Profile, addresses | `user.proto` |
 
-### 1. Auth Service Connections
+### Booking Service → Services (gRPC)
 
-#### Device Service Client
+| Target Service | Purpose | When Called |
+|----------------|---------|-------------|
+| Ticket Service | Reserve/release seats | During Saga execution |
+| Payment Service | Create/cancel payments | During Saga execution |
 
-- **File**: `auth-service/src/services/deviceService.js`
-- **Proto**: `auth-service/src/proto/device.proto`
-- **Methods**:
-  - `registerDevice()` - Register new device
-  - `createSession()` - Create device session
-  - `validateDevice()` - Validate device
-  - `getUserSessions()` - Get user sessions
-  - `health()` - Health check
+### Booking Worker → Services
 
-#### Security Service Client
+| Target Service | Protocol | Purpose |
+|----------------|----------|---------|
+| Booking Service | gRPC | Create bookings from queue |
+| Realtime Service | gRPC | Notify booking results |
 
-- **File**: `auth-service/src/services/securityService.js`
-- **Proto**: `auth-service/src/proto/security.proto`
-- **Methods**:
-  - `submitEvent()` - Submit security event
-  - `getUserRiskScore()` - Get user risk score
-  - `detectThreat()` - Detect security threat
-  - `health()` - Health check
+### Realtime Service Connections
 
-### 2. Device Service Connections
+| Direction | Protocol | Purpose |
+|-----------|----------|---------|
+| Frontend → Realtime | WebSocket | Real-time updates |
+| Booking Worker → Realtime | gRPC | Push booking notifications |
+| Payment Service → Realtime | gRPC | Push payment status |
+| Internal (scaling) | Redis Pub/Sub | Multi-instance sync |
 
-#### Security Service Client
+## Proto Definitions
 
-- **File**: `device-service/src/services/securityService.js`
-- **Proto**: `device-service/src/proto/security.proto`
-- **Methods**:
-  - `submitEvent()` - Submit security event
-  - `getUserRiskScore()` - Get user risk score
-  - `health()` - Health check
-
-### 3. Security Service Connections
-
-#### Auth Service Client
-
-- **File**: `security-service/src/services/authService.js`
-- **Proto**: `security-service/src/proto/auth.proto`
-- **Methods**:
-  - `getUserProfile()` - Get user profile
-  - `validateToken()` - Validate JWT token
-  - `getUserSessions()` - Get user sessions
-  - `health()` - Health check
-
-#### Device Service Client
-
-- **File**: `security-service/src/services/deviceService.js`
-- **Proto**: `security-service/src/proto/device.proto`
-- **Methods**:
-  - `getDeviceList()` - Get user devices
-  - `getDeviceAnalytics()` - Get device analytics
-  - `updateDeviceTrust()` - Update device trust score
-  - `revokeDevice()` - Revoke device access
-  - `health()` - Health check
-
-## 📡 gRPC Service Definitions
-
-### Auth Service (auth.proto)
+### User Service (user.proto)
 
 ```protobuf
-service AuthService {
-  // Registration & Login
-  rpc register(RegisterRequest) returns (RegisterResponse);
-  rpc login(LoginRequest) returns (LoginResponse);
-  rpc logout(LogoutRequest) returns (LogoutResponse);
+service UserService {
+  // Profile operations
+  rpc GetProfile (GetProfileRequest) returns (GetProfileResponse);
+  rpc CreateProfile (CreateProfileRequest) returns (CreateProfileResponse);
+  rpc UpdateProfile (UpdateProfileRequest) returns (UpdateProfileResponse);
 
-  // Token Management
-  rpc refreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
-  rpc validateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
-
-  // User Management
-  rpc getUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
-  rpc getUserSessions(GetUserSessionsRequest) returns (GetUserSessionsResponse);
-
-  // Health Check
-  rpc health(HealthCheckRequest) returns (HealthCheckResponse);
+  // Address operations
+  rpc GetAddresses (GetAddressesRequest) returns (GetAddressesResponse);
+  rpc AddAddress (AddAddressRequest) returns (AddAddressResponse);
+  rpc UpdateAddress (UpdateAddressRequest) returns (UpdateAddressResponse);
+  rpc DeleteAddress (DeleteAddressRequest) returns (DeleteAddressResponse);
 }
 ```
 
-### Device Service (device.proto)
+### Realtime Service (realtime.proto)
 
 ```protobuf
-service DeviceService {
-  // Device Management
-  rpc RegisterDevice(RegisterDeviceRequest) returns (RegisterDeviceResponse);
-  rpc GetDeviceList(GetDeviceListRequest) returns (GetDeviceListResponse);
-  rpc UpdateDeviceTrust(UpdateDeviceTrustRequest) returns (UpdateDeviceTrustResponse);
-  rpc RevokeDevice(RevokeDeviceRequest) returns (RevokeDeviceResponse);
+service RealtimeService {
+  // Called by booking-worker when booking processing completes
+  rpc NotifyBookingResult (NotifyBookingResultRequest) returns (NotifyBookingResultResponse);
 
-  // Session Management
-  rpc GetUserSessions(GetUserSessionsRequest) returns (GetUserSessionsResponse);
-  rpc CreateSession(CreateSessionRequest) returns (CreateSessionResponse);
-  rpc ValidateDevice(ValidateDeviceRequest) returns (ValidateDeviceResponse);
+  // Called to update user's position in booking queue
+  rpc NotifyQueuePosition (NotifyQueuePositionRequest) returns (NotifyQueuePositionResponse);
 
-  // Analytics
-  rpc GetDeviceAnalytics(GetDeviceAnalyticsRequest) returns (GetDeviceAnalyticsResponse);
+  // Called by payment-service for payment status updates
+  rpc NotifyPaymentStatus (NotifyPaymentStatusRequest) returns (NotifyPaymentStatusResponse);
 
-  // Health Check
-  rpc health(HealthCheckRequest) returns (HealthCheckResponse);
+  // Broadcast event to a room (e.g., ticket availability changes)
+  rpc BroadcastEvent (BroadcastEventRequest) returns (BroadcastEventResponse);
+
+  // Send notification to a specific user
+  rpc SendToUser (SendToUserRequest) returns (SendToUserResponse);
+
+  // Get current connection statistics (for monitoring)
+  rpc GetConnectionStats (GetConnectionStatsRequest) returns (GetConnectionStatsResponse);
 }
 ```
 
-### Security Service (security.proto)
+### Booking Service (booking.proto)
 
 ```protobuf
-service SecurityService {
-  // Event Management
-  rpc submitEvent(SubmitEventRequest) returns (SubmitEventResponse);
-  rpc getSecurityEvents(GetSecurityEventsRequest) returns (GetSecurityEventsResponse);
-
-  // Risk Assessment
-  rpc getUserRiskScore(GetUserRiskScoreRequest) returns (GetUserRiskScoreResponse);
-  rpc updateUserRiskScore(UpdateUserRiskScoreRequest) returns (UpdateUserRiskScoreResponse);
-
-  // Threat Detection
-  rpc detectThreat(DetectThreatRequest) returns (DetectThreatResponse);
-  rpc getThreatPatterns(GetThreatPatternsRequest) returns (GetThreatPatternsResponse);
-
-  // Alert Management
-  rpc createAlert(CreateAlertRequest) returns (CreateAlertResponse);
-  rpc getAlerts(GetAlertsRequest) returns (GetAlertsResponse);
-  rpc updateAlert(UpdateAlertRequest) returns (UpdateAlertResponse);
-
-  // Health Check
-  rpc health(HealthCheckRequest) returns (HealthCheckResponse);
+service BookingService {
+  rpc CreateBooking (CreateBookingRequest) returns (CreateBookingResponse);
+  rpc GetBooking (GetBookingRequest) returns (GetBookingResponse);
+  rpc CancelBooking (CancelBookingRequest) returns (CancelBookingResponse);
+  rpc GetUserBookings (GetUserBookingsRequest) returns (GetUserBookingsResponse);
 }
 ```
 
-## 🔄 Business Flows
+## Business Flows
 
-### 1. User Login Flow
-
-```
-1. User submits login credentials
-2. Auth Service validates credentials
-3. Auth Service calls Device Service to register/validate device
-4. Auth Service calls Security Service to submit login event
-5. Security Service analyzes login for threats
-6. Auth Service returns tokens to user
-```
-
-### 2. Device Registration Flow
+### 1. Booking Flow (Saga Pattern)
 
 ```
-1. User logs in from new device
-2. Auth Service calls Device Service to register device
-3. Device Service generates device fingerprint
-4. Device Service calls Security Service to submit device event
-5. Security Service assesses device risk
-6. Device Service returns device trust score
+1. User selects seats → Gateway
+2. Gateway → Booking Worker (add to Redis queue)
+3. Booking Worker processes queue
+4. Booking Worker → Booking Service (CreateBooking)
+5. Booking Service executes Saga:
+   a. Create Booking (PENDING)
+   b. Ticket Service → Reserve Seats
+   c. Payment Service → Process Payment
+   d. Confirm Booking (CONFIRMED)
+6. Booking Worker → Realtime Service (NotifyBookingResult)
+7. Realtime Service → Frontend (WebSocket push)
 ```
 
-### 3. Security Monitoring Flow
+### 2. Real-time Notification Flow
 
 ```
-1. Security Service receives events from all services
-2. Security Service analyzes patterns and detects threats
-3. Security Service calls Auth Service to get user context
-4. Security Service calls Device Service to get device analytics
-5. Security Service creates alerts if threats detected
-6. Security Service updates user risk scores
+1. Service event occurs (booking confirmed, payment processed)
+2. Service → Realtime Service (gRPC: NotifyBookingResult/NotifyPaymentStatus)
+3. Realtime Service finds user's WebSocket connection
+4. Realtime Service → Frontend (WebSocket message)
+5. If multiple instances: Redis Pub/Sub broadcasts to all instances
 ```
 
-## 🧪 Testing
+### 3. User Profile Flow
 
-### Test Scripts
+```
+1. User requests profile → Gateway
+2. Gateway → User Service (gRPC: GetProfile)
+3. User Service → PostgreSQL
+4. Response flows back through Gateway
+```
 
-1. **Basic Connection Test**: `test-service-connections.js`
+## Environment Configuration
 
-   - Tests if services are running and accessible
-   - Verifies gRPC client connections
-
-2. **Inter-Service Communication Test**: `test-inter-service-communication.js`
-   - Tests actual gRPC calls between services
-   - Validates business logic flows
-
-### Running Tests
+### Service URLs
 
 ```bash
-# Test basic connections
-node test-service-connections.js
+# Gateway
+AUTH_SERVICE_URL=localhost:50051
+EVENT_SERVICE_URL=localhost:50054
+TICKET_SERVICE_URL=localhost:50055
+BOOKING_SERVICE_URL=localhost:50056
+PAYMENT_SERVICE_URL=localhost:50058
+USER_SERVICE_URL=localhost:50052
 
-# Test inter-service communication
-node test-inter-service-communication.js
+# Booking Worker
+BOOKING_SERVICE_URL=localhost:50056
+REALTIME_SERVICE_URL=localhost:50057
+
+# Realtime Service
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# All Services
+KAFKA_BROKERS=localhost:9092
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
 ```
 
-## 🚀 Deployment
-
-### Environment Variables
-
-```bash
-# Auth Service
-AUTH_SERVICE_URL=localhost:50051
-DEVICE_SERVICE_URL=localhost:50052
-SECURITY_SERVICE_URL=localhost:50053
-
-# Device Service
-AUTH_SERVICE_URL=localhost:50051
-SECURITY_SERVICE_URL=localhost:50053
-
-# Security Service
-AUTH_SERVICE_URL=localhost:50051
-DEVICE_SERVICE_URL=localhost:50052
-```
-
-### Starting Services
-
-```bash
-# Start Auth Service
-cd auth-service && npm start
-
-# Start Device Service
-cd device-service && npm start
-
-# Start Security Service
-cd security-service && npm start
-```
-
-## 🔒 Security Considerations
-
-### Current Implementation
-
-- **Transport**: Insecure gRPC (for development)
-- **Authentication**: None (for development)
-- **Authorization**: None (for development)
-
-### Production Recommendations
-
-- **Transport**: TLS/SSL encryption
-- **Authentication**: mTLS (mutual TLS)
-- **Authorization**: Service-to-service authentication
-- **Rate Limiting**: Implement rate limiting
-- **Circuit Breaker**: Add circuit breaker patterns
-- **Retry Logic**: Implement exponential backoff
-
-## 📈 Monitoring & Observability
-
-### Health Checks
+## Health Checks
 
 All services implement health check endpoints:
 
-- `auth.health()`
-- `device.health()`
-- `security.health()`
+```bash
+# gRPC Health Check
+grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check
+grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check
+grpcurl -plaintext localhost:50057 grpc.health.v1.Health/Check
 
-### Logging
+# HTTP Health Check (services with HTTP endpoints)
+curl http://localhost:3000/health    # Gateway
+curl http://localhost:3003/health    # Realtime Service
+curl http://localhost:8080/actuator/health  # Booking Service
+curl http://localhost:8081/actuator/health  # Payment Service
+```
 
-- All inter-service calls are logged
-- Error handling with fallback mechanisms
-- Performance metrics collection
+## Monitoring
 
-### Metrics
+### Prometheus Metrics Ports
 
-- Request/response counts
-- Latency measurements
-- Error rates
-- Connection status
+| Service | Metrics Port | Endpoint |
+|---------|--------------|----------|
+| Gateway | 9090 | /metrics |
+| Booking Service | 9091 | /actuator/prometheus |
+| Payment Service | 9092 | /actuator/prometheus |
+| User Service | 9092 | /metrics |
+| Realtime Service | 9057 | /metrics |
+| Booking Worker | 9093 | /metrics |
+| Email Worker | 9094 | /metrics |
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
 1. **Service Not Found**
-
    - Check if service is running on correct port
    - Verify proto file paths
    - Check service URL configuration
 
 2. **Connection Refused**
-
    - Ensure service is started
    - Check firewall settings
    - Verify port availability
 
-3. **Proto File Errors**
-
-   - Validate proto file syntax
-   - Check proto file paths
-   - Ensure proto files are copied to all services
-
-4. **Method Not Found**
-   - Verify service method names
-   - Check proto service definitions
-   - Ensure client/server proto versions match
+3. **gRPC Deadline Exceeded**
+   - Check network latency
+   - Increase timeout settings
+   - Verify service health
 
 ### Debug Commands
 
 ```bash
-# Test gRPC connectivity
+# List available gRPC services
 grpcurl -plaintext localhost:50051 list
 grpcurl -plaintext localhost:50052 list
-grpcurl -plaintext localhost:50053 list
+grpcurl -plaintext localhost:50057 list
 
-# Test health checks
-grpcurl -plaintext localhost:50051 auth.AuthService/health
-grpcurl -plaintext localhost:50052 device.DeviceService/health
-grpcurl -plaintext localhost:50053 security.SecurityService/health
+# Test specific methods
+grpcurl -plaintext -d '{"user_id":"test"}' localhost:50052 user.UserService/GetProfile
+grpcurl -plaintext localhost:50057 realtime.RealtimeService/GetConnectionStats
+
+# Check Kafka topics
+kafka-topics.sh --list --bootstrap-server localhost:9092
+
+# Check Redis
+redis-cli ping
+redis-cli keys "booking-queue:*"
 ```
-
-## 📝 Future Enhancements
-
-### Planned Improvements
-
-1. **Service Mesh**: Implement Istio or Linkerd
-2. **API Gateway**: Add centralized API gateway
-3. **Event Streaming**: Implement Kafka for async communication
-4. **Caching**: Add Redis for caching
-5. **Load Balancing**: Implement client-side load balancing
-6. **Service Discovery**: Add service discovery mechanism
-
-### Missing Connections
-
-- **Device Service → Auth Service**: Optional, for user validation
-- **Bidirectional Communication**: Implement streaming for real-time updates
-- **Event-Driven Architecture**: Add event sourcing patterns

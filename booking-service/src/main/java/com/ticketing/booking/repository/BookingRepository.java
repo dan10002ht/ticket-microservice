@@ -14,5 +14,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     Optional<Booking> findByBookingId(UUID bookingId);
 
     Optional<Booking> findByBookingReference(String bookingReference);
+
+    /**
+     * Find booking by idempotency key for duplicate detection
+     */
+    Optional<Booking> findByIdempotencyKey(String idempotencyKey);
+
+    /**
+     * Check if a booking with this idempotency key already exists
+     */
+    boolean existsByIdempotencyKey(String idempotencyKey);
 }
 

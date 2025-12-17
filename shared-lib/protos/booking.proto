@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package booking;
 
+option go_package = "booking-worker/internal/protos/booking";
 option java_multiple_files = true;
 option java_package = "com.ticketing.booking.grpc";
 option java_outer_classname = "BookingProto";
@@ -36,6 +37,9 @@ message CreateBookingRequest {
   repeated string seat_numbers = 4;
   string special_requests = 5;
   map<string, string> metadata = 6;
+  // Idempotency key to prevent duplicate bookings on retry
+  // Should be unique per booking request (e.g., queue item ID)
+  string idempotency_key = 7;
 }
 
 message BookingResponse {

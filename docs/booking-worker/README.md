@@ -35,17 +35,17 @@ Complete documentation hub for the Booking Worker Service (Go) implementation.
 
 | Phase | Section | Status | Documents |
 | --- | --- | --- | --- |
-| **Phase 1: Core Setup** | Project Setup | ⏳ Not Started | - |
-|  | Queue Infrastructure | ⏳ Not Started | - |
-|  | gRPC Client Setup | ⏳ Not Started | - |
-| **Phase 2: Queue Management** | Enqueue Logic | ⏳ Not Started | - |
-|  | Dequeue & Processing | ⏳ Not Started | - |
-|  | Position Tracking | ⏳ Not Started | - |
-|  | Timeout Handler | ⏳ Not Started | - |
-| **Phase 3: Integration** | Booking Service gRPC | ⏳ Not Started | - |
-|  | Realtime Service gRPC | ⏳ Not Started | - |
-|  | Gateway Integration | ⏳ Not Started | - |
-|  | Metrics & Monitoring | ⏳ Not Started | - |
+| **Phase 1: Core Setup** | Project Setup | ✅ Completed | [README](../../booking-worker/README.md) |
+|  | Queue Infrastructure | ✅ Completed | [README](../../booking-worker/README.md) |
+|  | gRPC Client Setup | ✅ Completed | [README](../../booking-worker/README.md) |
+| **Phase 2: Queue Management** | Enqueue Logic | ✅ Completed | [README](../../booking-worker/README.md) |
+|  | Dequeue & Processing | ✅ Completed | [README](../../booking-worker/README.md) |
+|  | Position Tracking | ✅ Completed | [README](../../booking-worker/README.md) |
+|  | Timeout Handler | ✅ Completed | [README](../../booking-worker/README.md) |
+| **Phase 3: Integration** | Booking Service gRPC | ⏳ Pending Protobuf | [README](../../booking-worker/README.md) |
+|  | Realtime Service gRPC | ⏳ Pending Protobuf | [README](../../booking-worker/README.md) |
+|  | Gateway Integration | ⏳ Pending | - |
+|  | Metrics & Monitoring | ✅ Completed | [README](../../booking-worker/README.md) |
 
 ---
 
@@ -119,14 +119,29 @@ Client → Gateway → booking-worker (enqueue)
 
 ---
 
-## ✅ TODO / Deferred Items
+## ✅ Completed Items
 
-- [ ] Define protobuf messages for `BookingWorkerService` in `shared-lib/protos/`
-- [ ] Document Redis key schema (`booking-queue`, `booking-timeouts`, `booking-status:{clientId}`)
-- [ ] Design queue position calculation algorithm
-- [ ] Plan timeout strategy (TTL, cleanup workers)
+- [x] Define protobuf messages for `BookingWorkerService` in `shared-lib/protos/booking_worker.proto`
+- [x] Document Redis key schema (see [README](../../booking-worker/README.md))
+- [x] Implement queue position calculation algorithm (using Redis sorted sets)
+- [x] Implement timeout strategy (TTL + cleanup worker goroutine)
+- [x] Create project structure and core components
+- [x] Implement Redis queue manager (Enqueue, Dequeue, GetPosition, Remove)
+- [x] Implement worker pool with goroutines
+- [x] Implement timeout handler for expired items
+- [x] Setup gRPC client stubs (Booking Service, Realtime Service)
+- [x] Setup gRPC service handler (BookingWorkerService)
+- [x] Setup Prometheus metrics exporter
+- [x] Create build and development scripts
+
+## ⏳ Pending Items
+
+- [ ] Generate Go protobuf code (run `scripts/generate-proto.sh`)
+- [ ] Complete gRPC service handler implementation (uncomment code after protobuf generation)
+- [ ] Complete gRPC client implementations (after protobuf generation)
 - [ ] Write integration tests with Testcontainers (Redis, gRPC mocks)
 - [ ] Prepare load testing strategy (100k+ concurrent clients)
+- [ ] Gateway integration
 
 ---
 

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ticketing.booking.entity.Booking;
+import com.ticketing.booking.entity.FailedCompensation.CompensationType;
 import com.ticketing.booking.entity.enums.BookingStatus;
 import com.ticketing.booking.entity.enums.PaymentStatus;
 import com.ticketing.booking.exception.BookingLockException;
@@ -16,11 +17,15 @@ import com.ticketing.booking.grpcclient.PaymentServiceClient;
 import com.ticketing.booking.grpcclient.TicketServiceClient;
 import com.ticketing.booking.metrics.BookingMetricsService;
 import com.ticketing.booking.repository.BookingRepository;
-import com.ticketing.booking.service.BookingEventPublisher;
 import com.ticketing.booking.service.BookingLockService;
+import com.ticketing.booking.service.CompensationRetryService;
+import com.ticketing.booking.service.OutboxService;
 import com.ticketing.booking.service.dto.BookingCreateCommand;
 import com.ticketing.booking.service.dto.BookingResult;
 import com.ticketing.booking.service.mapper.BookingMapper;
+import com.ticketing.booking.statemachine.BookingEvent;
+import com.ticketing.booking.statemachine.BookingStateMachine;
+import com.ticketing.booking.statemachine.StateTransition;
 import com.ticketing.booking.util.ReferenceGenerator;
 import com.ticketing.booking.grpc.TicketProto;
 import com.ticketing.payment.grpc.PaymentProto;
@@ -45,14 +50,16 @@ public class BookingSagaOrchestrator {
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
     private final BookingLockService lockService;
-    private final BookingEventPublisher eventPublisher;
+    private final OutboxService outboxService;
     private final TicketServiceClient ticketServiceClient;
     private final PaymentServiceClient paymentServiceClient;
     private final BookingMetricsService metricsService;
+    private final CompensationRetryService compensationRetryService;
+    private final BookingStateMachine stateMachine;
 
     /**
      * Execute booking saga
-     * 
+     *
      * @param command Booking creation command
      * @return Booking result
      */
@@ -65,6 +72,17 @@ public class BookingSagaOrchestrator {
         String paymentId = null;
 
         try {
+            // Step 0: Check idempotency - return existing booking if duplicate request
+            if (command.getIdempotencyKey() != null && !command.getIdempotencyKey().isEmpty()) {
+                var existingBooking = bookingRepository.findByIdempotencyKey(command.getIdempotencyKey());
+                if (existingBooking.isPresent()) {
+                    log.info("Duplicate booking request detected, returning existing booking. idempotencyKey={}",
+                            command.getIdempotencyKey());
+                    metricsService.recordSagaStep("idempotency_check", "duplicate");
+                    return bookingMapper.toResult(existingBooking.get());
+                }
+            }
+
             // Step 1: Acquire distributed lock
             lock = acquireLock(command.getEventId());
             metricsService.recordSagaStep("acquire_lock", "success");
@@ -73,22 +91,41 @@ public class BookingSagaOrchestrator {
             booking = createBookingRecord(command);
             booking = bookingRepository.save(booking);
             metricsService.recordSagaStep("create_booking", "success");
-            log.info("Created booking record: {}", booking.getBookingId());
+            log.info("Created booking record: {}, idempotencyKey={}", booking.getBookingId(), command.getIdempotencyKey());
 
             // Step 3: Reserve seats via Ticket Service
-            booking.setStatus(BookingStatus.RESERVING);
+            StateTransition toReserving = stateMachine.transition(
+                    booking, BookingEvent.RESERVE_SEATS, "saga", "Starting seat reservation");
             bookingRepository.save(booking);
+            log.debug("State transition: {}", toReserving);
 
             reservationId = reserveSeats(booking, command);
+
+            // Transition to SEATS_RESERVED
+            StateTransition toSeatsReserved = stateMachine.transition(
+                    booking, BookingEvent.SEATS_RESERVED, "saga", "Seats reserved successfully");
+            bookingRepository.save(booking);
+            log.debug("State transition: {}", toSeatsReserved);
+
             metricsService.recordSagaStep("reserve_seats", "success");
             log.info("Reserved seats for booking: {}, reservationId: {}", booking.getBookingId(), reservationId);
 
             // Step 4: Process payment if required
             if (requiresPayment(command)) {
-                booking.setStatus(BookingStatus.AWAITING_PAYMENT);
+                // Transition to PAYMENT_PENDING
+                StateTransition toPaymentPending = stateMachine.transition(
+                        booking, BookingEvent.REQUEST_PAYMENT, "saga", "Starting payment processing");
                 bookingRepository.save(booking);
+                log.debug("State transition: {}", toPaymentPending);
 
                 paymentId = processPayment(booking, command);
+
+                // Transition to PAYMENT_PROCESSING
+                StateTransition toPaymentProcessing = stateMachine.transition(
+                        booking, BookingEvent.PAYMENT_AUTHORIZED, "saga", "Payment authorized");
+                bookingRepository.save(booking);
+                log.debug("State transition: {}", toPaymentProcessing);
+
                 metricsService.recordSagaStep("process_payment", "success");
                 log.info("Processed payment for booking: {}, paymentId: {}", booking.getBookingId(), paymentId);
             } else {
@@ -96,14 +133,25 @@ public class BookingSagaOrchestrator {
             }
 
             // Step 5: Confirm booking
-            booking.setStatus(BookingStatus.CONFIRMED);
+            if (requiresPayment(command)) {
+                // Transition via PAYMENT_CAPTURED event
+                StateTransition toConfirmed = stateMachine.transition(
+                        booking, BookingEvent.PAYMENT_CAPTURED, "saga", "Payment captured successfully");
+                log.debug("State transition: {}", toConfirmed);
+            } else {
+                // Free event - transition via CONFIRM event
+                StateTransition toConfirmed = stateMachine.transition(
+                        booking, BookingEvent.CONFIRM, "saga", "Free event - confirmed directly");
+                log.debug("State transition: {}", toConfirmed);
+            }
             booking.setPaymentStatus(PaymentStatus.CAPTURED);
             if (paymentId != null) {
                 booking.setPaymentReference(paymentId);
             }
             booking = bookingRepository.save(booking);
 
-            eventPublisher.publishBookingConfirmed(booking);
+            // Save event to outbox (same transaction - guarantees exactly-once delivery)
+            outboxService.saveBookingConfirmedEvent(booking);
             metricsService.recordSagaStep("confirm_booking", "success");
             log.info("Booking saga completed successfully: {}", booking.getBookingId());
 
@@ -123,9 +171,13 @@ public class BookingSagaOrchestrator {
     }
 
     /**
-     * Compensate for failed saga steps
+     * Compensate for failed saga steps.
+     * Failed compensations are saved to DLQ for automatic retry.
      */
     private void compensate(Booking booking, String reservationId, String paymentId, String reason) {
+        Long bookingId = booking != null ? booking.getId() : null;
+        String bookingRef = booking != null ? booking.getBookingReference() : null;
+
         try {
             // Compensate payment if processed
             if (paymentId != null) {
@@ -135,32 +187,56 @@ public class BookingSagaOrchestrator {
                     log.info("Compensated payment: {}", paymentId);
                 } catch (Exception e) {
                     metricsService.recordSagaCompensation("cancel_payment", "failed");
-                    log.error("Failed to compensate payment: {}", paymentId, e);
+                    log.error("Failed to compensate payment, saving to DLQ: {}", paymentId, e);
+                    // Save to DLQ for retry
+                    compensationRetryService.saveFailedCompensation(
+                            CompensationType.CANCEL_PAYMENT,
+                            paymentId,
+                            bookingId,
+                            bookingRef,
+                            e.getMessage(),
+                            null);
                 }
             }
 
             // Release seats if reserved
             if (reservationId != null && booking != null) {
                 try {
-                    // Release all tickets for this reservation
                     ticketServiceClient.releaseTickets(reservationId, null);
                     metricsService.recordSagaCompensation("release_seats", "success");
                     log.info("Released seats for reservation: {}", reservationId);
                 } catch (Exception e) {
                     metricsService.recordSagaCompensation("release_seats", "failed");
-                    log.error("Failed to release seats: {}", reservationId, e);
+                    log.error("Failed to release seats, saving to DLQ: {}", reservationId, e);
+                    // Save to DLQ for retry
+                    compensationRetryService.saveFailedCompensation(
+                            CompensationType.RELEASE_SEATS,
+                            reservationId,
+                            bookingId,
+                            bookingRef,
+                            e.getMessage(),
+                            null);
                 }
             }
 
-            // Update booking status
+            // Update booking status via state machine
             if (booking != null) {
-                booking.setStatus(BookingStatus.FAILED);
+                try {
+                    StateTransition toFailed = stateMachine.transition(
+                            booking, BookingEvent.FAIL, "saga-compensation", reason);
+                    log.debug("State transition during compensation: {}", toFailed);
+                } catch (Exception e) {
+                    // If state machine fails, force the status (terminal state)
+                    log.warn("State machine transition failed, forcing FAILED status", e);
+                    booking.setStatus(BookingStatus.FAILED);
+                }
                 booking.setPaymentStatus(PaymentStatus.FAILED);
                 bookingRepository.save(booking);
-                eventPublisher.publishBookingCancelled(booking);
+                // Save cancellation event to outbox (same transaction)
+                outboxService.saveBookingCancelledEvent(booking);
             }
         } catch (Exception e) {
-            log.error("Compensation failed", e);
+            log.error("Compensation failed critically", e);
         }
     }
 
@@ -198,6 +274,7 @@ public class BookingSagaOrchestrator {
                 .paymentStatus(totalAmount.compareTo(BigDecimal.ZERO) > 0
                         ? PaymentStatus.PENDING
                         : PaymentStatus.NOT_REQUIRED)
+                .idempotencyKey(command.getIdempotencyKey()) // Set idempotency key for duplicate detection
                 .build();
     }
 
