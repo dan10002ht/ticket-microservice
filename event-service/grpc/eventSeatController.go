@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 	"event-service/services"
-	eventpb "shared-lib/protos/event"
+	eventpb "event-service/internal/protos/event"
 )
 
 type EventSeatController struct {
@@ -27,7 +27,7 @@ func (c *EventSeatController) CreateSeat(ctx context.Context, req *eventpb.Creat
 
 	return &eventpb.CreateSeatResponse{
 		Success: true,
-		Seat: &eventpb.EventSeat{
+		Seat: &eventpb.EventSeatFull{
 			Id:              seat.PublicID,
 			EventId:         seat.EventID,
 			ZoneId:          seat.ZoneID,
@@ -58,7 +58,7 @@ func (c *EventSeatController) GetSeat(ctx context.Context, req *eventpb.GetSeatR
 
 	return &eventpb.GetSeatResponse{
 		Success: true,
-		Seat: &eventpb.EventSeat{
+		Seat: &eventpb.EventSeatFull{
 			Id:              seat.PublicID,
 			EventId:         seat.EventID,
 			ZoneId:          seat.ZoneID,
@@ -88,7 +88,7 @@ func (c *EventSeatController) UpdateSeat(ctx context.Context, req *eventpb.Updat
 
 	return &eventpb.UpdateSeatResponse{
 		Success: true,
-		Seat: &eventpb.EventSeat{
+		Seat: &eventpb.EventSeatFull{
 			Id:              seat.PublicID,
 			EventId:         seat.EventID,
 			ZoneId:          seat.ZoneID,
@@ -133,9 +133,9 @@ func (c *EventSeatController) ListSeatsByEvent(ctx context.Context, req *eventpb
 		}, nil
 	}
 
-	var pbSeats []*eventpb.EventSeat
+	var pbSeats []*eventpb.EventSeatFull
 	for _, seat := range seats {
-		pbSeats = append(pbSeats, &eventpb.EventSeat{
+		pbSeats = append(pbSeats, &eventpb.EventSeatFull{
 			Id:              seat.PublicID,
 			EventId:         seat.EventID,
 			ZoneId:          seat.ZoneID,

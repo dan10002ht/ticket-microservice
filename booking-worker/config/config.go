@@ -70,7 +70,7 @@ func LoadConfig() *Config {
 		GRPC: GRPCConfig{
 			Port:                   getEnv("GRPC_PORT", "50059"),
 			BookingServiceEndpoint: getEnv("GRPC_BOOKING_SERVICE_ENDPOINT", "localhost:50058"),
-			RealtimeServiceEndpoint: getEnv("GRPC_REALTIME_SERVICE_ENDPOINT", "localhost:50060"),
+			RealtimeServiceEndpoint: getEnv("GRPC_REALTIME_SERVICE_ENDPOINT", "localhost:50057"),
 		},
 		Queue: QueueConfig{
 			MaxSize:        getEnvAsInt("QUEUE_MAX_SIZE", 100000),

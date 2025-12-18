@@ -29,25 +29,26 @@ const loadProto = (protoFile) => {
   return grpc.loadPackageDefinition(packageDefinition);
 };
 
-const createClient = (serviceUrl, serviceName, packageName) => {
+const createClient = (serviceUrl, serviceName, packageName, serviceClassName = null) => {
   try {
     console.log(`🔧 Creating gRPC client for ${serviceName} at ${serviceUrl}`);
 
     const proto = loadProto(`${serviceName}.proto`);
 
-    const serviceClassName = `${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)}Service`;
+    // Use provided serviceClassName or derive from serviceName
+    const finalServiceClassName = serviceClassName || `${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)}Service`;
 
     if (!proto[packageName]) {
       throw new Error(`Package '${packageName}' not found in proto`);
     }
 
-    if (!proto[packageName][serviceClassName]) {
-      throw new Error(`Service '${serviceClassName}' not found in package '${packageName}'`);
+    if (!proto[packageName][finalServiceClassName]) {
+      throw new Error(`Service '${finalServiceClassName}' not found in package '${packageName}'`);
     }
 
-    console.log(`✅ Proto loaded successfully for ${serviceName}`);
+    console.log(`✅ Proto loaded successfully for ${serviceName} (${finalServiceClassName})`);
 
-    const client = new proto[packageName][serviceClassName](
+    const client = new proto[packageName][finalServiceClassName](
       serviceUrl,
       grpc.credentials.createInsecure(),
       clientOptions
@@ -195,6 +196,11 @@ const grpcClients = {
   bookingService: createClient(config.grpc.bookingService.url, 'booking', 'booking'),
   paymentService: createClient(config.grpc.paymentService.url, 'payment', 'payment'),
   ticketService: createClient(config.grpc.ticketService.url, 'ticket', 'ticket'),
+  // Event sub-services (all use event.proto)
+  zoneService: createClient(config.grpc.eventService.url, 'event', 'event', 'EventSeatingZoneService'),
+  seatService: createClient(config.grpc.eventService.url, 'event', 'event', 'EventSeatService'),
+  pricingService: createClient(config.grpc.eventService.url, 'event', 'event', 'PricingService'),
+  availabilityService: createClient(config.grpc.eventService.url, 'event', 'event', 'AvailabilityService'),
 };
 
 const healthCheck = async () => {

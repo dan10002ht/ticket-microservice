@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 	"event-service/services"
-	eventpb "shared-lib/protos/event"
+	eventpb "event-service/internal/protos/event"
 )
 
 type ZoneController struct {

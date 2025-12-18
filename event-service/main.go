@@ -1,14 +1,14 @@
 package main
 
 import (
-	"database/sql"
 	"event-service/config"
 	grpcapi "event-service/grpc"
 	"event-service/internal/app"
 	"net"
 
-	eventpb "shared-lib/protos/event"
+	eventpb "event-service/internal/protos/event"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -23,21 +23,28 @@ func main() {
 		logger.Fatal("Failed to load config", zap.Error(err))
 	}
 
-	db, err := sql.Open("postgres", cfg.Database.URL)
+	db, err := sqlx.Connect("postgres", cfg.Database.URL)
 	if err != nil {
 		logger.Fatal("Failed to connect DB", zap.Error(err))
 	}
 
 	appInstance := app.NewApp(logger, db)
 
+	// Event Service controllers
 	eventController := grpcapi.NewEventController(appInstance.GetEventService())
-	zoneController := grpcapi.NewEventSeatingZoneController(appInstance.GetEventSeatingZoneService())
+	zoneController := grpcapi.NewZoneController(appInstance.GetEventSeatingZoneService())
 	seatController := grpcapi.NewEventSeatController(appInstance.GetEventSeatService())
+	pricingController := grpcapi.NewAdvancedPricingController(appInstance.GetPricingService())
+	availabilityController := grpcapi.NewAvailabilityController(appInstance.GetAvailabilityService())
 
 	grpcServer := grpc.NewServer()
+
+	// Register all Event Service gRPC services
 	eventpb.RegisterEventServiceServer(grpcServer, eventController)
 	eventpb.RegisterEventSeatingZoneServiceServer(grpcServer, zoneController)
 	eventpb.RegisterEventSeatServiceServer(grpcServer, seatController)
+	eventpb.RegisterPricingServiceServer(grpcServer, pricingController)
+	eventpb.RegisterAvailabilityServiceServer(grpcServer, availabilityController)
 
 	logger.Info("Starting Event Service gRPC server", zap.String("port", cfg.GRPC.Port))
 	ln, err := listenOn(cfg.GRPC.Port)

@@ -344,20 +344,22 @@ services:
       - JWT_SECRET=dev_jwt_secret
       - JWT_REFRESH_SECRET=dev_refresh_secret
       - GRPC_AUTH_SERVICE_URL=auth-service:50051
-      - GRPC_USER_SERVICE_URL=user-profile:50052
+      - GRPC_USER_SERVICE_URL=user-service:50052
       - GRPC_EVENT_SERVICE_URL=event-management:50053
       - GRPC_BOOKING_SERVICE_URL=booking-service:50054
       - GRPC_BOOKING_WORKER_URL=booking-worker:50055
       - GRPC_PAYMENT_SERVICE_URL=payment-service:50056
-      - GRPC_TICKET_SERVICE_URL=ticket-service:50057
+      - GRPC_TICKET_SERVICE_URL=ticket-service:50058
       - GRPC_NOTIFICATION_SERVICE_URL=notification-service:50058
       - GRPC_ANALYTICS_SERVICE_URL=analytics-service:50059
       - GRPC_PRICING_SERVICE_URL=pricing-service:50060
       - GRPC_SUPPORT_SERVICE_URL=support-service:50061
       - GRPC_INVOICE_SERVICE_URL=invoice-service:50062
+      - GRPC_REALTIME_SERVICE_URL=realtime-service:50057
     depends_on:
       - redis
       - auth-service
+      - user-service
     volumes:
       - ../gateway:/app
       - /app/node_modules
@@ -475,6 +477,82 @@ services:
     volumes:
       - ../payment-service:/app
       - /app/target
+    networks:
+      - booking-net
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ../user-service
+      dockerfile: Dockerfile
+    ports:
+      - "50052:50052"
+      - "9092:9092"
+    environment:
+      - GRPC_PORT=50052
+      - METRICS_PORT=9092
+      - DB_HOST=postgres-main-master
+      - DB_PORT=5432
+      - DB_NAME=user_service
+      - DB_USER=booking_user
+      - DB_PASSWORD=booking_pass
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - postgres-main-master
+      - redis
+    networks:
+      - booking-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9092/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  realtime-service:
+    build:
+      context: ../realtime-service
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+      - "50057:50057"
+      - "9057:9057"
+    environment:
+      - HTTP_PORT=3003
+      - GRPC_PORT=50057
+      - METRICS_PORT=9057
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=dev_jwt_secret
+    depends_on:
+      - redis
+    networks:
+      - booking-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  booking-worker:
+    build:
+      context: ../booking-worker
+      dockerfile: Dockerfile
+    ports:
+      - "50059:50059"
+      - "9091:9091"
+    environment:
+      - GRPC_PORT=50059
+      - METRICS_PORT=9091
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - GRPC_BOOKING_SERVICE_ENDPOINT=booking-service:50056
+      - GRPC_REALTIME_SERVICE_ENDPOINT=realtime-service:50057
+    depends_on:
+      - redis
+      - realtime-service
     networks:
       - booking-net
     restart: unless-stopped

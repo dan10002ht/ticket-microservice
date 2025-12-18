@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 	"event-service/services"
-	eventpb "shared-lib/protos/event"
+	eventpb "event-service/internal/protos/event"
 )
 
 type AvailabilityController struct {
@@ -17,76 +17,105 @@ func NewAvailabilityController(service *services.AvailabilityService) *Availabil
 
 // GetEventAvailability - Get availability for entire event
 func (c *AvailabilityController) GetEventAvailability(ctx context.Context, req *eventpb.GetEventAvailabilityRequest) (*eventpb.GetEventAvailabilityResponse, error) {
-	availability, err := c.service.GetEventAvailability(ctx, req.EventId)
+	availability, summary, err := c.service.GetEventAvailability(ctx, req.EventId)
 	if err != nil {
 		return &eventpb.GetEventAvailabilityResponse{
-			Success: false,
-			Error:   err.Error(),
+			Error: err.Error(),
 		}, nil
 	}
 
+	var pbAvailability []*eventpb.SeatAvailability
+	for _, a := range availability {
+		pbAvailability = append(pbAvailability, &eventpb.SeatAvailability{
+			Id:                 a.PublicID,
+			EventId:            a.EventID,
+			SeatId:             a.SeatID,
+			ZoneId:             a.ZoneID,
+			AvailabilityStatus: a.AvailabilityStatus,
+			ReservationId:      a.ReservationID,
+			BlockedReason:      a.BlockedReason,
+			BlockedUntil:       a.BlockedUntil,
+			LastUpdated:        a.LastUpdated,
+			CreatedAt:          a.CreatedAt,
+			UpdatedAt:          a.UpdatedAt,
+		})
+	}
+
 	return &eventpb.GetEventAvailabilityResponse{
-		Success:        true,
-		EventId:        req.EventId,
-		TotalSeats:     availability.TotalSeats,
-		AvailableSeats: availability.AvailableSeats,
-		ReservedSeats:  availability.ReservedSeats,
-		SoldSeats:      availability.SoldSeats,
-		BlockedSeats:   availability.BlockedSeats,
-		Zones:          availability.Zones,
+		Availability:   pbAvailability,
+		TotalSeats:     summary.TotalSeats,
+		AvailableSeats: summary.AvailableSeats,
+		ReservedSeats:  summary.ReservedSeats,
+		BookedSeats:    summary.BookedSeats,
+		BlockedSeats:   summary.BlockedSeats,
 	}, nil
 }
 
 // GetZoneAvailability - Get availability for specific zone
 func (c *AvailabilityController) GetZoneAvailability(ctx context.Context, req *eventpb.GetZoneAvailabilityRequest) (*eventpb.GetZoneAvailabilityResponse, error) {
-	availability, err := c.service.GetZoneAvailability(ctx, req.EventId, req.ZoneId)
+	availability, summary, err := c.service.GetZoneAvailability(ctx, req.EventId, req.ZoneId)
 	if err != nil {
 		return &eventpb.GetZoneAvailabilityResponse{
-			Success: false,
-			Error:   err.Error(),
+			Error: err.Error(),
 		}, nil
 	}
 
+	var pbAvailability []*eventpb.SeatAvailability
+	for _, a := range availability {
+		pbAvailability = append(pbAvailability, &eventpb.SeatAvailability{
+			Id:                 a.PublicID,
+			EventId:            a.EventID,
+			SeatId:             a.SeatID,
+			ZoneId:             a.ZoneID,
+			AvailabilityStatus: a.AvailabilityStatus,
+			ReservationId:      a.ReservationID,
+			BlockedReason:      a.BlockedReason,
+			BlockedUntil:       a.BlockedUntil,
+			LastUpdated:        a.LastUpdated,
+			CreatedAt:          a.CreatedAt,
+			UpdatedAt:          a.UpdatedAt,
+		})
+	}
+
 	return &eventpb.GetZoneAvailabilityResponse{
-		Success:        true,
-		EventId:        req.EventId,
-		ZoneId:         req.ZoneId,
-		TotalSeats:     availability.TotalSeats,
-		AvailableSeats: availability.AvailableSeats,
-		ReservedSeats:  availability.ReservedSeats,
-		SoldSeats:      availability.SoldSeats,
-		BlockedSeats:   availability.BlockedSeats,
-		Seats:          availability.Seats,
+		Availability:   pbAvailability,
+		TotalSeats:     summary.TotalSeats,
+		AvailableSeats: summary.AvailableSeats,
+		ReservedSeats:  summary.ReservedSeats,
+		BookedSeats:    summary.BookedSeats,
+		BlockedSeats:   summary.BlockedSeats,
 	}, nil
 }
 
 // GetSeatAvailability - Get availability for specific seat
 func (c *AvailabilityController) GetSeatAvailability(ctx context.Context, req *eventpb.GetSeatAvailabilityRequest) (*eventpb.GetSeatAvailabilityResponse, error) {
-	availability, err := c.service.GetSeatAvailability(ctx, req.EventId, req.SeatId)
+	avail, err := c.service.GetSeatAvailability(ctx, req.EventId, req.SeatId)
 	if err != nil {
 		return &eventpb.GetSeatAvailabilityResponse{
-			Success: false,
-			Error:   err.Error(),
+			Error: err.Error(),
 		}, nil
 	}
 
 	return &eventpb.GetSeatAvailabilityResponse{
-		Success:       true,
-		EventId:       req.EventId,
-		SeatId:        req.SeatId,
-		Status:        availability.Status,
-		ReservedBy:    availability.ReservedBy,
-		ReservedUntil: availability.ReservedUntil,
-		BookedBy:      availability.BookedBy,
-		BookingId:     availability.BookingId,
-		Price:         availability.Price,
-		Currency:      availability.Currency,
+		Availability: &eventpb.SeatAvailability{
+			Id:                 avail.PublicID,
+			EventId:            avail.EventID,
+			SeatId:             avail.SeatID,
+			ZoneId:             avail.ZoneID,
+			AvailabilityStatus: avail.AvailabilityStatus,
+			ReservationId:      avail.ReservationID,
+			BlockedReason:      avail.BlockedReason,
+			BlockedUntil:       avail.BlockedUntil,
+			LastUpdated:        avail.LastUpdated,
+			CreatedAt:          avail.CreatedAt,
+			UpdatedAt:          avail.UpdatedAt,
+		},
 	}, nil
 }
 
 // UpdateSeatAvailability - Update seat availability status
 func (c *AvailabilityController) UpdateSeatAvailability(ctx context.Context, req *eventpb.UpdateSeatAvailabilityRequest) (*eventpb.UpdateSeatAvailabilityResponse, error) {
-	err := c.service.UpdateSeatAvailability(ctx, req.EventId, req.SeatId, req.Status, req.UserId, req.BookingId)
+	err := c.service.UpdateSeatAvailability(ctx, req.EventId, req.SeatId, req.AvailabilityStatus, req.ReservationId, req.BlockedReason, req.BlockedUntil)
 	if err != nil {
 		return &eventpb.UpdateSeatAvailabilityResponse{
 			Success: false,
@@ -96,42 +125,35 @@ func (c *AvailabilityController) UpdateSeatAvailability(ctx context.Context, req
 
 	return &eventpb.UpdateSeatAvailabilityResponse{
 		Success: true,
-		Message: "Seat availability updated successfully",
 	}, nil
 }
 
 // BlockSeats - Block multiple seats for booking
 func (c *AvailabilityController) BlockSeats(ctx context.Context, req *eventpb.BlockSeatsRequest) (*eventpb.BlockSeatsResponse, error) {
-	result, err := c.service.BlockSeats(ctx, req.EventId, req.SeatIds, req.UserId, req.BookingId, req.ExpiresAt)
+	result, err := c.service.BlockSeats(ctx, req.EventId, req.SeatIds, req.BlockedReason, req.BlockedUntil)
 	if err != nil {
 		return &eventpb.BlockSeatsResponse{
-			Success: false,
-			Error:   err.Error(),
+			Error: err.Error(),
 		}, nil
 	}
 
 	return &eventpb.BlockSeatsResponse{
-		Success:      true,
-		BlockedSeats: result.BlockedSeats,
-		FailedSeats:  result.FailedSeats,
-		Message:      "Seats blocked successfully",
+		BlockedCount:   result.BlockedCount,
+		BlockedSeatIds: result.BlockedSeatIDs,
 	}, nil
 }
 
 // ReleaseSeats - Release blocked seats
 func (c *AvailabilityController) ReleaseSeats(ctx context.Context, req *eventpb.ReleaseSeatsRequest) (*eventpb.ReleaseSeatsResponse, error) {
-	result, err := c.service.ReleaseSeats(ctx, req.EventId, req.SeatIds, req.UserId, req.Reason)
+	result, err := c.service.ReleaseSeats(ctx, req.EventId, req.SeatIds)
 	if err != nil {
 		return &eventpb.ReleaseSeatsResponse{
-			Success: false,
-			Error:   err.Error(),
+			Error: err.Error(),
 		}, nil
 	}
 
 	return &eventpb.ReleaseSeatsResponse{
-		Success:       true,
-		ReleasedSeats: result.ReleasedSeats,
-		FailedSeats:   result.FailedSeats,
-		Message:       "Seats released successfully",
+		ReleasedCount:   result.ReleasedCount,
+		ReleasedSeatIds: result.ReleasedSeatIDs,
 	}, nil
 }

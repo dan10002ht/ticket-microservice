@@ -47,7 +47,7 @@ const config = {
       keepaliveTimeoutMs: parseInt(process.env.GRPC_KEEPALIVE_TIMEOUT_MS) || 5000,
     },
     userService: {
-      url: process.env.GRPC_USER_SERVICE_URL || 'user-profile-service:50052',
+      url: process.env.GRPC_USER_SERVICE_URL || 'localhost:50052',
     },
     eventService: {
       url: process.env.GRPC_EVENT_SERVICE_URL || 'event-management-service:50053',

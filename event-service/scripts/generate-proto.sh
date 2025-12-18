@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Generate protobuf code for booking-worker
-# This script generates Go code from shared-lib/protos/booking_worker.proto
+# Generate protobuf code for event-service
+# This script generates Go code from shared-lib/protos/event.proto
 
 set -e
 
@@ -35,7 +35,7 @@ PROJECT_ROOT="$(cd "$SERVICE_DIR/.." && pwd)"
 SHARED_PROTO_DIR="$PROJECT_ROOT/shared-lib/protos"
 OUTPUT_DIR="$SERVICE_DIR/internal/protos"
 
-print_header "Booking Worker Proto Generation"
+print_header "Event Service Proto Generation"
 print_status "Service directory: $SERVICE_DIR"
 print_status "Project root: $PROJECT_ROOT"
 print_status "Shared proto directory: $SHARED_PROTO_DIR"
@@ -64,59 +64,28 @@ fi
 # Create output directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"
 
-# Generate Go code from booking_worker.proto
-PROTO_FILE="$SHARED_PROTO_DIR/booking_worker.proto"
-BOOKING_WORKER_OUTPUT_DIR="$OUTPUT_DIR/booking_worker"
+# Generate Go code from event.proto
+PROTO_FILE="$SHARED_PROTO_DIR/event.proto"
+EVENT_OUTPUT_DIR="$OUTPUT_DIR/event"
 
 if [ ! -f "$PROTO_FILE" ]; then
     print_error "Proto file not found: $PROTO_FILE"
     exit 1
 fi
 
-print_status "Generating Go code from booking_worker.proto..."
-mkdir -p "$BOOKING_WORKER_OUTPUT_DIR"
+print_status "Generating Go code from event.proto..."
+mkdir -p "$EVENT_OUTPUT_DIR"
 
 protoc \
-    --go_out="$BOOKING_WORKER_OUTPUT_DIR" \
+    --go_out="$EVENT_OUTPUT_DIR" \
     --go_opt=paths=source_relative \
-    --go-grpc_out="$BOOKING_WORKER_OUTPUT_DIR" \
+    --go-grpc_out="$EVENT_OUTPUT_DIR" \
     --go-grpc_opt=paths=source_relative \
     --proto_path="$SHARED_PROTO_DIR" \
     "$PROTO_FILE"
 
-# Also generate booking.proto (for BookingService client)
-BOOKING_PROTO="$SHARED_PROTO_DIR/booking.proto"
-BOOKING_OUTPUT_DIR="$OUTPUT_DIR/booking"
-if [ -f "$BOOKING_PROTO" ]; then
-    print_status "Generating Go code from booking.proto (for client)..."
-    mkdir -p "$BOOKING_OUTPUT_DIR"
-    protoc \
-        --go_out="$BOOKING_OUTPUT_DIR" \
-        --go_opt=paths=source_relative \
-        --go-grpc_out="$BOOKING_OUTPUT_DIR" \
-        --go-grpc_opt=paths=source_relative \
-        --proto_path="$SHARED_PROTO_DIR" \
-        "$BOOKING_PROTO"
-fi
-
-# Also generate realtime.proto (for RealtimeService client)
-REALTIME_PROTO="$SHARED_PROTO_DIR/realtime.proto"
-REALTIME_OUTPUT_DIR="$OUTPUT_DIR/realtime"
-if [ -f "$REALTIME_PROTO" ]; then
-    print_status "Generating Go code from realtime.proto (for client)..."
-    mkdir -p "$REALTIME_OUTPUT_DIR"
-    protoc \
-        --go_out="$REALTIME_OUTPUT_DIR" \
-        --go_opt=paths=source_relative \
-        --go-grpc_out="$REALTIME_OUTPUT_DIR" \
-        --go-grpc_opt=paths=source_relative \
-        --proto_path="$SHARED_PROTO_DIR" \
-        "$REALTIME_PROTO"
-fi
-
-print_status "✅ Protobuf code generated successfully!"
-print_status "📁 Generated files in: $OUTPUT_DIR"
+print_status "Proto files generated successfully!"
+print_status "Generated files in: $OUTPUT_DIR"
 find "$OUTPUT_DIR" -name "*.pb.go" -type f | while read file; do
     print_status "  - $(basename "$file")"
 done
-

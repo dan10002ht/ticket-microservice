@@ -30,8 +30,12 @@ func (s *EventService) DeleteEvent(ctx context.Context, publicID string) error {
 	return s.repo.Delete(ctx, publicID)
 }
 
-func (s *EventService) ListByOrganizationID(ctx context.Context, organizationID int64) ([]*models.Event, error) {
-	return s.repo.List(ctx, organizationID)
+func (s *EventService) ListByOrganizationID(ctx context.Context, organizationID string) ([]*models.Event, error) {
+	return s.repo.ListByOrganizationID(ctx, organizationID)
+}
+
+func (s *EventService) List(ctx context.Context, page, limit int32) ([]*models.Event, error) {
+	return s.repo.ListAll(ctx, page, limit)
 }
 
 // Advanced search and filtering methods

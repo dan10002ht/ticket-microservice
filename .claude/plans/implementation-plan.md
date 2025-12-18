@@ -134,62 +134,87 @@ POST /api/users/addresses     → userService.addAddress()
 - [ ] Test end-to-end user profile flow
 - [ ] Update gateway environment variables
 
-### 2. Integration: Booking Worker → Realtime Service
+### 2. Integration: Booking Worker → Realtime Service ✅ DONE
 **Priority:** HIGH
-**Effort:** 1-2 hours
+**Status:** COMPLETED (Dec 18, 2024)
 
-Booking Worker đã có gRPC client stub, cần verify connection:
-```go
-// booking-worker/grpcclient/realtime_service_client.go
-p.realtimeClient.NotifyBookingResult(ctx, ...)
-```
+**Completed:**
+- [x] Fixed port config: 50060 → 50057
+- [x] Full gRPC client implementation (NotifyBookingResult, NotifyQueuePosition, NotifyPaymentStatus, BroadcastEvent, SendToUser)
+- [x] Proto generation script updated
+- [x] Proto files generated in `booking-worker/internal/protos/realtime/`
+- [x] Code review verified integration points:
+  - [processor.go:268](booking-worker/internal/worker/processor.go#L268) - NotifyBookingResult on success
+  - [processor.go:316](booking-worker/internal/worker/processor.go#L316) - NotifyBookingResult on failure
+- [x] Test script created: `scripts/test-e2e-realtime.sh`
 
-**Tasks:**
-- [ ] Update booking-worker config for realtime-service (port 50057)
+**Ready for Testing (requires Docker):**
 - [ ] Test booking notification flow end-to-end
 - [ ] Verify WebSocket delivery to frontend
 
 ### 3. Database Setup
 **Priority:** HIGH
-**Effort:** 30 mins
+**Status:** Script created, ready to run
+
+**Script:** `scripts/setup-databases.sh`
+
+**Manual commands (if script not available):**
+```bash
+# Using docker-compose postgres (port 55435)
+export PGPASSWORD=booking_pass
+createdb -h localhost -p 55435 -U booking_user user_service
+psql -h localhost -p 55435 -U booking_user -d user_service -f user-service/migrations/001_init.sql
+
+# Verify
+psql -h localhost -p 55435 -U booking_user -d user_service -c '\dt'
+```
 
 **Tasks:**
-- [ ] Create `user_service` database
-- [ ] Run migrations: `psql -d user_service -f user-service/migrations/001_init.sql`
+- [x] Create setup script: `scripts/setup-databases.sh`
+- [ ] Run: `./scripts/setup-databases.sh`
 - [ ] Verify connection from user-service
 
-### 4. Redis Setup for Realtime Service
+### 4. Redis Setup for Realtime Service ✅ Ready
 **Priority:** HIGH
-**Effort:** 15 mins
+**Status:** Already configured in docker-compose.dev.yml
+
+**Docker Compose config (already set):**
+- `REDIS_HOST=redis` (docker network hostname)
+- `REDIS_PORT=6379` (internal port)
 
 **Tasks:**
-- [ ] Ensure Redis is running
-- [ ] Configure REDIS_HOST, REDIS_PORT in realtime-service
-- [ ] Test Pub/Sub connectivity
+- [x] Redis config in docker-compose.dev.yml
+- [x] REDIS_HOST, REDIS_PORT set for realtime-service
+- [ ] Test Pub/Sub connectivity when services are running
 
 ---
 
 ## Short-term (Week 1-2)
 
-### 5. Update Documentation
+### 5. Update Documentation ✅ DONE
 **Priority:** MEDIUM
-**Effort:** 2-3 hours
+**Status:** COMPLETED (Dec 18, 2024)
 
-**Files to update:**
-- [ ] `docs/architecture/SERVICE_OVERVIEW.md` - Add User Service + Realtime Service
-- [ ] `docs/architecture/COMMUNICATION_PATTERNS.md` - Update service communication diagram
-- [ ] `docs/booking-service/README.md` - Add realtime notification flow
-- [ ] `docs/` - Create new docs for user-service and realtime-service
+**Completed:**
+- [x] `docs/user-service/README.md` - Created
+- [x] `docs/realtime-service/README.md` - Created
+- [x] `docs/architecture/SERVICE_CONNECTIONS.md` - Completely rewritten
+- [x] `docs/architecture/README.md` - Updated with new diagram
+- [x] `docs/services/README.md` - Added all 10 services
+- [x] `docs/guides/README_PORTS.md` - Updated with new ports
+- [x] `docs/services/auth/INTEGRATION_FLOWS_README.md` - Cleaned up outdated references
+- [x] `docs/services/auth/INTEGRATION_TODO.md` - Updated status
 
-### 6. Docker Compose Update
+### 6. Docker Compose Update ✅ DONE
 **Priority:** MEDIUM
-**Effort:** 1 hour
+**Status:** COMPLETED (Dec 18, 2024)
 
-**Tasks:**
-- [ ] Add user-service to `docker-compose.yml`
-- [ ] Add realtime-service to `docker-compose.yml`
-- [ ] Update network configuration
-- [ ] Add health check dependencies
+**Completed:**
+- [x] Added user-service to `deploy/docker-compose.dev.yml` (ports 50052, 9092)
+- [x] Added realtime-service to `deploy/docker-compose.dev.yml` (ports 3003, 50057, 9057)
+- [x] Added booking-worker to `deploy/docker-compose.dev.yml` (ports 50059, 9091)
+- [x] Fixed gateway GRPC_USER_SERVICE_URL: `user-profile` → `user-service`
+- [x] Added gateway GRPC_REALTIME_SERVICE_URL
 
 ### 7. Frontend WebSocket Integration
 **Priority:** MEDIUM
@@ -205,14 +230,20 @@ p.realtimeClient.NotifyBookingResult(ctx, ...)
 
 ## Medium-term (Week 3-4)
 
-### 8. Complete Gateway Event Handlers
+### 8. Complete Gateway Event Handlers ✅ DONE
 **Priority:** MEDIUM
+**Status:** COMPLETED (Dec 18, 2024)
 
-Endpoints returning 501:
-- [ ] `POST /api/events/:id/layout`
-- [ ] `POST /api/events/:id/pricing`
-- [ ] `POST /api/events/:id/publish`
-- [ ] `GET /api/events/templates`
+All endpoints implemented in [eventHandlers.js](gateway/src/handlers/eventHandlers.js):
+- [x] `POST /api/events/:id/layout` - saveEventLayoutHandler (stores in canvasConfig)
+- [x] `POST /api/events/:id/pricing` - saveEventPricingHandler (stores in metadata)
+- [x] `POST /api/events/:id/publish` - publishEventHandler (updates status)
+- [x] `GET /api/events/templates` - getEventTemplatesHandler (static templates)
+- [x] `POST /api/events/:id/duplicate` - duplicateEventHandler (copy event)
+
+**Notes:**
+- Pricing uses simplified metadata storage (full PricingService integration pending)
+- Templates are static, could be moved to database in production
 
 ### 9. Device Service Implementation
 **Priority:** LOW
@@ -244,14 +275,15 @@ Endpoints returning 501:
 
 ## Files to Create/Update
 
-| File | Action | Priority |
-|------|--------|----------|
-| `docs/user-service/README.md` | Create | HIGH |
-| `docs/realtime-service/README.md` | Create | HIGH |
-| `docs/architecture/SERVICE_OVERVIEW.md` | Update table | MEDIUM |
-| `docs/architecture/COMMUNICATION_PATTERNS.md` | Add WebSocket flow | MEDIUM |
-| `docs/booking-service/INTEGRATION.md` | Add realtime notification | MEDIUM |
-| `docker-compose.yml` | Add new services | MEDIUM |
+| File | Action | Priority | Status |
+|------|--------|----------|--------|
+| `docs/user-service/README.md` | Create | HIGH | ✅ Done |
+| `docs/realtime-service/README.md` | Create | HIGH | ✅ Done |
+| `docs/architecture/SERVICE_CONNECTIONS.md` | Rewrite | HIGH | ✅ Done |
+| `docs/architecture/README.md` | Update diagram | MEDIUM | ✅ Done |
+| `docs/services/README.md` | Add new services | MEDIUM | ✅ Done |
+| `docs/guides/README_PORTS.md` | Add new ports | MEDIUM | ✅ Done |
+| `docker-compose.dev.yml` | Add new services | MEDIUM | ✅ Done |
 
 ## Service Communication Diagram Update
 

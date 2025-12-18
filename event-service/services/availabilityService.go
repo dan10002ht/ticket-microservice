@@ -5,8 +5,6 @@ import (
 	"event-service/models"
 	"event-service/repositories"
 	"fmt"
-
-	"github.com/google/uuid"
 )
 
 type AvailabilityService struct {
@@ -17,60 +15,111 @@ func NewAvailabilityService(repo *repositories.EventSeatAvailabilityRepository) 
 	return &AvailabilityService{repo: repo}
 }
 
-func (s *AvailabilityService) CreateAvailability(ctx context.Context, avail *models.EventSeatAvailability) error {
-	if err := s.ValidateAvailability(avail); err != nil {
-		return err
+// GetEventAvailability - Get all seat availability for an event
+func (s *AvailabilityService) GetEventAvailability(ctx context.Context, eventID string) ([]*models.EventSeatAvailability, *models.EventAvailabilitySummary, error) {
+	availability, err := s.repo.GetByEventID(ctx, eventID)
+	if err != nil {
+		return nil, nil, err
 	}
-	return s.repo.Create(ctx, avail)
-}
 
-func (s *AvailabilityService) GetAvailability(ctx context.Context, publicID string) (*models.EventSeatAvailability, error) {
-	return s.repo.GetByPublicID(ctx, uuid.MustParse(publicID))
-}
-
-func (s *AvailabilityService) UpdateAvailability(ctx context.Context, avail *models.EventSeatAvailability) error {
-	if err := s.ValidateAvailability(avail); err != nil {
-		return err
+	// Calculate summary
+	summary := &models.EventAvailabilitySummary{
+		TotalSeats: int32(len(availability)),
 	}
-	return s.repo.Update(ctx, avail)
-}
-
-func (s *AvailabilityService) DeleteAvailability(ctx context.Context, publicID string) error {
-	return s.repo.Delete(ctx, uuid.MustParse(publicID))
-}
-
-func (s *AvailabilityService) ListByEventID(ctx context.Context, eventID int64) ([]*models.EventSeatAvailability, error) {
-	return s.repo.ListByEventID(ctx, eventID)
-}
-
-func (s *AvailabilityService) ValidateAvailability(avail *models.EventSeatAvailability) error {
-	if avail.EventID == 0 || avail.SeatID == 0 {
-		return fmt.Errorf("invalid seat availability data")
+	for _, a := range availability {
+		switch a.AvailabilityStatus {
+		case "available":
+			summary.AvailableSeats++
+		case "reserved":
+			summary.ReservedSeats++
+		case "booked":
+			summary.BookedSeats++
+		case "blocked":
+			summary.BlockedSeats++
+		}
 	}
-	return nil
+
+	return availability, summary, nil
 }
 
-// Advanced availability methods
-func (s *AvailabilityService) GetEventAvailability(ctx context.Context, eventID string) (*models.EventAvailability, error) {
-	return s.repo.GetEventAvailability(ctx, eventID)
+// GetZoneAvailability - Get seat availability for a specific zone
+func (s *AvailabilityService) GetZoneAvailability(ctx context.Context, eventID, zoneID string) ([]*models.EventSeatAvailability, *models.EventAvailabilitySummary, error) {
+	availability, err := s.repo.GetByEventAndZone(ctx, eventID, zoneID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Calculate summary
+	summary := &models.EventAvailabilitySummary{
+		TotalSeats: int32(len(availability)),
+	}
+	for _, a := range availability {
+		switch a.AvailabilityStatus {
+		case "available":
+			summary.AvailableSeats++
+		case "reserved":
+			summary.ReservedSeats++
+		case "booked":
+			summary.BookedSeats++
+		case "blocked":
+			summary.BlockedSeats++
+		}
+	}
+
+	return availability, summary, nil
 }
 
-func (s *AvailabilityService) GetZoneAvailability(ctx context.Context, eventID, zoneID string) (*models.ZoneAvailability, error) {
-	return s.repo.GetZoneAvailability(ctx, eventID, zoneID)
+// GetSeatAvailability - Get availability for a specific seat
+func (s *AvailabilityService) GetSeatAvailability(ctx context.Context, eventID, seatID string) (*models.EventSeatAvailability, error) {
+	return s.repo.GetBySeatID(ctx, eventID, seatID)
 }
 
-func (s *AvailabilityService) GetSeatAvailability(ctx context.Context, eventID, seatID string) (*models.SeatAvailability, error) {
-	return s.repo.GetSeatAvailability(ctx, eventID, seatID)
+// UpdateSeatAvailability - Update seat availability status
+func (s *AvailabilityService) UpdateSeatAvailability(ctx context.Context, eventID, seatID, status, reservationID, blockedReason, blockedUntil string) error {
+	if eventID == "" || seatID == "" || status == "" {
+		return fmt.Errorf("invalid update parameters")
+	}
+	return s.repo.UpdateStatus(ctx, eventID, seatID, status, reservationID, blockedReason, blockedUntil)
 }
 
-func (s *AvailabilityService) UpdateSeatAvailability(ctx context.Context, eventID, seatID, status, userID, bookingID string) error {
-	return s.repo.UpdateSeatAvailability(ctx, eventID, seatID, status, userID, bookingID)
+// BlockSeats - Block multiple seats
+func (s *AvailabilityService) BlockSeats(ctx context.Context, eventID string, seatIDs []string, blockedReason, blockedUntil string) (*models.BlockSeatsResult, error) {
+	if eventID == "" || len(seatIDs) == 0 {
+		return nil, fmt.Errorf("invalid block parameters")
+	}
+
+	result := &models.BlockSeatsResult{
+		BlockedSeatIDs: make([]string, 0),
+	}
+
+	for _, seatID := range seatIDs {
+		err := s.repo.UpdateStatus(ctx, eventID, seatID, "blocked", "", blockedReason, blockedUntil)
+		if err == nil {
+			result.BlockedSeatIDs = append(result.BlockedSeatIDs, seatID)
+			result.BlockedCount++
+		}
+	}
+
+	return result, nil
 }
 
-func (s *AvailabilityService) BlockSeats(ctx context.Context, eventID string, seatIDs []string, userID, bookingID, expiresAt string) (*models.BlockSeatsResult, error) {
-	return s.repo.BlockSeats(ctx, eventID, seatIDs, userID, bookingID, expiresAt)
-}
+// ReleaseSeats - Release blocked seats
+func (s *AvailabilityService) ReleaseSeats(ctx context.Context, eventID string, seatIDs []string) (*models.ReleaseSeatsResult, error) {
+	if eventID == "" || len(seatIDs) == 0 {
+		return nil, fmt.Errorf("invalid release parameters")
+	}
 
-func (s *AvailabilityService) ReleaseSeats(ctx context.Context, eventID string, seatIDs []string, userID, reason string) (*models.ReleaseSeatsResult, error) {
-	return s.repo.ReleaseSeats(ctx, eventID, seatIDs, userID, reason)
+	result := &models.ReleaseSeatsResult{
+		ReleasedSeatIDs: make([]string, 0),
+	}
+
+	for _, seatID := range seatIDs {
+		err := s.repo.UpdateStatus(ctx, eventID, seatID, "available", "", "", "")
+		if err == nil {
+			result.ReleasedSeatIDs = append(result.ReleasedSeatIDs, seatID)
+			result.ReleasedCount++
+		}
+	}
+
+	return result, nil
 }

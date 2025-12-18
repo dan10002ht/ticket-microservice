@@ -17,8 +17,16 @@ func NewEventSeatingZoneRepository(db *sqlx.DB) *EventSeatingZoneRepository {
 
 func (r *EventSeatingZoneRepository) Create(ctx context.Context, zone *models.EventSeatingZone) error {
 	query := `INSERT INTO event_seating_zones (public_id, event_id, name, zone_type, coordinates, seat_count, color, created_at, updated_at)
-		VALUES (:public_id, :event_id, :name, :zone_type, :coordinates, :seat_count, :color, NOW(), NOW())`
-	_, err := r.db.NamedExecContext(ctx, query, zone)
+		VALUES (:public_id, :event_id, :name, :zone_type, :coordinates, :seat_count, :color, NOW(), NOW())
+		RETURNING id, created_at, updated_at`
+	rows, err := r.db.NamedQueryContext(ctx, query, zone)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	if rows.Next() {
+		err = rows.Scan(&zone.ID, &zone.CreatedAt, &zone.UpdatedAt)
+	}
 	return err
 }
 
@@ -44,7 +52,7 @@ func (r *EventSeatingZoneRepository) Delete(ctx context.Context, publicID string
 	return err
 }
 
-func (r *EventSeatingZoneRepository) ListByEventID(ctx context.Context, eventID int64) ([]*models.EventSeatingZone, error) {
+func (r *EventSeatingZoneRepository) ListByEventID(ctx context.Context, eventID string) ([]*models.EventSeatingZone, error) {
 	var zones []*models.EventSeatingZone
 	query := `SELECT * FROM event_seating_zones WHERE event_id = $1 ORDER BY created_at ASC`
 	err := r.db.SelectContext(ctx, &zones, query, eventID)

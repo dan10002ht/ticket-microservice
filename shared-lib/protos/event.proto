@@ -49,6 +49,25 @@ service AvailabilityService {
   rpc ReleaseSeats(ReleaseSeatsRequest) returns (ReleaseSeatsResponse);
 }
 
+// EventSeatingZone Service - Zone management for events
+service EventSeatingZoneService {
+  rpc CreateZone(CreateZoneRequest) returns (CreateZoneResponse);
+  rpc GetZone(GetZoneRequest) returns (GetZoneResponse);
+  rpc UpdateZone(UpdateZoneRequest) returns (UpdateZoneResponse);
+  rpc DeleteZone(DeleteZoneRequest) returns (DeleteZoneResponse);
+  rpc ListZonesByEvent(ListZonesByEventRequest) returns (ListZonesByEventResponse);
+}
+
+// EventSeat Service - Seat management for events
+service EventSeatService {
+  rpc CreateSeat(CreateSeatRequest) returns (CreateSeatResponse);
+  rpc GetSeat(GetSeatRequest) returns (GetSeatResponse);
+  rpc UpdateSeat(UpdateSeatRequest) returns (UpdateSeatResponse);
+  rpc DeleteSeat(DeleteSeatRequest) returns (DeleteSeatResponse);
+  rpc ListSeatsByEvent(ListSeatsByEventRequest) returns (ListSeatsByEventResponse);
+  rpc BulkCreateSeats(BulkCreateSeatsRequest) returns (BulkCreateSeatsResponse);
+}
+
 // =============================================================================
 // Event Service Messages
 // =============================================================================
@@ -481,4 +500,188 @@ message ReleaseSeatsResponse {
   int32 released_count = 1;
   repeated string released_seat_ids = 2;
   string error = 3;
+}
+
+// =============================================================================
+// EventSeatingZone Service Messages
+// =============================================================================
+
+message CreateZoneRequest {
+  string event_id = 1;
+  string name = 2;
+  string zone_type = 3;
+  string coordinates = 4;
+  string color = 5;
+}
+
+message CreateZoneResponse {
+  bool success = 1;
+  EventSeatingZone zone = 2;
+  string message = 3;
+  string error = 4;
+}
+
+message GetZoneRequest {
+  string zone_id = 1;
+}
+
+message GetZoneResponse {
+  bool success = 1;
+  EventSeatingZone zone = 2;
+  string error = 3;
+}
+
+message UpdateZoneRequest {
+  string zone_id = 1;
+  string name = 2;
+  string zone_type = 3;
+  string coordinates = 4;
+  string color = 5;
+}
+
+message UpdateZoneResponse {
+  bool success = 1;
+  EventSeatingZone zone = 2;
+  string message = 3;
+  string error = 4;
+}
+
+message DeleteZoneRequest {
+  string zone_id = 1;
+}
+
+message DeleteZoneResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+}
+
+message ListZonesByEventRequest {
+  string event_id = 1;
+}
+
+message ListZonesByEventResponse {
+  bool success = 1;
+  repeated EventSeatingZone zones = 2;
+  int32 total = 3;
+  string error = 4;
+}
+
+// =============================================================================
+// EventSeat Service Messages
+// =============================================================================
+
+message CreateSeatRequest {
+  string event_id = 1;
+  string zone_id = 2;
+  string seat_number = 3;
+  string row_number = 4;
+  string coordinates = 5;
+  string pricing_category = 6;
+  double base_price = 7;
+  double final_price = 8;
+  string currency = 9;
+}
+
+message CreateSeatResponse {
+  bool success = 1;
+  EventSeatFull seat = 2;
+  string message = 3;
+  string error = 4;
+}
+
+message GetSeatRequest {
+  string seat_id = 1;
+}
+
+message GetSeatResponse {
+  bool success = 1;
+  EventSeatFull seat = 2;
+  string error = 3;
+}
+
+message UpdateSeatRequest {
+  string seat_id = 1;
+  string seat_number = 2;
+  string row_number = 3;
+  string coordinates = 4;
+  string pricing_category = 5;
+  double base_price = 6;
+  double final_price = 7;
+  string currency = 8;
+}
+
+message UpdateSeatResponse {
+  bool success = 1;
+  EventSeatFull seat = 2;
+  string message = 3;
+  string error = 4;
+}
+
+message DeleteSeatRequest {
+  string seat_id = 1;
+}
+
+message DeleteSeatResponse {
+  bool success = 1;
+  string message = 2;
+  string error = 3;
+}
+
+message ListSeatsByEventRequest {
+  string event_id = 1;
+  string zone_id = 2;
+  string status = 3;
+  int32 page = 4;
+  int32 limit = 5;
+}
+
+message ListSeatsByEventResponse {
+  bool success = 1;
+  repeated EventSeatFull seats = 2;
+  int32 total = 3;
+  int32 page = 4;
+  int32 limit = 5;
+  string error = 6;
+}
+
+message BulkCreateSeatsRequest {
+  string event_id = 1;
+  string zone_id = 2;
+  repeated SeatInput seats = 3;
+}
+
+message SeatInput {
+  string seat_number = 1;
+  string row_number = 2;
+  string coordinates = 3;
+  string pricing_category = 4;
+  double base_price = 5;
+  double final_price = 6;
+  string currency = 7;
+}
+
+message BulkCreateSeatsResponse {
+  bool success = 1;
+  repeated EventSeatFull seats = 2;
+  int32 created_count = 3;
+  string message = 4;
+  string error = 5;
+}
+
+// Extended EventSeat with pricing info
+message EventSeatFull {
+  string id = 1;
+  string event_id = 2;
+  string zone_id = 3;
+  string seat_number = 4;
+  string row_number = 5;
+  string coordinates = 6;
+  string status = 7;
+  string pricing_category = 8;
+  double base_price = 9;
+  double final_price = 10;
+  string currency = 11;
+  string created_at = 12;
+  string updated_at = 13;
 } 

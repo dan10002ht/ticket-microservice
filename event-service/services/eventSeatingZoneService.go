@@ -5,6 +5,8 @@ import (
 	"event-service/models"
 	"event-service/repositories"
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type EventSeatingZoneService struct {
@@ -17,6 +19,7 @@ func NewEventSeatingZoneService(repo *repositories.EventSeatingZoneRepository) *
 
 func (s *EventSeatingZoneService) CreateZone(ctx context.Context, eventID, name, zoneType, coordinates, color string) (*models.EventSeatingZone, error) {
 	zone := &models.EventSeatingZone{
+		PublicID:    uuid.New().String(),
 		EventID:     eventID,
 		Name:        name,
 		ZoneType:    zoneType,

@@ -53,6 +53,27 @@ func (r *EventRepository) List(ctx context.Context, organizationID int64) ([]*mo
 	return events, err
 }
 
+func (r *EventRepository) ListByOrganizationID(ctx context.Context, organizationID string) ([]*models.Event, error) {
+	var events []*models.Event
+	query := `SELECT * FROM events WHERE organization_id = $1 ORDER BY created_at DESC`
+	err := r.db.SelectContext(ctx, &events, query, organizationID)
+	return events, err
+}
+
+func (r *EventRepository) ListAll(ctx context.Context, page, limit int32) ([]*models.Event, error) {
+	var events []*models.Event
+	offset := (page - 1) * limit
+	if page <= 0 {
+		offset = 0
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+	query := `SELECT * FROM events ORDER BY created_at DESC LIMIT $1 OFFSET $2`
+	err := r.db.SelectContext(ctx, &events, query, limit, offset)
+	return events, err
+}
+
 // Advanced search and filtering methods
 func (r *EventRepository) SearchEvents(ctx context.Context, query, eventType, category string, page, limit int32) ([]*models.Event, int, error) {
 	var events []*models.Event

@@ -9,33 +9,75 @@ import {
   refundPaymentHandler,
   getPaymentMethodsHandler,
   addPaymentMethodHandler,
+  capturePaymentHandler,
+  cancelPaymentHandler,
+  listPaymentsHandler,
+  listRefundsHandler,
+  updateRefundStatusHandler,
 } from '../handlers/paymentHandlers.js';
+import { requireRole, requireAuth } from '../middlewares/index.js';
 
 const router = express.Router();
 
+// ============================================
+// Admin routes (must be before /:paymentId)
+// ============================================
+router.get('/admin/list', requireRole(['admin']), listPaymentsHandler);
+
+// ============================================
+// Refund routes (must be before /:paymentId)
+// ============================================
+router.put('/refunds/:refundId', requireRole(['admin']), updateRefundStatusHandler);
+
+// ============================================
+// Payment Methods
+// ============================================
+router.get('/methods', requireAuth, getPaymentMethodsHandler);
+router.post('/methods', requireAuth, addPaymentMethodHandler);
+
+// ============================================
+// Payment CRUD
+// ============================================
 router.post(
   '/',
+  requireAuth,
   [
-    body('bookingId').notEmpty().trim(),
+    body('booking_id').notEmpty().trim(),
     body('amount').isFloat({ min: 0.01 }),
-    body('paymentMethod').isIn(['credit_card', 'debit_card', 'bank_transfer']),
-    body('cardNumber').optional().isCreditCard(),
-    body('expiryDate')
-      .optional()
-      .matches(/^\d{2}\/\d{2}$/),
-    body('cvv').optional().isLength({ min: 3, max: 4 }),
+    body('payment_method').notEmpty().trim(),
   ],
   processPaymentHandler
 );
 
-router.get('/', getUserPaymentsHandler);
+router.get('/', requireAuth, getUserPaymentsHandler);
 
-router.get('/methods', getPaymentMethodsHandler);
+router.get('/:paymentId', requireAuth, getPaymentHandler);
 
-router.post('/methods', addPaymentMethodHandler);
+// ============================================
+// Payment Operations
+// ============================================
+router.post('/:paymentId/capture', requireAuth, capturePaymentHandler);
 
-router.get('/:paymentId', getPaymentHandler);
+router.post(
+  '/:paymentId/cancel',
+  requireAuth,
+  [body('reason').optional().trim()],
+  cancelPaymentHandler
+);
 
-router.post('/:paymentId/refund', [body('reason').notEmpty().trim()], refundPaymentHandler);
+// ============================================
+// Refund Management
+// ============================================
+router.post(
+  '/:paymentId/refund',
+  requireAuth,
+  [
+    body('amount').isFloat({ min: 0.01 }),
+    body('reason').optional().trim(),
+  ],
+  refundPaymentHandler
+);
+
+router.get('/:paymentId/refunds', requireAuth, listRefundsHandler);
 
 export default router;

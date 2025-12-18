@@ -2,17 +2,17 @@ package repositories
 
 import (
 	"context"
-	"database/sql"
 	"event-service/models"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 )
 
 type EventScheduleRepository struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
-func NewEventScheduleRepository(db *sql.DB) *EventScheduleRepository {
+func NewEventScheduleRepository(db *sqlx.DB) *EventScheduleRepository {
 	return &EventScheduleRepository{db: db}
 }
 
