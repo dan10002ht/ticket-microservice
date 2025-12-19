@@ -13,7 +13,7 @@ const getAllEvents = async (req, res) => {
  * Get event by ID
  */
 const getEventById = async (req, res) => {
-  const result = await grpcClients.eventService.getEvent({ eventId: req.params.eventId });
+  const result = await grpcClients.eventService.getEvent({ id: req.params.eventId });
   sendSuccessResponse(res, 200, result, req.correlationId);
 };
 
@@ -30,7 +30,7 @@ const createNewEvent = async (req, res) => {
  */
 const updateEvent = async (req, res) => {
   const result = await grpcClients.eventService.updateEvent({
-    eventId: req.params.eventId,
+    id: req.params.eventId,
     ...req.body,
   });
   sendSuccessResponse(res, 200, result, req.correlationId);
@@ -40,7 +40,7 @@ const updateEvent = async (req, res) => {
  * Delete event
  */
 const deleteEvent = async (req, res) => {
-  await grpcClients.eventService.deleteEvent({ eventId: req.params.eventId });
+  await grpcClients.eventService.deleteEvent({ id: req.params.eventId });
   sendSuccessResponse(res, 200, { message: 'Event deleted successfully' }, req.correlationId);
 };
 
@@ -58,7 +58,7 @@ const saveEventDraft = async (req, res) => {
   }
   // Cho phép partial body
   const result = await grpcClients.eventService.updateEvent({
-    eventId,
+    id: eventId,
     ...req.body,
   });
   return result;

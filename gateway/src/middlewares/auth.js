@@ -141,5 +141,8 @@ const requirePermission = (permissions) => {
   };
 };
 
-export { authMiddleware, optionalAuthMiddleware, requireRole, requirePermission };
+// Alias for authMiddleware - used in routes that need explicit auth check
+const requireAuth = authMiddleware;
+
+export { authMiddleware, optionalAuthMiddleware, requireRole, requirePermission, requireAuth };
 export default authMiddleware; 

@@ -54,8 +54,7 @@ import {
   releaseSeatsHandler,
 } from '../handlers/availabilityHandlers.js';
 
-import { validateEvent } from '../middlewares/index.js';
-import { requireRole } from '../middlewares/index.js';
+import { validateEvent, requireRole } from '../middlewares/index.js';
 
 const router = express.Router();
 
@@ -63,20 +62,20 @@ const router = express.Router();
 router.get('/', getEventsHandler);
 router.post('/', requireRole(['organization']), validateEvent, createEventHandler);
 router.get('/:eventId', getEventHandler);
-router.put('/:eventId', updateEventHandler);
-router.delete('/:eventId', deleteEventHandler);
+router.put('/:eventId', requireRole(['organization']), validateEvent, updateEventHandler);
+router.delete('/:eventId', requireRole(['organization']), deleteEventHandler);
 
 // Draft event
-router.put('/:eventId/draft', validateEvent, saveEventDraftHandler);
+router.put('/:eventId/draft', requireRole(['organization']), saveEventDraftHandler);
 
 // Publish event
-router.post('/:eventId/publish', publishEventHandler);
+router.post('/:eventId/publish', requireRole(['organization']), publishEventHandler);
 
 // Event templates
 router.get('/templates', getEventTemplatesHandler);
 
 // Duplicate event
-router.post('/:eventId/duplicate', duplicateEventHandler);
+router.post('/:eventId/duplicate', requireRole(['organization']), duplicateEventHandler);
 
 // ============================================
 // Zone Management

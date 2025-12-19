@@ -669,4 +669,537 @@
  *                   example: "PASSWORD_RESET_FAILED"
  */
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     ValidateTokenRequest:
+ *       type: object
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: JWT token to validate (optional if using Authorization header)
+ *     ValidateTokenResponse:
+ *       type: object
+ *       properties:
+ *         valid:
+ *           type: boolean
+ *           description: Whether the token is valid
+ *         user:
+ *           $ref: '#/components/schemas/User'
+ *     OAuthLoginRequest:
+ *       type: object
+ *       required:
+ *         - provider
+ *         - access_token
+ *       properties:
+ *         provider:
+ *           type: string
+ *           enum: [google, facebook, github]
+ *           description: OAuth provider
+ *         access_token:
+ *           type: string
+ *           description: OAuth access token
+ *         provider_user_id:
+ *           type: string
+ *           description: User ID from OAuth provider
+ *         email:
+ *           type: string
+ *           format: email
+ *         first_name:
+ *           type: string
+ *         last_name:
+ *           type: string
+ *         picture:
+ *           type: string
+ *           description: Profile picture URL
+ *         refresh_token:
+ *           type: string
+ *         expires_at:
+ *           type: integer
+ *     PermissionData:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         resource:
+ *           type: string
+ *         action:
+ *           type: string
+ *     RoleData:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         description:
+ *           type: string
+ *         permissions:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/PermissionData'
+ *     CheckPermissionRequest:
+ *       type: object
+ *       required:
+ *         - permission_name
+ *       properties:
+ *         permission_name:
+ *           type: string
+ *           description: Permission name to check
+ *     CheckResourcePermissionRequest:
+ *       type: object
+ *       required:
+ *         - resource
+ *         - action
+ *       properties:
+ *         resource:
+ *           type: string
+ *           description: Resource name
+ *         action:
+ *           type: string
+ *           description: Action to check
+ *         context:
+ *           type: object
+ *           description: Additional context for permission check
+ *     BatchCheckPermissionsRequest:
+ *       type: object
+ *       required:
+ *         - permission_names
+ *       properties:
+ *         permission_names:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: List of permission names to check
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         email:
+ *           type: string
+ *         first_name:
+ *           type: string
+ *         last_name:
+ *           type: string
+ *         phone:
+ *           type: string
+ *         role:
+ *           type: string
+ *         is_active:
+ *           type: boolean
+ *         is_verified:
+ *           type: boolean
+ */
+
+/**
+ * @swagger
+ * /api/auth/validate:
+ *   post:
+ *     summary: Validate JWT token
+ *     description: Validate a JWT token and return user info if valid
+ *     tags: [Auth - Token]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ValidateTokenRequest'
+ *     responses:
+ *       200:
+ *         description: Token validation result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidateTokenResponse'
+ *       401:
+ *         description: Invalid token
+ */
+
+/**
+ * @swagger
+ * /api/auth/oauth/login:
+ *   post:
+ *     summary: OAuth login
+ *     description: Login using OAuth provider
+ *     tags: [Auth - OAuth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/OAuthLoginRequest'
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       401:
+ *         description: Invalid OAuth credentials
+ */
+
+/**
+ * @swagger
+ * /api/auth/verify-email-token:
+ *   post:
+ *     summary: Verify email with token
+ *     description: Verify user email using token from email link
+ *     tags: [Auth - Email Verification]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Email verification token
+ *     responses:
+ *       200:
+ *         description: Email verified successfully
+ *       400:
+ *         description: Invalid or expired token
+ */
+
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Basic registration
+ *     description: Register a new user with basic information
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *               first_name:
+ *                 type: string
+ *               last_name:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [individual, organization, admin]
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       400:
+ *         description: Validation error
+ *       409:
+ *         description: User already exists
+ */
+
+/**
+ * @swagger
+ * /api/auth/permissions:
+ *   get:
+ *     summary: Get user permissions
+ *     description: Get all permissions for the authenticated user
+ *     tags: [Auth - Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User permissions
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 permissions:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/PermissionData'
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /api/auth/permissions/check:
+ *   post:
+ *     summary: Check single permission
+ *     description: Check if user has a specific permission
+ *     tags: [Auth - Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CheckPermissionRequest'
+ *     responses:
+ *       200:
+ *         description: Permission check result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 allowed:
+ *                   type: boolean
+ *                 reason:
+ *                   type: string
+ *                 roles:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /api/auth/permissions/resource:
+ *   post:
+ *     summary: Check resource permission
+ *     description: Check if user has permission for a specific resource and action
+ *     tags: [Auth - Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CheckResourcePermissionRequest'
+ *     responses:
+ *       200:
+ *         description: Resource permission check result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 allowed:
+ *                   type: boolean
+ *                 reason:
+ *                   type: string
+ *                 permissions:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /api/auth/permissions/batch:
+ *   post:
+ *     summary: Batch check permissions
+ *     description: Check multiple permissions at once
+ *     tags: [Auth - Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/BatchCheckPermissionsRequest'
+ *     responses:
+ *       200:
+ *         description: Batch permission check results
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 results:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: boolean
+ *                 roles:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /api/auth/roles:
+ *   get:
+ *     summary: Get user roles
+ *     description: Get all roles for the authenticated user
+ *     tags: [Auth - Permissions]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User roles
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 roles:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/RoleData'
+ *       401:
+ *         description: Unauthorized
+ */
+
+/**
+ * @swagger
+ * /api/auth/users/{userId}:
+ *   get:
+ *     summary: Get user by ID (Admin)
+ *     description: Get user details by ID (Admin only)
+ *     tags: [Auth - User Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin role required
+ *       404:
+ *         description: User not found
+ *   put:
+ *     summary: Update user (Admin)
+ *     description: Update user details (Admin only)
+ *     tags: [Auth - User Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *               last_name:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               city:
+ *                 type: string
+ *               state:
+ *                 type: string
+ *               country:
+ *                 type: string
+ *               postal_code:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User updated successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin role required
+ *       404:
+ *         description: User not found
+ *   delete:
+ *     summary: Delete user (Admin)
+ *     description: Delete a user (Admin only)
+ *     tags: [Auth - User Management]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User deleted successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin role required
+ *       404:
+ *         description: User not found
+ */
+
+/**
+ * @swagger
+ * /api/auth/health:
+ *   get:
+ *     summary: Health check
+ *     description: Check auth service health
+ *     tags: [Auth - Health]
+ *     responses:
+ *       200:
+ *         description: Service is healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: healthy
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ */
+
 export default {};

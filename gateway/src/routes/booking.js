@@ -13,7 +13,7 @@ import {
   reserveSeatsHandler,
   releaseSeatsHandler,
 } from '../handlers/bookingHandlers.js';
-import { requireRole, requireAuth } from '../middlewares/index.js';
+import { requireRole, requireAuth, validateUUIDParam } from '../middlewares/index.js';
 
 const router = express.Router();
 
@@ -60,15 +60,16 @@ router.post(
 
 router.get('/', requireAuth, getUserBookingsHandler);
 
-router.get('/:bookingId', requireAuth, getBookingHandler);
+router.get('/:bookingId', requireAuth, validateUUIDParam('bookingId'), getBookingHandler);
 
-router.put('/:bookingId', requireAuth, updateBookingHandler);
+router.put('/:bookingId', requireAuth, validateUUIDParam('bookingId'), updateBookingHandler);
 
-router.post('/:bookingId/cancel', requireAuth, cancelBookingHandler);
+router.post('/:bookingId/cancel', requireAuth, validateUUIDParam('bookingId'), cancelBookingHandler);
 
 router.post(
   '/:bookingId/confirm',
   requireAuth,
+  validateUUIDParam('bookingId'),
   [
     body('payment_reference').notEmpty().trim(),
   ],

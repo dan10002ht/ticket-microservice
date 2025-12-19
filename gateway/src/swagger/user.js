@@ -286,4 +286,211 @@
  *         description: Address not found
  */
 
+/**
+ * @swagger
+ * /users/profile:
+ *   post:
+ *     summary: Create user profile
+ *     description: Create a new profile for the current user (called after registration)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               first_name:
+ *                 type: string
+ *                 description: First name
+ *               last_name:
+ *                 type: string
+ *                 description: Last name
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email address
+ *               phone:
+ *                 type: string
+ *                 description: Phone number
+ *               avatar_url:
+ *                 type: string
+ *                 description: Avatar URL
+ *               date_of_birth:
+ *                 type: string
+ *                 format: date
+ *                 description: Date of birth
+ *               preferences:
+ *                 type: object
+ *                 additionalProperties:
+ *                   type: string
+ *                 description: User preferences
+ *     responses:
+ *       201:
+ *         description: Profile created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 profile:
+ *                   $ref: '#/components/schemas/UserProfile'
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       409:
+ *         description: Profile already exists
+ */
+
+/**
+ * @swagger
+ * /users/admin/list:
+ *   get:
+ *     summary: List all users (Admin)
+ *     description: Retrieve a paginated list of all users (Admin only)
+ *     tags: [Users Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: size
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 20
+ *         description: Number of items per page
+ *     responses:
+ *       200:
+ *         description: Users list retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                 total:
+ *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin role required
+ */
+
+/**
+ * @swagger
+ * /users/admin/{userId}:
+ *   get:
+ *     summary: Get user by ID (Admin)
+ *     description: Retrieve a specific user by ID (Admin only)
+ *     tags: [Users Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 id:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin role required
+ *       404:
+ *         description: User not found
+ */
+
+/**
+ * @swagger
+ * /users/admin:
+ *   post:
+ *     summary: Create user (Admin)
+ *     description: Create a new user (Admin only)
+ *     tags: [Users Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: User name
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: User email
+ *     responses:
+ *       201:
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 id:
+ *                   type: string
+ *                 name:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin role required
+ *       409:
+ *         description: User already exists
+ */
+
 export default {};

@@ -14,7 +14,13 @@ import {
   reserveTicketsHandler,
   releaseTicketsHandler,
 } from '../handlers/ticketHandlers.js';
-import { requireRole, requireAuth } from '../middlewares/index.js';
+import {
+  requireRole,
+  requireAuth,
+  validateTicketCreate,
+  validateTicketUpdate,
+  validateUUIDParam,
+} from '../middlewares/index.js';
 
 const router = express.Router();
 
@@ -42,9 +48,9 @@ router.post('/release', requireAuth, releaseTicketsHandler);
 // Ticket CRUD
 // ============================================
 router.get('/', getTicketsHandler);
-router.post('/', createTicketHandler);
-router.get('/:ticketId', getTicketHandler);
-router.put('/:ticketId', updateTicketHandler);
-router.delete('/:ticketId', deleteTicketHandler);
+router.post('/', requireRole(['organization']), validateTicketCreate, createTicketHandler);
+router.get('/:ticketId', validateUUIDParam('ticketId'), getTicketHandler);
+router.put('/:ticketId', requireRole(['organization']), validateUUIDParam('ticketId'), validateTicketUpdate, updateTicketHandler);
+router.delete('/:ticketId', requireRole(['organization']), validateUUIDParam('ticketId'), deleteTicketHandler);
 
 export default router;

@@ -135,6 +135,169 @@ const resendVerificationEmail = async (req, res) => {
   sendSuccessResponse(res, 200, result, req.correlationId);
 };
 
+// ============================================
+// Token Validation
+// ============================================
+
+/**
+ * Validate JWT token
+ */
+const validateToken = async (req, res) => {
+  const token = req.body.token || req.headers.authorization?.replace('Bearer ', '');
+  const result = await grpcClients.authService.ValidateToken({ token });
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+// ============================================
+// OAuth Login
+// ============================================
+
+/**
+ * OAuth login flow
+ */
+const oAuthLogin = async (req, res) => {
+  const result = await grpcClients.authService.OAuthLogin({
+    provider: req.body.provider,
+    access_token: req.body.access_token,
+    provider_user_id: req.body.provider_user_id,
+    email: req.body.email,
+    first_name: req.body.first_name,
+    last_name: req.body.last_name,
+    picture: req.body.picture,
+    refresh_token: req.body.refresh_token,
+    expires_at: req.body.expires_at,
+  });
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+// ============================================
+// Email Verification (Token-based)
+// ============================================
+
+/**
+ * Verify email with token
+ */
+const verifyEmail = async (req, res) => {
+  const result = await grpcClients.authService.VerifyEmail({
+    token: req.body.token || req.query.token,
+  });
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+// ============================================
+// Permissions & Roles
+// ============================================
+
+/**
+ * Get user permissions
+ */
+const getUserPermissions = async (req, res) => {
+  const result = await grpcClients.authService.GetUserPermissions({
+    user_id: req.user.id,
+  });
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+/**
+ * Check single permission
+ */
+const checkPermission = async (req, res) => {
+  const result = await grpcClients.authService.CheckPermission({
+    user_id: req.user.id,
+    permission_name: req.body.permission_name,
+  });
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+/**
+ * Check resource permission
+ */
+const checkResourcePermission = async (req, res) => {
+  const result = await grpcClients.authService.CheckResourcePermission({
+    user_id: req.user.id,
+    resource: req.body.resource,
+    action: req.body.action,
+    context: req.body.context || {},
+  });
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+/**
+ * Get user roles
+ */
+const getUserRoles = async (req, res) => {
+  const result = await grpcClients.authService.GetUserRoles({
+    user_id: req.user.id,
+  });
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+/**
+ * Batch check permissions
+ */
+const batchCheckPermissions = async (req, res) => {
+  const result = await grpcClients.authService.BatchCheckPermissions({
+    user_id: req.user.id,
+    permission_names: req.body.permission_names,
+  });
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+// ============================================
+// User Management (Admin)
+// ============================================
+
+/**
+ * Get user by ID (Admin)
+ */
+const getUser = async (req, res) => {
+  const result = await grpcClients.authService.GetUser({
+    user_id: req.params.userId,
+  });
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+/**
+ * Update user (Admin)
+ */
+const updateUser = async (req, res) => {
+  const result = await grpcClients.authService.UpdateUser({
+    user_id: req.params.userId,
+    ...req.body,
+  });
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+/**
+ * Delete user (Admin)
+ */
+const deleteUser = async (req, res) => {
+  const result = await grpcClients.authService.DeleteUser({
+    user_id: req.params.userId,
+  });
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
+// ============================================
+// Utility
+// ============================================
+
+/**
+ * Basic registration
+ */
+const register = async (req, res) => {
+  const result = await grpcClients.authService.Register(req.body);
+  sendSuccessResponse(res, 201, result, req.correlationId);
+};
+
+/**
+ * Health check
+ */
+const healthCheck = async (req, res) => {
+  const result = await grpcClients.authService.Health({});
+  sendSuccessResponse(res, 200, result, req.correlationId);
+};
+
 // Export wrapped handlers
 export const registerWithEmailHandler = createHandler(
   registerUserWithEmail,
@@ -166,3 +329,28 @@ export const resendVerificationEmailHandler = createHandler(
   'auth',
   'resendVerificationEmail'
 );
+
+// Token Validation
+export const validateTokenHandler = createHandler(validateToken, 'auth', 'validateToken');
+
+// OAuth Login
+export const oAuthLoginHandler = createHandler(oAuthLogin, 'auth', 'oAuthLogin');
+
+// Email Verification (Token-based)
+export const verifyEmailHandler = createHandler(verifyEmail, 'auth', 'verifyEmail');
+
+// Permissions & Roles
+export const getUserPermissionsHandler = createSimpleHandler(getUserPermissions, 'auth', 'getUserPermissions');
+export const checkPermissionHandler = createHandler(checkPermission, 'auth', 'checkPermission');
+export const checkResourcePermissionHandler = createHandler(checkResourcePermission, 'auth', 'checkResourcePermission');
+export const getUserRolesHandler = createSimpleHandler(getUserRoles, 'auth', 'getUserRoles');
+export const batchCheckPermissionsHandler = createHandler(batchCheckPermissions, 'auth', 'batchCheckPermissions');
+
+// User Management (Admin)
+export const getUserHandler = createSimpleHandler(getUser, 'auth', 'getUser');
+export const updateUserHandler = createHandler(updateUser, 'auth', 'updateUser');
+export const deleteUserHandler = createHandler(deleteUser, 'auth', 'deleteUser');
+
+// Utility
+export const registerHandler = createHandler(register, 'auth', 'register');
+export const healthCheckHandler = createSimpleHandler(healthCheck, 'auth', 'health');

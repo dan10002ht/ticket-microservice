@@ -1,4 +1,4 @@
-import { body } from 'express-validator';
+import { body, param } from 'express-validator';
 
 /**
  * Validation middleware for user registration
@@ -143,6 +143,32 @@ export const validateEvent = [
   body('venue').notEmpty().withMessage('Event venue is required').trim(),
   body('capacity').isInt({ min: 1 }).withMessage('Event capacity must be at least 1'),
   body('price').isFloat({ min: 0 }).withMessage('Event price must be non-negative'),
+];
+
+/**
+ * Validation middleware for user profile creation
+ */
+export const validateUserProfileCreate = [
+  body('first_name')
+    .notEmpty()
+    .withMessage('First name is required')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('First name must be between 2 and 50 characters'),
+  body('last_name')
+    .notEmpty()
+    .withMessage('Last name is required')
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Last name must be between 2 and 50 characters'),
+  body('email')
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please provide a valid email address'),
+  body('phone').optional().isMobilePhone().withMessage('Please provide a valid phone number'),
+  body('avatar_url').optional().isURL().withMessage('Avatar URL must be a valid URL'),
+  body('date_of_birth').optional().isISO8601().withMessage('Invalid date of birth format'),
 ];
 
 /**
@@ -317,4 +343,110 @@ export const validateResetPassword = [
     }
     return true;
   }),
+];
+
+/**
+ * Validation middleware for token validation
+ */
+export const validateTokenValidation = [
+  body('token').optional().isJWT().withMessage('Invalid token format'),
+];
+
+/**
+ * Validation middleware for OAuth login
+ */
+export const validateOAuthLogin = [
+  body('provider')
+    .isIn(['google', 'facebook', 'github'])
+    .withMessage('Provider must be one of: google, facebook, github'),
+  body('access_token').notEmpty().withMessage('Access token is required'),
+  body('email').optional().isEmail().withMessage('Invalid email format'),
+];
+
+/**
+ * Validation middleware for verify email token
+ */
+export const validateVerifyEmailToken = [
+  body('token').notEmpty().withMessage('Verification token is required'),
+];
+
+/**
+ * Validation middleware for check permission
+ */
+export const validateCheckPermission = [
+  body('permission_name')
+    .notEmpty()
+    .withMessage('Permission name is required')
+    .isString()
+    .withMessage('Permission name must be a string'),
+];
+
+/**
+ * Validation middleware for check resource permission
+ */
+export const validateCheckResourcePermission = [
+  body('resource').notEmpty().withMessage('Resource is required'),
+  body('action').notEmpty().withMessage('Action is required'),
+  body('context').optional().isObject().withMessage('Context must be an object'),
+];
+
+/**
+ * Validation middleware for batch check permissions
+ */
+export const validateBatchCheckPermissions = [
+  body('permission_names')
+    .isArray({ min: 1 })
+    .withMessage('Permission names must be a non-empty array'),
+  body('permission_names.*')
+    .isString()
+    .withMessage('Each permission name must be a string'),
+];
+
+/**
+ * Validation middleware for ticket creation
+ */
+export const validateTicketCreate = [
+  body('event_id')
+    .notEmpty()
+    .withMessage('Event ID is required')
+    .isUUID()
+    .withMessage('Event ID must be a valid UUID'),
+  body('ticket_type_id')
+    .notEmpty()
+    .withMessage('Ticket type ID is required')
+    .isUUID()
+    .withMessage('Ticket type ID must be a valid UUID'),
+  body('seat_id')
+    .optional()
+    .isUUID()
+    .withMessage('Seat ID must be a valid UUID'),
+  body('price')
+    .notEmpty()
+    .withMessage('Price is required')
+    .isFloat({ min: 0 })
+    .withMessage('Price must be a non-negative number'),
+];
+
+/**
+ * Validation middleware for ticket update
+ */
+export const validateTicketUpdate = [
+  body('status')
+    .optional()
+    .isIn(['available', 'reserved', 'sold', 'cancelled'])
+    .withMessage('Status must be one of: available, reserved, sold, cancelled'),
+  body('price')
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage('Price must be a non-negative number'),
+];
+
+/**
+ * UUID param validation factory
+ * @param {string} paramName - The name of the param to validate
+ */
+export const validateUUIDParam = (paramName) => [
+  param(paramName)
+    .isUUID()
+    .withMessage(`${paramName} must be a valid UUID`),
 ];

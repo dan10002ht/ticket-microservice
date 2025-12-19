@@ -15,7 +15,7 @@ import {
   listRefundsHandler,
   updateRefundStatusHandler,
 } from '../handlers/paymentHandlers.js';
-import { requireRole, requireAuth } from '../middlewares/index.js';
+import { requireRole, requireAuth, validateUUIDParam } from '../middlewares/index.js';
 
 const router = express.Router();
 
@@ -27,7 +27,7 @@ router.get('/admin/list', requireRole(['admin']), listPaymentsHandler);
 // ============================================
 // Refund routes (must be before /:paymentId)
 // ============================================
-router.put('/refunds/:refundId', requireRole(['admin']), updateRefundStatusHandler);
+router.put('/refunds/:refundId', requireRole(['admin']), validateUUIDParam('refundId'), updateRefundStatusHandler);
 
 // ============================================
 // Payment Methods
@@ -51,16 +51,17 @@ router.post(
 
 router.get('/', requireAuth, getUserPaymentsHandler);
 
-router.get('/:paymentId', requireAuth, getPaymentHandler);
+router.get('/:paymentId', requireAuth, validateUUIDParam('paymentId'), getPaymentHandler);
 
 // ============================================
 // Payment Operations
 // ============================================
-router.post('/:paymentId/capture', requireAuth, capturePaymentHandler);
+router.post('/:paymentId/capture', requireAuth, validateUUIDParam('paymentId'), capturePaymentHandler);
 
 router.post(
   '/:paymentId/cancel',
   requireAuth,
+  validateUUIDParam('paymentId'),
   [body('reason').optional().trim()],
   cancelPaymentHandler
 );
@@ -71,6 +72,7 @@ router.post(
 router.post(
   '/:paymentId/refund',
   requireAuth,
+  validateUUIDParam('paymentId'),
   [
     body('amount').isFloat({ min: 0.01 }),
     body('reason').optional().trim(),
@@ -78,6 +80,6 @@ router.post(
   refundPaymentHandler
 );
 
-router.get('/:paymentId/refunds', requireAuth, listRefundsHandler);
+router.get('/:paymentId/refunds', requireAuth, validateUUIDParam('paymentId'), listRefundsHandler);
 
 export default router;

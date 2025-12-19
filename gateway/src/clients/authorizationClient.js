@@ -27,10 +27,9 @@ const checkPermission = async (userId, permission, correlationId) => {
       return cached.hasPermission;
     }
 
-    const response = await grpcClients.authService.checkPermission({
-      userId,
-      permission,
-      correlationId,
+    const response = await grpcClients.authService.CheckPermission({
+      user_id: userId,
+      permission_name: permission,
     });
 
     const hasPermission = response.hasPermission;
@@ -95,12 +94,11 @@ const checkResourcePermission = async (
       return cached.hasPermission;
     }
 
-    const response = await grpcClients.authService.checkResourcePermission({
-      userId,
-      permission,
-      resourceType,
-      resourceId,
-      correlationId,
+    const response = await grpcClients.authService.CheckResourcePermission({
+      user_id: userId,
+      resource: resourceType,
+      action: permission,
+      context: { resource_id: resourceId },
     });
 
     const hasPermission = response.hasPermission;
@@ -157,9 +155,8 @@ const getUserRoles = async (userId, correlationId) => {
       return cached.roles;
     }
 
-    const response = await grpcClients.authService.getUserRoles({
-      userId,
-      correlationId,
+    const response = await grpcClients.authService.GetUserRoles({
+      user_id: userId,
     });
 
     const roles = response.roles || [];
@@ -198,10 +195,9 @@ const getUserRoles = async (userId, correlationId) => {
  */
 const batchCheckPermissions = async (userId, permissions, correlationId) => {
   try {
-    const response = await grpcClients.authService.batchCheckPermissions({
-      userId,
-      permissions,
-      correlationId,
+    const response = await grpcClients.authService.BatchCheckPermissions({
+      user_id: userId,
+      permission_names: permissions,
     });
 
     const results = response.results || {};

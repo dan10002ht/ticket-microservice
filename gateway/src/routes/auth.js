@@ -1,49 +1,57 @@
 import express from 'express';
-import {
-  registerWithEmailHandler,
-  registerWithOAuthHandler,
-  loginHandler,
-  refreshTokenHandler,
-  logoutHandler,
-  forgotPasswordHandler,
-  resetPasswordHandler,
-  sendVerificationEmailHandler,
-  verifyEmailWithPinHandler,
-  resendVerificationEmailHandler,
-} from '../handlers/authHandlers.js';
-import {
-  validateRegistration,
-  validateLogin,
-  validateRefreshToken,
-  validateOAuthRegistration,
-  validateForgotPassword,
-  validateResetPassword,
-  validateSendVerificationEmail,
-  validateVerifyEmailWithPin,
-  validateResendVerificationEmail,
-} from '../middlewares/index.js';
-import { requirePermission, requireRole } from '../middlewares/authorizationMiddleware.js';
+import * as authHandler from  '../handlers/authHandlers.js';
+import * as validation from '../middlewares';
+import * as authorizationMiddleware from '../middlewares/authorizationMiddleware'
 
 const router = express.Router();
 
-router.post('/register/email', validateRegistration, registerWithEmailHandler);
-router.post('/register/oauth', validateOAuthRegistration, registerWithOAuthHandler);
-router.post('/login', validateLogin, loginHandler);
-router.post('/forgot-password', validateForgotPassword, forgotPasswordHandler);
-router.post('/reset-password', validateResetPassword, resetPasswordHandler);
+router.post('/register/email', validation.validateRegistration, authHandler.registerWithEmailHandler);
+router.post('/register/oauth', validation.validateOAuthRegistration, authHandler.registerWithOAuthHandler);
+router.post('/login', validation.validateLogin, authHandler.loginHandler);
+router.post('/forgot-password', validation.validateForgotPassword, authHandler.forgotPasswordHandler);
+router.post('/reset-password', validation.validateResetPassword, authHandler.resetPasswordHandler);
 router.post(
   '/send-verification-email',
-  validateSendVerificationEmail,
-  sendVerificationEmailHandler
+  validation.validateSendVerificationEmail,
+  authHandler.sendVerificationEmailHandler
 );
-router.post('/verify-user', validateVerifyEmailWithPin, verifyEmailWithPinHandler);
+router.post('/verify-user', validation.validateVerifyEmailWithPin, authHandler.verifyEmailWithPinHandler);
 router.post(
   '/resend-verification-email',
-  validateResendVerificationEmail,
-  resendVerificationEmailHandler
+  validation.validateResendVerificationEmail,
+  authHandler.resendVerificationEmailHandler
 );
-router.post('/refresh', validateRefreshToken, refreshTokenHandler);
-router.post('/logout', logoutHandler);
+router.post('/refresh', validation.validateRefreshToken, authHandler.refreshTokenHandler);
+router.post('/logout', authHandler.logoutHandler);
+
+// ============================================
+// Token Validation & OAuth
+// ============================================
+router.post('/validate', validation.validateTokenValidation, authHandler.validateTokenHandler);
+router.post('/oauth/login', validation.validateOAuthLogin, authHandler.oAuthLoginHandler);
+router.post('/verify-email-token', validation.validateVerifyEmailToken, authHandler.verifyEmailHandler);
+router.post('/register', validation.validateRegistration, authHandler.registerHandler);
+
+// ============================================
+// Permissions & Roles (requires auth)
+// ============================================
+router.get('/permissions', authorizationMiddleware.requireAuth, authHandler.getUserPermissionsHandler);
+router.post('/permissions/check', authorizationMiddleware.requireAuth, validation.validateCheckPermission, authHandler.checkPermissionHandler);
+router.post('/permissions/resource', authorizationMiddleware.requireAuth, validation.validateCheckResourcePermission, authHandler.checkResourcePermissionHandler);
+router.post('/permissions/batch', authorizationMiddleware.requireAuth, validation.validateBatchCheckPermissions, authHandler.batchCheckPermissionsHandler);
+router.get('/roles', authorizationMiddleware.requireAuth, authHandler.getUserRolesHandler);
+
+// ============================================
+// User Management (Admin only)
+// ============================================
+router.get('/users/:userId', authorizationMiddleware.requireRole(['admin', 'super_admin']), authHandler.getUserHandler);
+router.put('/users/:userId', authorizationMiddleware.requireRole(['admin', 'super_admin']), authHandler.updateUserHandler);
+router.delete('/users/:userId', authorizationMiddleware.requireRole(['admin', 'super_admin']), authHandler.deleteUserHandler);
+
+// ============================================
+// Health Check
+// ============================================
+router.get('/health', authHandler.healthCheckHandler);
 
 // Public hello endpoint (no authorization required)
 router.get('/hello', (req, res) => {
@@ -51,7 +59,7 @@ router.get('/hello', (req, res) => {
 });
 
 // Protected hello endpoint (requires authentication and permission)
-router.get('/hello/protected', requirePermission('auth.hello.view'), (req, res) => {
+router.get('/hello/protected', authorizationMiddleware.requirePermission('auth.hello.view'), (req, res) => {
   res.json({
     message: 'Hello Protected World',
     user: req.user,
@@ -59,7 +67,7 @@ router.get('/hello/protected', requirePermission('auth.hello.view'), (req, res) 
 });
 
 // Admin hello endpoint (requires admin role)
-router.get('/hello/admin', requireRole(['admin', 'super_admin']), (req, res) => {
+router.get('/hello/admin', authorizationMiddleware.requireRole(['admin', 'super_admin']), (req, res) => {
   res.json({
     message: 'Hello Admin World',
     user: req.user,

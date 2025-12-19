@@ -1,4 +1,4 @@
-export { authMiddleware, optionalAuthMiddleware, requireRole, requirePermission } from './auth.js';
+export { authMiddleware, optionalAuthMiddleware, requireRole, requirePermission, requireAuth } from './auth.js';
 export { default as errorHandlerMiddleware } from './errorHandler.js';
 export { default as requestLoggerMiddleware } from './requestLogger.js';
 export { loggingMiddleware } from './logging.js';
@@ -18,10 +18,20 @@ export {
   validateBooking,
   validatePayment,
   validateEvent,
+  validateUserProfileCreate,
   validateUserProfileUpdate,
   validateUserAddress,
   validateUserAddressUpdate,
   validateSendVerificationEmail,
   validateVerifyEmailWithPin,
   validateResendVerificationEmail,
+  validateTokenValidation,
+  validateOAuthLogin,
+  validateVerifyEmailToken,
+  validateCheckPermission,
+  validateCheckResourcePermission,
+  validateBatchCheckPermissions,
+  validateTicketCreate,
+  validateTicketUpdate,
+  validateUUIDParam,
 } from './validationMiddleware.js';
