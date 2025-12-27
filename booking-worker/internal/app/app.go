@@ -57,8 +57,15 @@ func (a *App) Initialize() error {
 	a.queue = queueManager
 	a.logger.Info("Queue manager initialized")
 
+	// Initialize DLQ manager
+	var dlqManager *queue.DLQManager
+	if redisQueue, ok := a.queue.(*queue.RedisQueueManager); ok {
+		dlqManager = queue.NewDLQManager(redisQueue.GetClient(), a.logger)
+		a.logger.Info("DLQ manager initialized")
+	}
+
 	// Initialize worker processor
-	processor, err := worker.NewProcessor(a.config, a.queue, a.logger)
+	processor, err := worker.NewProcessor(a.config, a.queue, dlqManager, a.logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize processor: %w", err)
 	}

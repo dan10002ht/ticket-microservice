@@ -1,4 +1,4 @@
-import grpc from '@grpc/grpc-js';
+import * as grpc from '@grpc/grpc-js';
 import dotenv from 'dotenv';
 import logger from './utils/logger.js';
 import { server } from './server.js';

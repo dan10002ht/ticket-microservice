@@ -1,0 +1,252 @@
+version: "3.8"
+
+# Staging Environment - HAProxy + PostgreSQL Primary/Replica
+# Usage: docker compose -f docker-compose.yml up -d
+
+services:
+  # ============================================
+  # HAProxy - Load Balancer
+  # ============================================
+  haproxy:
+    image: haproxy:2.8-alpine
+    container_name: staging-haproxy
+    ports:
+      # Auth DB: Write (5432), Read (5433)
+      - "${AUTH_DB_WRITE_PORT:-5432}:5432"
+      - "${AUTH_DB_READ_PORT:-5433}:5433"
+      # Main DB: Write (5434), Read (5435)
+      - "${MAIN_DB_WRITE_PORT:-5434}:5434"
+      - "${MAIN_DB_READ_PORT:-5435}:5435"
+      # Stats page
+      - "${HAPROXY_STATS_PORT:-8404}:8404"
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    networks:
+      - booking-net
+    depends_on:
+      auth-postgres-primary:
+        condition: service_healthy
+      auth-postgres-replica1:
+        condition: service_healthy
+      main-postgres-primary:
+        condition: service_healthy
+      main-postgres-replica1:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ============================================
+  # Auth PostgreSQL Cluster
+  # ============================================
+
+  # Auth Primary
+  auth-postgres-primary:
+    image: postgres:15
+    container_name: staging-auth-postgres-primary
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME:-booking_system_auth}
+      POSTGRES_USER: ${DB_USER:-booking_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-booking_pass}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "55432:5432"
+    volumes:
+      - auth_primary_data:/var/lib/postgresql/data
+      - ../../shared/postgres-init/init-primary.sh:/docker-entrypoint-initdb.d/init-primary.sh
+    networks:
+      - booking-net
+    command: >
+      postgres
+      -c wal_level=replica
+      -c max_wal_senders=5
+      -c max_replication_slots=5
+      -c hot_standby=on
+      -c synchronous_commit=off
+      -c checkpoint_timeout=5min
+      -c max_wal_size=1GB
+      -c min_wal_size=80MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-booking_user} -d ${AUTH_DB_NAME:-booking_system_auth}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Auth Replica 1
+  auth-postgres-replica1:
+    image: postgres:15
+    container_name: staging-auth-postgres-replica1
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME:-booking_system_auth}
+      POSTGRES_USER: ${DB_USER:-booking_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-booking_pass}
+      PGUSER: ${DB_USER:-booking_user}
+      PGPASSWORD: ${DB_PASSWORD:-booking_pass}
+    ports:
+      - "55433:5432"
+    volumes:
+      - auth_replica1_data:/var/lib/postgresql/data
+      - ../../shared/postgres-init/init-replica.sh:/docker-entrypoint-initdb.d/init-replica.sh
+    networks:
+      - booking-net
+    depends_on:
+      auth-postgres-primary:
+        condition: service_healthy
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME:-booking_system_auth}
+      POSTGRES_USER: ${DB_USER:-booking_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-booking_pass}
+      REPLICATION_USER: replicator
+      REPLICATION_PASSWORD: replicator_pass
+      PRIMARY_HOST: auth-postgres-primary
+      PRIMARY_PORT: 5432
+    command: >
+      postgres
+      -c hot_standby=on
+      -c max_standby_archive_delay=30s
+      -c max_standby_streaming_delay=30s
+      -c wal_receiver_status_interval=10s
+      -c hot_standby_feedback=on
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-booking_user} -d ${AUTH_DB_NAME:-booking_system_auth}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # Main PostgreSQL Cluster
+  # ============================================
+
+  # Main Primary
+  main-postgres-primary:
+    image: postgres:15
+    container_name: staging-main-postgres-primary
+    environment:
+      POSTGRES_DB: ${MAIN_DB_NAME:-booking_system}
+      POSTGRES_USER: ${DB_USER:-booking_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-booking_pass}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      - "55434:5432"
+    volumes:
+      - main_primary_data:/var/lib/postgresql/data
+      - ../../shared/postgres-init/init-primary.sh:/docker-entrypoint-initdb.d/init-primary.sh
+    networks:
+      - booking-net
+    command: >
+      postgres
+      -c wal_level=replica
+      -c max_wal_senders=5
+      -c max_replication_slots=5
+      -c hot_standby=on
+      -c synchronous_commit=off
+      -c checkpoint_timeout=5min
+      -c max_wal_size=1GB
+      -c min_wal_size=80MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-booking_user} -d ${MAIN_DB_NAME:-booking_system}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Main Replica 1
+  main-postgres-replica1:
+    image: postgres:15
+    container_name: staging-main-postgres-replica1
+    environment:
+      POSTGRES_DB: ${MAIN_DB_NAME:-booking_system}
+      POSTGRES_USER: ${DB_USER:-booking_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-booking_pass}
+      REPLICATION_USER: replicator
+      REPLICATION_PASSWORD: replicator_pass
+      PRIMARY_HOST: main-postgres-primary
+      PRIMARY_PORT: 5432
+    ports:
+      - "55435:5432"
+    volumes:
+      - main_replica1_data:/var/lib/postgresql/data
+      - ../../shared/postgres-init/init-replica.sh:/docker-entrypoint-initdb.d/init-replica.sh
+    networks:
+      - booking-net
+    depends_on:
+      main-postgres-primary:
+        condition: service_healthy
+    command: >
+      postgres
+      -c hot_standby=on
+      -c max_standby_archive_delay=30s
+      -c max_standby_streaming_delay=30s
+      -c wal_receiver_status_interval=10s
+      -c hot_standby_feedback=on
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-booking_user} -d ${MAIN_DB_NAME:-booking_system}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # Redis
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: staging-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - booking-net
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # Kafka & Zookeeper
+  # ============================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: staging-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "${ZOOKEEPER_PORT:-2181}:2181"
+    networks:
+      - booking-net
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: staging-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - booking-net
+    restart: unless-stopped
+
+volumes:
+  auth_primary_data:
+  auth_replica1_data:
+  main_primary_data:
+  main_replica1_data:
+  redis_data:
+
+networks:
+  booking-net:
+    driver: bridge

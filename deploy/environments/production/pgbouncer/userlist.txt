@@ -1,0 +1,8 @@
+# PgBouncer User List
+# Format: "username" "password_hash"
+# Generate MD5 hash: echo -n "password_here" | md5sum
+# Or use: SELECT concat('md5', md5(concat('password', 'username')));
+
+"booking_user" "md5e10adc3949ba59abbe56e057f20f883e"
+"pgbouncer_admin" "md5e10adc3949ba59abbe56e057f20f883e"
+"pgbouncer_stats" "md5e10adc3949ba59abbe56e057f20f883e"

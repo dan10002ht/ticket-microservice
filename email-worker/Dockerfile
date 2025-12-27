@@ -1,47 +1,58 @@
-# Build stage
-FROM golang:1.21-alpine AS builder
+# ============================================
+# Stage 1: Dependencies
+# ============================================
+# Pin exact image digest for security & reproducibility
+FROM golang:1.22-alpine@sha256:1699c10032ca2582ec89a24a1312d986a3f094aed3d5c1147b19880afe40e052 AS deps
 
 WORKDIR /app
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
 
-# Copy go mod files
+# Download dependencies first (layer caching)
 COPY go.mod go.sum ./
-RUN go mod download
+RUN go mod download && go mod verify
+
+# ============================================
+# Stage 2: Builder
+# ============================================
+FROM deps AS builder
 
 # Copy source code
 COPY . .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o email-worker .
+# Build with optimizations
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s" \
+    -o /app/server .
 
-# Final stage
-FROM alpine:latest
+# ============================================
+# Stage 3: Security Scan (CI/CD - use with --target security)
+# ============================================
+FROM deps AS security
 
-WORKDIR /root/
+RUN go install golang.org/x/vuln/cmd/govulncheck@latest
+COPY . .
+RUN govulncheck ./... || true
 
-# Install runtime dependencies
-RUN apk --no-cache add ca-certificates tzdata
+# ============================================
+# Stage 4: Production (Distroless)
+# ============================================
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:2b7c93f6d6648c11f0e80a48558c8f77885eb0445213b8e69a6a0d7c89fc6ae4 AS production
 
-# Copy binary from builder stage
-COPY --from=builder /app/email-worker .
+WORKDIR /app
 
-# Copy configuration files
-COPY --from=builder /app/env.example ./
+# Copy binary from builder
+COPY --from=builder /app/server /app/server
 
-# Create non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+# Copy SSL certificates and timezone data
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-# Change ownership
-RUN chown -R appuser:appgroup /root/
+# Distroless runs as nonroot (uid 65532) by default
+USER nonroot:nonroot
 
-# Switch to non-root user
-USER appuser
-
-# Expose ports
+# Expose HTTP and gRPC ports
 EXPOSE 8080 50060
 
-# Run the application
-CMD ["./email-worker"] 
+CMD ["/app/server"]

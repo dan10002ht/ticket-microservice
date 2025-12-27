@@ -27,22 +27,23 @@ CREATE TABLE IF NOT EXISTS booking_sessions (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_booking_sessions_user_id ON booking_sessions(user_id);
-CREATE INDEX idx_booking_sessions_event_id ON booking_sessions(event_id);
-CREATE INDEX idx_booking_sessions_session_token ON booking_sessions(session_token);
-CREATE INDEX idx_booking_sessions_status ON booking_sessions(status);
-CREATE INDEX idx_booking_sessions_expires_at ON booking_sessions(expires_at);
-CREATE INDEX idx_booking_sessions_created_at ON booking_sessions(created_at);
+CREATE INDEX IF NOT EXISTS idx_booking_sessions_user_id ON booking_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_booking_sessions_event_id ON booking_sessions(event_id);
+CREATE INDEX IF NOT EXISTS idx_booking_sessions_session_token ON booking_sessions(session_token);
+CREATE INDEX IF NOT EXISTS idx_booking_sessions_status ON booking_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_booking_sessions_expires_at ON booking_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_booking_sessions_created_at ON booking_sessions(created_at);
 
 -- Composite indexes for common queries
-CREATE INDEX idx_booking_sessions_user_status ON booking_sessions(user_id, status);
-CREATE INDEX idx_booking_sessions_event_status ON booking_sessions(event_id, status);
-CREATE INDEX idx_booking_sessions_expires_status ON booking_sessions(expires_at, status);
+CREATE INDEX IF NOT EXISTS idx_booking_sessions_user_status ON booking_sessions(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_booking_sessions_event_status ON booking_sessions(event_id, status);
+CREATE INDEX IF NOT EXISTS idx_booking_sessions_expires_status ON booking_sessions(expires_at, status);
 
 -- Trigger to update updated_at timestamp
-CREATE TRIGGER update_booking_sessions_updated_at 
-    BEFORE UPDATE ON booking_sessions 
-    FOR EACH ROW 
+DROP TRIGGER IF EXISTS update_booking_sessions_updated_at ON booking_sessions;
+CREATE TRIGGER update_booking_sessions_updated_at
+    BEFORE UPDATE ON booking_sessions
+    FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Add comments

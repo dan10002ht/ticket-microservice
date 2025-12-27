@@ -1,56 +1,59 @@
-# Build stage
-FROM golang:1.22-alpine AS builder
+# ============================================
+# Stage 1: Dependencies
+# ============================================
+# Pin exact image digest for security & reproducibility
+FROM golang:1.22-alpine@sha256:1699c10032ca2582ec89a24a1312d986a3f094aed3d5c1147b19880afe40e052 AS deps
 
-# Install build dependencies
-RUN apk add --no-cache git ca-certificates
-
-# Set working directory
 WORKDIR /app
 
-# Copy go mod files
-COPY go.mod go.sum ./
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates tzdata
 
-# Download dependencies
-RUN go mod download
+# Download dependencies first (layer caching)
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
+
+# ============================================
+# Stage 2: Builder
+# ============================================
+FROM deps AS builder
 
 # Copy source code
 COPY . .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o realtime-service .
+# Build with optimizations
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s" \
+    -o /app/server .
 
-# Final stage
-FROM alpine:3.19
+# ============================================
+# Stage 3: Security Scan (CI/CD - use with --target security)
+# ============================================
+FROM deps AS security
 
-# Install ca-certificates for HTTPS
-RUN apk --no-cache add ca-certificates tzdata
+RUN go install golang.org/x/vuln/cmd/govulncheck@latest
+COPY . .
+RUN govulncheck ./... || true
 
-# Create non-root user
-RUN adduser -D -g '' appuser
+# ============================================
+# Stage 4: Production (Distroless)
+# ============================================
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:2b7c93f6d6648c11f0e80a48558c8f77885eb0445213b8e69a6a0d7c89fc6ae4 AS production
 
-# Set working directory
 WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /app/realtime-service .
+COPY --from=builder /app/server /app/server
 
-# Change ownership
-RUN chown -R appuser:appuser /app
+# Copy SSL certificates and timezone data
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-# Switch to non-root user
-USER appuser
+# Distroless runs as nonroot (uid 65532) by default
+USER nonroot:nonroot
 
-# Expose ports
-# HTTP/WebSocket port
-EXPOSE 3003
-# gRPC port
-EXPOSE 50057
-# Metrics port
-EXPOSE 9057
+# Expose HTTP/WebSocket, gRPC, and metrics ports
+EXPOSE 3003 50057 9057
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3003/health || exit 1
-
-# Run the application
-ENTRYPOINT ["./realtime-service"]
+# Note: Distroless has no shell, health checks must be external
+CMD ["/app/server"]

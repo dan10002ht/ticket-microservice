@@ -41,28 +41,29 @@ CREATE TABLE IF NOT EXISTS tickets (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_tickets_event_id ON tickets(event_id);
-CREATE INDEX idx_tickets_seat_id ON tickets(seat_id);
-CREATE INDEX idx_tickets_zone_id ON tickets(zone_id);
-CREATE INDEX idx_tickets_user_id ON tickets(user_id);
-CREATE INDEX idx_tickets_booking_session_id ON tickets(booking_session_id);
-CREATE INDEX idx_tickets_ticket_number ON tickets(ticket_number);
-CREATE INDEX idx_tickets_status ON tickets(status);
-CREATE INDEX idx_tickets_payment_status ON tickets(payment_status);
-CREATE INDEX idx_tickets_pricing_category ON tickets(pricing_category);
-CREATE INDEX idx_tickets_created_at ON tickets(created_at);
-CREATE INDEX idx_tickets_valid_until ON tickets(valid_until);
+CREATE INDEX IF NOT EXISTS idx_tickets_event_id ON tickets(event_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_seat_id ON tickets(seat_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_zone_id ON tickets(zone_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_user_id ON tickets(user_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_booking_session_id ON tickets(booking_session_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_ticket_number ON tickets(ticket_number);
+CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
+CREATE INDEX IF NOT EXISTS idx_tickets_payment_status ON tickets(payment_status);
+CREATE INDEX IF NOT EXISTS idx_tickets_pricing_category ON tickets(pricing_category);
+CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at);
+CREATE INDEX IF NOT EXISTS idx_tickets_valid_until ON tickets(valid_until);
 
 -- Composite indexes for common queries
-CREATE INDEX idx_tickets_event_status ON tickets(event_id, status);
-CREATE INDEX idx_tickets_user_status ON tickets(user_id, status);
-CREATE INDEX idx_tickets_event_user ON tickets(event_id, user_id);
-CREATE INDEX idx_tickets_booking_session ON tickets(booking_session_id, status);
+CREATE INDEX IF NOT EXISTS idx_tickets_event_status ON tickets(event_id, status);
+CREATE INDEX IF NOT EXISTS idx_tickets_user_status ON tickets(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_tickets_event_user ON tickets(event_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_booking_session ON tickets(booking_session_id, status);
 
 -- Trigger to update updated_at timestamp
-CREATE TRIGGER update_tickets_updated_at 
-    BEFORE UPDATE ON tickets 
-    FOR EACH ROW 
+DROP TRIGGER IF EXISTS update_tickets_updated_at ON tickets;
+CREATE TRIGGER update_tickets_updated_at
+    BEFORE UPDATE ON tickets
+    FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Add comments

@@ -2,7 +2,7 @@
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-export async function seed(knex) {
+exports.seed = async function(knex) {
   // Check if roles already exist
   const existingRoles = await knex('roles').select('name');
   const existingRoleNames = existingRoles.map((r) => r.name);
@@ -397,7 +397,7 @@ export async function seed(knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-export async function down(knex) {
+export.down = async function(knex) {
   await knex('organization_members').del();
   await knex('organization_roles').del();
   await knex('user_roles').del();

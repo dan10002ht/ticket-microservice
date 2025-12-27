@@ -235,7 +235,7 @@ public class PaymentGrpcService extends PaymentServiceGrpc.PaymentServiceImplBas
                     .requestBody(toObjectMap(request.getMetadataMap()))
                     .build();
 
-            RefundResponse serviceResponse = refundService.createRefund(command, context);
+            com.ticketing.payment.service.dto.RefundResponse serviceResponse = refundService.createRefund(command, context);
             responseObserver.onNext(RefundResponse.newBuilder()
                     .setRefund(toProtoRefund(serviceResponse))
                     .build());
@@ -269,7 +269,7 @@ public class PaymentGrpcService extends PaymentServiceGrpc.PaymentServiceImplBas
         try {
             UUID refundId = parseUuid(requireNonBlank(request.getRefundId(), "refund_id"), "refund_id");
             RefundStatus status = RefundStatus.valueOf(requireNonBlank(request.getStatus(), "status").toUpperCase());
-            RefundResponse serviceResponse = refundService.markRefundStatus(
+            com.ticketing.payment.service.dto.RefundResponse serviceResponse = refundService.markRefundStatus(
                     refundId,
                     status,
                     emptyToNull(request.getExternalReference()),

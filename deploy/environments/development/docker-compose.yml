@@ -1,0 +1,266 @@
+# Development Environment - Simple PostgreSQL (No Replicas)
+# Usage: docker compose -f docker-compose.yml up -d
+
+services:
+  # ============================================
+  # PostgreSQL Databases (Single Instance)
+  # ============================================
+
+  # PostgreSQL for Auth Service
+  postgres-auth:
+    image: postgres:15
+    container_name: dev-postgres-auth
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME:-booking_system_auth}
+      POSTGRES_USER: ${DB_USER:-booking_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-booking_pass}
+    ports:
+      - "${AUTH_DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - booking-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-booking_user} -d ${AUTH_DB_NAME:-booking_system_auth}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # PostgreSQL for Main Application (Events, Bookings, Users, etc.)
+  postgres-main:
+    image: postgres:15
+    container_name: dev-postgres-main
+    environment:
+      POSTGRES_DB: ${MAIN_DB_NAME:-booking_system}
+      POSTGRES_USER: ${DB_USER:-booking_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-booking_pass}
+    ports:
+      - "${MAIN_DB_PORT:-5433}:5432"
+    volumes:
+      - postgres_main_data:/var/lib/postgresql/data
+    networks:
+      - booking-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-booking_user} -d ${MAIN_DB_NAME:-booking_system}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ============================================
+  # Migration Services (Init Containers)
+  # ============================================
+
+  # Auth Service Migration (Knex)
+  migrate-auth:
+    image: node:18-alpine
+    container_name: dev-migrate-auth
+    working_dir: /app
+    environment:
+      DB_MASTER_HOST: postgres-auth
+      DB_MASTER_PORT: 5432
+      DB_MASTER_NAME: ${AUTH_DB_NAME:-booking_system_auth}
+      DB_MASTER_USER: ${DB_USER:-booking_user}
+      DB_MASTER_PASSWORD: ${DB_PASSWORD:-booking_pass}
+      NODE_ENV: development
+    volumes:
+      - ../../../auth-service:/app
+    networks:
+      - booking-net
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Installing dependencies...' &&
+        npm install --silent &&
+        echo 'Running auth-service migrations...' &&
+        npx knex migrate:latest --env development &&
+        echo 'Auth migrations completed!'
+      "
+    restart: "no"
+
+  # User Service Migration (SQL)
+  migrate-user:
+    image: postgres:15-alpine
+    container_name: dev-migrate-user
+    environment:
+      PGHOST: postgres-main
+      PGPORT: 5432
+      PGDATABASE: ${MAIN_DB_NAME:-booking_system}
+      PGUSER: ${DB_USER:-booking_user}
+      PGPASSWORD: ${DB_PASSWORD:-booking_pass}
+    volumes:
+      - ../../../user-service/migrations:/migrations:ro
+    networks:
+      - booking-net
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Running user-service migrations...' &&
+        for f in /migrations/*.sql; do
+          echo \"Applying: $$f\" &&
+          psql -f $$f
+        done &&
+        echo 'User migrations completed!'
+      "
+    restart: "no"
+
+  # Event Service Migration (SQL)
+  migrate-event:
+    image: postgres:15-alpine
+    container_name: dev-migrate-event
+    environment:
+      PGHOST: postgres-main
+      PGPORT: 5432
+      PGDATABASE: ${MAIN_DB_NAME:-booking_system}
+      PGUSER: ${DB_USER:-booking_user}
+      PGPASSWORD: ${DB_PASSWORD:-booking_pass}
+    volumes:
+      # Use database/migrations folder (stable schema, not the broken migrations/ folder)
+      - ../../../event-service/database/migrations:/migrations:ro
+    networks:
+      - booking-net
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+      migrate-user:
+        condition: service_completed_successfully
+    command: >
+      sh -c "
+        echo 'Running event-service migrations...' &&
+        for f in /migrations/*.up.sql; do
+          if [ -f \"$$f\" ]; then
+            echo \"Applying: $$f\" &&
+            psql -f $$f || true
+          fi
+        done &&
+        echo 'Event migrations completed!'
+      "
+    restart: "no"
+
+  # Ticket Service Migration (SQL)
+  migrate-ticket:
+    image: postgres:15-alpine
+    container_name: dev-migrate-ticket
+    environment:
+      PGHOST: postgres-main
+      PGPORT: 5432
+      PGDATABASE: ${MAIN_DB_NAME:-booking_system}
+      PGUSER: ${DB_USER:-booking_user}
+      PGPASSWORD: ${DB_PASSWORD:-booking_pass}
+    volumes:
+      - ../../../ticket-service/migrations:/migrations:ro
+    networks:
+      - booking-net
+    depends_on:
+      postgres-main:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Running ticket-service migrations...' &&
+        for f in /migrations/*.sql; do
+          if [ -f \"$$f\" ]; then
+            echo \"Applying: $$f\" &&
+            psql -f $$f || true
+          fi
+        done &&
+        echo 'Ticket migrations completed!'
+      "
+    restart: "no"
+
+  # ============================================
+  # Redis
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: dev-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - booking-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ============================================
+  # Kafka & Zookeeper
+  # ============================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: dev-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "${ZOOKEEPER_PORT:-2181}:2181"
+    networks:
+      - booking-net
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: dev-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - booking-net
+    restart: unless-stopped
+
+  # ============================================
+  # Monitoring (Optional - uncomment if needed)
+  # ============================================
+
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: dev-prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ../../prometheus.dev.yml:/etc/prometheus/prometheus.yml
+  #     - prometheus_data:/prometheus
+  #   networks:
+  #     - booking-net
+  #   restart: unless-stopped
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: dev-grafana
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     GF_SECURITY_ADMIN_PASSWORD: admin
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #   networks:
+  #     - booking-net
+  #   restart: unless-stopped
+
+volumes:
+  postgres_auth_data:
+  postgres_main_data:
+  redis_data:
+  # prometheus_data:
+  # grafana_data:
+
+networks:
+  booking-net:
+    driver: bridge

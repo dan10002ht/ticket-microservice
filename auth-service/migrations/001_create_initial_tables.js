@@ -2,7 +2,7 @@
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-export async function up(knex) {
+exports.up = async function(knex) {
   // Create users table - Hybrid approach
   await knex.schema.createTable('users', (table) => {
     table.bigIncrements('id').primary(); // Internal ID for performance
@@ -312,7 +312,7 @@ export async function up(knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-export async function down(knex) {
+exports.down = async function(knex) {
   // Drop tables in correct order to avoid foreign key constraints
   await knex.schema.dropTableIfExists('organization_invitations');
   await knex.schema.dropTableIfExists('organization_members');

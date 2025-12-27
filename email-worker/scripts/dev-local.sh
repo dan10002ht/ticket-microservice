@@ -5,13 +5,13 @@
 
 echo "🚀 Starting Email Worker Service Local Development Environment"
 
-# Function to kill process using a specific port
+# Function to kill process using a specific port (macOS compatible)
 kill_port() {
     local port=$1
     local service_name=$2
-    
+
     echo "🔍 Checking if port $port is in use by $service_name..."
-    
+
     # Check if it's a Docker container using the port
     local container_id=$(docker ps --format "table {{.ID}}\t{{.Ports}}" | grep ":$port->" | awk '{print $1}' | head -1)
     if [ ! -z "$container_id" ]; then
@@ -22,20 +22,19 @@ kill_port() {
         docker rm $container_id 2>/dev/null || true
         sleep 3
     fi
-    
-    # Find all processes using the port
-    local pids=$(ss -tlnp | grep ":$port " | awk '{print $7}' | sed 's/.*pid=\([0-9]*\).*/\1/' | sort -u)
-    
+
+    # Find all processes using the port (use lsof for macOS compatibility)
+    local pids=$(lsof -ti:$port 2>/dev/null)
+
     if [ ! -z "$pids" ]; then
         echo "⚠️  Found processes using port $port: $pids, killing them..."
         echo $pids | xargs kill -9 2>/dev/null
         sleep 3
-        
+
         # Verify the port is free
-        if ss -tlnp | grep ":$port " > /dev/null; then
+        if lsof -ti:$port > /dev/null 2>&1; then
             echo "❌ Failed to kill all processes on port $port"
-            # Try one more time with force
-            local remaining_pids=$(ss -tlnp | grep ":$port " | awk '{print $7}' | sed 's/.*pid=\([0-9]*\).*/\1/' | sort -u)
+            local remaining_pids=$(lsof -ti:$port 2>/dev/null)
             if [ ! -z "$remaining_pids" ]; then
                 echo "🔄 Force killing remaining processes: $remaining_pids"
                 echo $remaining_pids | xargs kill -9 2>/dev/null
@@ -97,26 +96,17 @@ kill_email_worker
 kill_port 8080 "email-worker"
 kill_port 2112 "email-worker-metrics"
 
-# Start PgPool-II infrastructure first
-echo "🐳 Starting PgPool-II infrastructure..."
-cd ../deploy/pgpool
-docker compose -f docker-compose.pgpool.yml up -d
-
-# Wait for PgPool-II to be ready
-echo "⏳ Waiting for PgPool-II to be ready..."
-sleep 15
-
-# Go back to deploy directory and start other services
-echo "🐳 Starting other infrastructure services..."
-cd ..
-docker compose -f docker-compose.dev.yml up -d redis kafka zookeeper prometheus grafana elasticsearch kibana node-exporter redis-exporter
+# Start infrastructure services
+echo "🐳 Starting infrastructure services..."
+cd ../deploy/environments/development
+docker compose up -d redis kafka zookeeper
 
 # Wait for services to be ready
 echo "⏳ Waiting for infrastructure services to be ready..."
-sleep 15
+sleep 10
 
 # Go back to email-worker directory
-cd ../email-worker
+cd ../../../email-worker
 
 # Install dependencies if needed
 echo "📦 Installing Go dependencies..."

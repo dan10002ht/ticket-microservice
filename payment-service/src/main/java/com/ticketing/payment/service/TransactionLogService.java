@@ -29,7 +29,7 @@ public class TransactionLogService {
     @Transactional
     public void logPaymentEvent(TransactionType type, TransactionStatus status, Payment payment, String eventName,
             String externalReference, String errorCode, String errorMessage) {
-        TransactionLog log = TransactionLog.builder()
+        TransactionLog txLog = TransactionLog.builder()
                 .payment(payment)
                 .paymentUuid(payment.getPaymentId())
                 .transactionType(type)
@@ -40,14 +40,14 @@ public class TransactionLogService {
                 .errorCode(errorCode)
                 .errorMessage(errorMessage)
                 .build();
-        transactionLogRepository.save(log);
-        log.debug("Payment transaction log recorded: {}", log.getLogId());
+        transactionLogRepository.save(txLog);
+        log.debug("Payment transaction log recorded: {}", txLog.getLogId());
     }
 
     @Transactional
     public void logRefundEvent(TransactionType type, TransactionStatus status, Refund refund, String eventName,
             String externalReference, String errorCode, String errorMessage) {
-        TransactionLog log = TransactionLog.builder()
+        TransactionLog txLog = TransactionLog.builder()
                 .payment(refund.getPayment())
                 .paymentUuid(refund.getPaymentUuid())
                 .refund(refund)
@@ -60,7 +60,7 @@ public class TransactionLogService {
                 .errorCode(errorCode)
                 .errorMessage(errorMessage)
                 .build();
-        transactionLogRepository.save(log);
+        transactionLogRepository.save(txLog);
     }
 
     /**

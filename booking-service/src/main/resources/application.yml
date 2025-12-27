@@ -3,9 +3,9 @@ spring:
     name: booking-service
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/booking_service}
-    username: ${SPRING_DATASOURCE_USERNAME:booking}
-    password: ${SPRING_DATASOURCE_PASSWORD:booking}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/booking_system}
+    username: ${SPRING_DATASOURCE_USERNAME:booking_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:booking_pass}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -30,6 +30,7 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     validate-on-migrate: true
+    table: flyway_schema_history_booking
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
@@ -89,8 +90,8 @@ booking:
 # Outbox Configuration (Transactional Outbox Pattern)
 outbox:
   processor:
-    # How often to poll for pending events (ms)
-    poll-interval-ms: ${OUTBOX_POLL_INTERVAL_MS:100}
+    # How often to poll for pending events (ms) - 5 seconds for dev, 100ms for prod
+    poll-interval-ms: ${OUTBOX_POLL_INTERVAL_MS:5000}
     # Number of events to process per batch
     batch-size: ${OUTBOX_BATCH_SIZE:100}
     # How often to retry failed events (ms)
@@ -135,8 +136,8 @@ logging:
     com.ticketing.booking: DEBUG
     org.springframework.web: INFO
     org.springframework.security: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

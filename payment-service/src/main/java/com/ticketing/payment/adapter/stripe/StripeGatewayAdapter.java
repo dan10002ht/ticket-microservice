@@ -10,10 +10,10 @@ import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.Refund;
+import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.PaymentIntentCreateParams.CaptureMethod;
 import com.stripe.param.PaymentIntentCreateParams.ConfirmationMethod;
-import com.stripe.param.PaymentIntentCreateParams.PaymentMethodOptions;
 import com.stripe.param.PaymentIntentCaptureParams;
 import com.stripe.param.PaymentIntentCancelParams;
 import com.stripe.param.RefundCreateParams;
@@ -58,13 +58,18 @@ public class StripeGatewayAdapter implements PaymentGatewayAdapter {
                     .putAllMetadata(toMetadata(command.getMetadata()))
                     .putMetadata("booking_id", command.getBookingId())
                     .putMetadata("user_id", command.getUserId())
-                    .setPaymentMethodTypes(java.util.List.of("card"));
+                    .addPaymentMethodType("card");
 
+            RequestOptions requestOptions = null;
             if (command.getIdempotencyKey() != null) {
-                builder.setIdempotencyKey(command.getIdempotencyKey());
+                requestOptions = RequestOptions.builder()
+                        .setIdempotencyKey(command.getIdempotencyKey())
+                        .build();
             }
 
-            PaymentIntent intent = PaymentIntent.create(builder.build());
+            PaymentIntent intent = requestOptions != null
+                    ? PaymentIntent.create(builder.build(), requestOptions)
+                    : PaymentIntent.create(builder.build());
             return GatewayResponse.builder()
                     .successful(true)
                     .providerReference(intent.getId())

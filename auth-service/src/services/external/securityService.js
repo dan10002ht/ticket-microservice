@@ -1,12 +1,11 @@
-import grpc from '@grpc/grpc-js';
-import protoLoader from '@grpc/proto-loader';
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import logger from '../../utils/logger.js';
 import fs from 'fs';
+import logger from '../../utils/logger.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __dirname polyfill for CommonJS compatibility
+const __dirname = path.dirname(require.resolve('./securityService.js'));
 
 // Load security service proto
 const dockerSharedProtoPath = path.join('/shared-lib', 'protos', 'security.proto');

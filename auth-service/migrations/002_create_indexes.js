@@ -2,7 +2,7 @@
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-export async function up(knex) {
+exports.up = async function(knex) {
   // Users table indexes
   await knex.schema.raw('CREATE INDEX IF NOT EXISTS idx_users_public_id ON users(public_id)');
   await knex.schema.raw('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)');
@@ -119,7 +119,7 @@ export async function up(knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-export async function down(knex) {
+exports.down = async function(knex) {
   // Drop indexes in reverse order
   await knex.schema.raw('DROP INDEX IF EXISTS idx_organization_invitations_expires');
   await knex.schema.raw('DROP INDEX IF EXISTS idx_organization_invitations_email');

@@ -1,0 +1,13 @@
+# Migration runner for Node.js services (Knex)
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install postgresql client for health checks
+RUN apk add --no-cache postgresql-client
+
+# Copy migration scripts
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

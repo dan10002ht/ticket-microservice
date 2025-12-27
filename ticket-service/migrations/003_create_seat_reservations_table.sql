@@ -30,24 +30,25 @@ CREATE TABLE IF NOT EXISTS seat_reservations (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_seat_reservations_booking_session_id ON seat_reservations(booking_session_id);
-CREATE INDEX idx_seat_reservations_event_id ON seat_reservations(event_id);
-CREATE INDEX idx_seat_reservations_seat_id ON seat_reservations(seat_id);
-CREATE INDEX idx_seat_reservations_zone_id ON seat_reservations(zone_id);
-CREATE INDEX idx_seat_reservations_reservation_token ON seat_reservations(reservation_token);
-CREATE INDEX idx_seat_reservations_status ON seat_reservations(status);
-CREATE INDEX idx_seat_reservations_expires_at ON seat_reservations(expires_at);
-CREATE INDEX idx_seat_reservations_reserved_at ON seat_reservations(reserved_at);
+CREATE INDEX IF NOT EXISTS idx_seat_reservations_booking_session_id ON seat_reservations(booking_session_id);
+CREATE INDEX IF NOT EXISTS idx_seat_reservations_event_id ON seat_reservations(event_id);
+CREATE INDEX IF NOT EXISTS idx_seat_reservations_seat_id ON seat_reservations(seat_id);
+CREATE INDEX IF NOT EXISTS idx_seat_reservations_zone_id ON seat_reservations(zone_id);
+CREATE INDEX IF NOT EXISTS idx_seat_reservations_reservation_token ON seat_reservations(reservation_token);
+CREATE INDEX IF NOT EXISTS idx_seat_reservations_status ON seat_reservations(status);
+CREATE INDEX IF NOT EXISTS idx_seat_reservations_expires_at ON seat_reservations(expires_at);
+CREATE INDEX IF NOT EXISTS idx_seat_reservations_reserved_at ON seat_reservations(reserved_at);
 
 -- Composite indexes for common queries
-CREATE INDEX idx_seat_reservations_event_seat ON seat_reservations(event_id, seat_id);
-CREATE INDEX idx_seat_reservations_session_status ON seat_reservations(booking_session_id, status);
-CREATE INDEX idx_seat_reservations_expires_status ON seat_reservations(expires_at, status);
+CREATE INDEX IF NOT EXISTS idx_seat_reservations_event_seat ON seat_reservations(event_id, seat_id);
+CREATE INDEX IF NOT EXISTS idx_seat_reservations_session_status ON seat_reservations(booking_session_id, status);
+CREATE INDEX IF NOT EXISTS idx_seat_reservations_expires_status ON seat_reservations(expires_at, status);
 
 -- Trigger to update updated_at timestamp
-CREATE TRIGGER update_seat_reservations_updated_at 
-    BEFORE UPDATE ON seat_reservations 
-    FOR EACH ROW 
+DROP TRIGGER IF EXISTS update_seat_reservations_updated_at ON seat_reservations;
+CREATE TRIGGER update_seat_reservations_updated_at
+    BEFORE UPDATE ON seat_reservations
+    FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Add comments

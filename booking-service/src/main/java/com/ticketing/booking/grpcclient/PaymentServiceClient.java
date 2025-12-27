@@ -7,8 +7,13 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
-import com.ticketing.payment.grpc.PaymentProto;
-import com.ticketing.payment.grpc.PaymentProto.PaymentServiceGrpc;
+import com.ticketing.payment.grpc.CancelPaymentRequest;
+import com.ticketing.payment.grpc.CapturePaymentRequest;
+import com.ticketing.payment.grpc.CreatePaymentRequest;
+import com.ticketing.payment.grpc.GetPaymentRequest;
+import com.ticketing.payment.grpc.Payment;
+import com.ticketing.payment.grpc.PaymentResponse;
+import com.ticketing.payment.grpc.PaymentServiceGrpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
@@ -38,7 +43,7 @@ public class PaymentServiceClient {
                     delayExpression = "${booking.grpc.retry.initial-interval-ms:500}",
                     multiplierExpression = "${booking.grpc.retry.multiplier:2.0}",
                     maxDelayExpression = "${booking.grpc.retry.max-interval-ms:5000}"))
-    public PaymentProto.Payment createPayment(
+    public Payment createPayment(
             String bookingId,
             String userId,
             BigDecimal amount,
@@ -48,7 +53,7 @@ public class PaymentServiceClient {
             String idempotencyKey,
             Map<String, String> metadata) {
         try {
-            PaymentProto.CreatePaymentRequest request = PaymentProto.CreatePaymentRequest.newBuilder()
+            CreatePaymentRequest request = CreatePaymentRequest.newBuilder()
                     .setBookingId(bookingId)
                     .setUserId(userId)
                     .setAmount(amount.doubleValue())
@@ -59,7 +64,7 @@ public class PaymentServiceClient {
                     .putAllMetadata(metadata != null ? metadata : Map.of())
                     .build();
 
-            PaymentProto.PaymentResponse response = getStub().createPayment(request);
+            PaymentResponse response = getStub().createPayment(request);
             return response.getPayment();
         } catch (StatusRuntimeException e) {
             Status status = e.getStatus();
@@ -86,13 +91,13 @@ public class PaymentServiceClient {
                     delayExpression = "${booking.grpc.retry.initial-interval-ms:500}",
                     multiplierExpression = "${booking.grpc.retry.multiplier:2.0}",
                     maxDelayExpression = "${booking.grpc.retry.max-interval-ms:5000}"))
-    public PaymentProto.Payment capturePayment(String paymentId) {
+    public Payment capturePayment(String paymentId) {
         try {
-            PaymentProto.CapturePaymentRequest request = PaymentProto.CapturePaymentRequest.newBuilder()
+            CapturePaymentRequest request = CapturePaymentRequest.newBuilder()
                     .setPaymentId(paymentId)
                     .build();
 
-            PaymentProto.PaymentResponse response = getStub().capturePayment(request);
+            PaymentResponse response = getStub().capturePayment(request);
             return response.getPayment();
         } catch (StatusRuntimeException e) {
             Status status = e.getStatus();
@@ -118,13 +123,13 @@ public class PaymentServiceClient {
                     delayExpression = "${booking.grpc.retry.initial-interval-ms:500}",
                     multiplierExpression = "${booking.grpc.retry.multiplier:2.0}",
                     maxDelayExpression = "${booking.grpc.retry.max-interval-ms:5000}"))
-    public PaymentProto.Payment cancelPayment(String paymentId) {
+    public Payment cancelPayment(String paymentId) {
         try {
-            PaymentProto.CancelPaymentRequest request = PaymentProto.CancelPaymentRequest.newBuilder()
+            CancelPaymentRequest request = CancelPaymentRequest.newBuilder()
                     .setPaymentId(paymentId)
                     .build();
 
-            PaymentProto.PaymentResponse response = getStub().cancelPayment(request);
+            PaymentResponse response = getStub().cancelPayment(request);
             return response.getPayment();
         } catch (StatusRuntimeException e) {
             Status status = e.getStatus();
@@ -150,13 +155,13 @@ public class PaymentServiceClient {
                     delayExpression = "${booking.grpc.retry.initial-interval-ms:500}",
                     multiplierExpression = "${booking.grpc.retry.multiplier:2.0}",
                     maxDelayExpression = "${booking.grpc.retry.max-interval-ms:5000}"))
-    public PaymentProto.Payment getPayment(String paymentId) {
+    public Payment getPayment(String paymentId) {
         try {
-            PaymentProto.GetPaymentRequest request = PaymentProto.GetPaymentRequest.newBuilder()
+            GetPaymentRequest request = GetPaymentRequest.newBuilder()
                     .setPaymentId(paymentId)
                     .build();
 
-            PaymentProto.PaymentResponse response = getStub().getPayment(request);
+            PaymentResponse response = getStub().getPayment(request);
             return response.getPayment();
         } catch (StatusRuntimeException e) {
             Status status = e.getStatus();

@@ -262,7 +262,7 @@ func (p *Processor) PublishJob(ctx context.Context, job *models.EmailJob) error 
 	}
 
 	p.logger.Info("Job published to queue",
-		zap.String("job_id", job.ID.String()),
+		zap.String("job_id", job.PublicID.String()),
 		zap.String("template", job.TemplateName),
 		zap.Strings("recipients", job.To),
 	)
@@ -280,7 +280,7 @@ func (p *Processor) PublishScheduledJob(ctx context.Context, job *models.EmailJo
 	}
 
 	p.logger.Info("Scheduled job published to queue",
-		zap.String("job_id", job.ID.String()),
+		zap.String("job_id", job.PublicID.String()),
 		zap.Strings("recipients", job.To),
 		zap.Time("scheduled_at", scheduledAt),
 	)

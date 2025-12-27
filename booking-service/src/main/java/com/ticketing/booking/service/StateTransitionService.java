@@ -41,7 +41,7 @@ public class StateTransitionService {
                 .event(transition.getEvent())
                 .triggeredBy(transition.getTriggeredBy())
                 .reason(transition.getReason())
-                .createdAt(transition.getTimestamp())
+                .createdAt(transition.getTimestamp().toInstant())
                 .build();
 
         transitionRepository.save(entity);

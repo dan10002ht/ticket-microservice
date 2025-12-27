@@ -43,7 +43,7 @@ fi
 # Start the service
 echo "🚀 Starting Ticket Service..."
 echo "  Port: ${PORT:-3003}"
-echo "  gRPC Port: ${GRPC_PORT:-50053}"
+echo "  gRPC Port: ${GRPC_PORT:-50054}"
 echo "  Database: ${DB_NAME:-booking_system_ticket}"
 echo ""
 

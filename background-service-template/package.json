@@ -3,11 +3,10 @@
   "version": "1.0.0",
   "description": "Background Service Template with Best Practices",
   "main": "backgroundService.js",
-  "type": "module",
   "scripts": {
-    "test": "node test.js",
-    "start": "node test.js",
-    "dev": "nodemon test.js"
+    "test": "babel-node test.js",
+    "start": "babel-node test.js",
+    "dev": "nodemon --exec babel-node test.js"
   },
   "keywords": [
     "background-service",
@@ -24,9 +23,13 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "@babel/core": "^7.28.5",
+    "@babel/node": "^7.28.0",
+    "@babel/plugin-transform-modules-commonjs": "^7.27.1",
+    "@babel/preset-env": "^7.28.5",
+    "nodemon": "^3.1.11"
   },
   "engines": {
     "node": ">=18.0.0"
   }
-} 
+}

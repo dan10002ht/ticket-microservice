@@ -6,8 +6,13 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 
-import com.ticketing.booking.grpc.TicketProto;
-import com.ticketing.booking.grpc.TicketProto.TicketServiceGrpc;
+import com.ticketing.ticket.grpc.CheckAvailabilityRequest;
+import com.ticketing.ticket.grpc.CheckAvailabilityResponse;
+import com.ticketing.ticket.grpc.ReleaseTicketsRequest;
+import com.ticketing.ticket.grpc.ReleaseTicketsResponse;
+import com.ticketing.ticket.grpc.ReserveTicketsRequest;
+import com.ticketing.ticket.grpc.ReserveTicketsResponse;
+import com.ticketing.ticket.grpc.TicketServiceGrpc;
 
 import io.grpc.ManagedChannel;
 import io.grpc.Status;
@@ -37,13 +42,13 @@ public class TicketServiceClient {
                     delayExpression = "${booking.grpc.retry.initial-interval-ms:500}",
                     multiplierExpression = "${booking.grpc.retry.multiplier:2.0}",
                     maxDelayExpression = "${booking.grpc.retry.max-interval-ms:5000}"))
-    public TicketProto.ReserveTicketsResponse reserveTickets(
+    public ReserveTicketsResponse reserveTickets(
             String eventId,
             List<String> seatNumbers,
             String userId,
             int timeoutSeconds) {
         try {
-            TicketProto.ReserveTicketsRequest request = TicketProto.ReserveTicketsRequest.newBuilder()
+            ReserveTicketsRequest request = ReserveTicketsRequest.newBuilder()
                     .setEventId(eventId)
                     .addAllSeatNumbers(seatNumbers)
                     .setUserId(userId)
@@ -75,9 +80,9 @@ public class TicketServiceClient {
                     delayExpression = "${booking.grpc.retry.initial-interval-ms:500}",
                     multiplierExpression = "${booking.grpc.retry.multiplier:2.0}",
                     maxDelayExpression = "${booking.grpc.retry.max-interval-ms:5000}"))
-    public TicketProto.ReleaseTicketsResponse releaseTickets(String reservationId, List<String> ticketIds) {
+    public ReleaseTicketsResponse releaseTickets(String reservationId, List<String> ticketIds) {
         try {
-            TicketProto.ReleaseTicketsRequest.Builder builder = TicketProto.ReleaseTicketsRequest.newBuilder()
+            ReleaseTicketsRequest.Builder builder = ReleaseTicketsRequest.newBuilder()
                     .setReservationId(reservationId);
 
             if (ticketIds != null && !ticketIds.isEmpty()) {
@@ -108,9 +113,9 @@ public class TicketServiceClient {
                     delayExpression = "${booking.grpc.retry.initial-interval-ms:500}",
                     multiplierExpression = "${booking.grpc.retry.multiplier:2.0}",
                     maxDelayExpression = "${booking.grpc.retry.max-interval-ms:5000}"))
-    public TicketProto.CheckAvailabilityResponse checkAvailability(String eventId, List<String> seatNumbers) {
+    public CheckAvailabilityResponse checkAvailability(String eventId, List<String> seatNumbers) {
         try {
-            TicketProto.CheckAvailabilityRequest request = TicketProto.CheckAvailabilityRequest.newBuilder()
+            CheckAvailabilityRequest request = CheckAvailabilityRequest.newBuilder()
                     .setEventId(eventId)
                     .addAllSeatNumbers(seatNumbers)
                     .build();

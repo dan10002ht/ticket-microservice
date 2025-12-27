@@ -13,16 +13,19 @@ fi
 
 # Default values
 DB_HOST=${DB_HOST:-localhost}
-DB_PORT=${DB_PORT:-5432}
-DB_NAME=${DB_NAME:-booking_system_ticket}
-DB_USER=${DB_USER:-postgres}
-DB_PASSWORD=${DB_PASSWORD:-postgres_password}
+DB_PORT=${DB_PORT:-5433}
+DB_NAME=${DB_NAME:-booking_system}
+DB_USER=${DB_USER:-booking_user}
+DB_PASSWORD=${DB_PASSWORD:-booking_pass}
 
 echo "📊 Database Configuration:"
 echo "  Host: $DB_HOST"
 echo "  Port: $DB_PORT"
 echo "  Database: $DB_NAME"
 echo "  User: $DB_USER"
+
+# Export password for psql
+export PGPASSWORD=$DB_PASSWORD
 
 # Check if database exists
 echo "🔍 Checking if database exists..."

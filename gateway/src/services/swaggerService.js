@@ -8,6 +8,7 @@ import '../swagger/booking.js';
 import '../swagger/event.js';
 import '../swagger/payment.js';
 import '../swagger/health.js';
+import '../swagger/ticket.js';
 
 /**
  * Initialize Swagger documentation
@@ -60,16 +61,76 @@ export const initializeSwagger = () => {
           description: 'User profile and address management',
         },
         {
+          name: 'Users Admin',
+          description: 'Admin user management endpoints',
+        },
+        {
           name: 'Events',
           description: 'Event management and discovery',
+        },
+        {
+          name: 'Event Zones',
+          description: 'Event zone/section management',
+        },
+        {
+          name: 'Event Seats',
+          description: 'Event seat management',
+        },
+        {
+          name: 'Event Pricing',
+          description: 'Event pricing and discounts',
+        },
+        {
+          name: 'Event Availability',
+          description: 'Event seat availability management',
         },
         {
           name: 'Bookings',
           description: 'Booking creation and management',
         },
         {
+          name: 'Bookings Admin',
+          description: 'Admin booking management',
+        },
+        {
+          name: 'Seat Reservation',
+          description: 'Temporary seat reservation',
+        },
+        {
+          name: 'Tickets',
+          description: 'Ticket management',
+        },
+        {
+          name: 'Ticket Types',
+          description: 'Ticket type management',
+        },
+        {
+          name: 'Ticket Availability',
+          description: 'Ticket availability checking',
+        },
+        {
+          name: 'Ticket Reservation',
+          description: 'Ticket reservation',
+        },
+        {
           name: 'Payments',
           description: 'Payment processing and management',
+        },
+        {
+          name: 'Payments Admin',
+          description: 'Admin payment management',
+        },
+        {
+          name: 'Payment Operations',
+          description: 'Payment capture and cancellation',
+        },
+        {
+          name: 'Refunds',
+          description: 'Payment refund management',
+        },
+        {
+          name: 'Refunds Admin',
+          description: 'Admin refund management',
         },
         {
           name: 'Health',

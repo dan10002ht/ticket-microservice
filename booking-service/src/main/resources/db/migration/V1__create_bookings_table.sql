@@ -4,11 +4,12 @@ CREATE TABLE bookings (
     booking_reference VARCHAR(50) NOT NULL UNIQUE,
     user_id VARCHAR(36) NOT NULL,
     event_id VARCHAR(36) NOT NULL,
+    idempotency_key VARCHAR(64) UNIQUE,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     payment_status VARCHAR(20) NOT NULL DEFAULT 'NOT_REQUIRED',
     payment_reference VARCHAR(100),
     total_amount NUMERIC(12, 2) NOT NULL,
-    currency CHAR(3) NOT NULL DEFAULT 'USD',
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
     seat_count INTEGER NOT NULL,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     confirmed_at TIMESTAMP WITH TIME ZONE,
@@ -31,6 +32,7 @@ CREATE TABLE booking_metadata (
 );
 
 CREATE UNIQUE INDEX idx_booking_reference ON bookings (booking_reference);
+CREATE UNIQUE INDEX idx_booking_idempotency ON bookings (idempotency_key);
 CREATE INDEX idx_booking_user ON bookings (user_id);
 CREATE INDEX idx_booking_event ON bookings (event_id);
 CREATE INDEX idx_booking_status ON bookings (status);

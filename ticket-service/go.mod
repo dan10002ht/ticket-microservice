@@ -6,13 +6,11 @@ require (
 	github.com/google/uuid v1.4.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.9
+	github.com/prometheus/client_golang v1.17.0
 	github.com/redis/go-redis/v9 v9.3.0
 	go.uber.org/zap v1.26.0
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
-	github.com/prometheus/client_golang v1.17.0
-	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 )
 
 require (
@@ -24,6 +22,7 @@ require (
 	github.com/prometheus/client_model v0.4.1-0.20230718164431-9a2bf3000d16 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
 	github.com/prometheus/procfs v0.11.1 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect

@@ -104,7 +104,7 @@ public class BookingLockService {
             try {
                 // Redisson automatically extends lock if we're still holding it
                 // But we can manually check remaining TTL
-                long remainingTTL = lock.remainTime();
+                long remainingTTL = lock.remainTimeToLive();
                 if (remainingTTL > 0) {
                     log.debug("Lock still valid, remaining TTL: {}ms", remainingTTL);
                     return true;

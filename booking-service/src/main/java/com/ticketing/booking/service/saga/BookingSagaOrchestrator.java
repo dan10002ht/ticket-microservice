@@ -27,8 +27,8 @@ import com.ticketing.booking.statemachine.BookingEvent;
 import com.ticketing.booking.statemachine.BookingStateMachine;
 import com.ticketing.booking.statemachine.StateTransition;
 import com.ticketing.booking.util.ReferenceGenerator;
-import com.ticketing.booking.grpc.TicketProto;
-import com.ticketing.payment.grpc.PaymentProto;
+import com.ticketing.ticket.grpc.ReserveTicketsResponse;
+import com.ticketing.payment.grpc.Payment;
 
 import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
@@ -283,7 +283,7 @@ public class BookingSagaOrchestrator {
      */
     private String reserveSeats(Booking booking, BookingCreateCommand command) {
         try {
-            TicketProto.ReserveTicketsResponse response = ticketServiceClient.reserveTickets(
+            ReserveTicketsResponse response = ticketServiceClient.reserveTickets(
                     booking.getEventId(),
                     command.getSeatNumbers(),
                     booking.getUserId(),
@@ -307,7 +307,7 @@ public class BookingSagaOrchestrator {
      */
     private String processPayment(Booking booking, BookingCreateCommand command) {
         try {
-            PaymentProto.Payment payment = paymentServiceClient.createPayment(
+            Payment payment = paymentServiceClient.createPayment(
                     booking.getBookingId().toString(),
                     booking.getUserId(),
                     booking.getTotalAmount(),
@@ -323,7 +323,7 @@ public class BookingSagaOrchestrator {
             }
 
             // Capture payment immediately (authorize + capture in one step)
-            PaymentProto.Payment capturedPayment = paymentServiceClient.capturePayment(payment.getId());
+            Payment capturedPayment = paymentServiceClient.capturePayment(payment.getId());
 
             if (capturedPayment == null || !capturedPayment.getStatus().equals("CAPTURED")) {
                 metricsService.recordSagaStep("process_payment", "failed");

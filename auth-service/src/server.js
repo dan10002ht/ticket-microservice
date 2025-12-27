@@ -1,7 +1,6 @@
-import grpc from '@grpc/grpc-js';
-import protoLoader from '@grpc/proto-loader';
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import fs from 'fs';
 import logger from './utils/logger.js';
 import { closeConnections } from './config/databaseConfig.js';
@@ -10,8 +9,8 @@ import { closeConnections } from './config/databaseConfig.js';
 import * as authController from './controllers/authController.js';
 import * as authorizationController from './controllers/authorizationController.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __dirname polyfill for CommonJS compatibility
+const __dirname = path.dirname(require.resolve('./server.js'));
 
 // Load protobuf definition from shared-lib
 const dockerSharedProtoPath = path.join('/shared-lib', 'protos', 'auth.proto');

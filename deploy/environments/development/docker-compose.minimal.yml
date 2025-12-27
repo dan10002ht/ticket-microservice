@@ -1,0 +1,84 @@
+# Minimal Development Environment - PostgreSQL + Redis only (No Kafka)
+# This is a lightweight version that won't crash Docker Desktop
+# Usage: docker compose -f docker-compose.minimal.yml up -d
+
+services:
+  # PostgreSQL for Auth Service
+  postgres-auth:
+    image: postgres:15-alpine
+    container_name: dev-postgres-auth
+    environment:
+      POSTGRES_DB: booking_system_auth
+      POSTGRES_USER: booking_user
+      POSTGRES_PASSWORD: booking_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - booking-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking_user -d booking_system_auth"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # PostgreSQL for Main Application
+  postgres-main:
+    image: postgres:15-alpine
+    container_name: dev-postgres-main
+    environment:
+      POSTGRES_DB: booking_system
+      POSTGRES_USER: booking_user
+      POSTGRES_PASSWORD: booking_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_main_data:/var/lib/postgresql/data
+    networks:
+      - booking-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U booking_user -d booking_system"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: dev-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - booking-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+
+volumes:
+  postgres_auth_data:
+  postgres_main_data:
+  redis_data:
+
+networks:
+  booking-net:
+    driver: bridge

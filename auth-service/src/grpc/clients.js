@@ -1,5 +1,5 @@
-import grpc from '@grpc/grpc-js';
-import protoLoader from '@grpc/proto-loader';
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
 import path from 'path';
 import logger from '../utils/logger.js';
 

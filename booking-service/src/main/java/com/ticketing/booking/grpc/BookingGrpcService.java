@@ -4,13 +4,13 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
-import org.lognet.springboot.grpc.GRpcService;
+import net.devh.boot.grpc.server.service.GrpcService;
 
 import com.ticketing.booking.exception.BookingException;
 import com.ticketing.booking.exception.BookingLockException;
 import com.ticketing.booking.exception.BookingNotFoundException;
 import com.ticketing.booking.exception.BookingValidationException;
-import com.ticketing.booking.grpc.BookingProto.BookingServiceGrpc.BookingServiceImplBase;
+import com.ticketing.booking.grpc.BookingServiceGrpc.BookingServiceImplBase;
 import com.ticketing.booking.service.BookingService;
 import com.ticketing.booking.service.dto.BookingCreateCommand;
 import com.ticketing.booking.service.mapper.BookingMapper;
@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@GRpcService
+@GrpcService
 @RequiredArgsConstructor
 public class BookingGrpcService extends BookingServiceImplBase {
 
@@ -30,8 +30,8 @@ public class BookingGrpcService extends BookingServiceImplBase {
     private final BookingMapper bookingMapper;
 
     @Override
-    public void createBooking(BookingProto.CreateBookingRequest request,
-            StreamObserver<BookingProto.BookingResponse> responseObserver) {
+    public void createBooking(CreateBookingRequest request,
+            StreamObserver<BookingResponse> responseObserver) {
         try {
             // Extract idempotency key from request (for duplicate detection)
             String idempotencyKey = request.getIdempotencyKey();
@@ -52,7 +52,7 @@ public class BookingGrpcService extends BookingServiceImplBase {
 
             var result = bookingService.createBooking(command);
             var booking = bookingService.getBooking(result.getBookingId());
-            var response = BookingProto.BookingResponse.newBuilder()
+            var response = BookingResponse.newBuilder()
                     .setSuccess(true)
                     .setBooking(BookingMapperUtil.toProto(bookingMapper, booking))
                     .setMessage("Booking created")
@@ -81,12 +81,12 @@ public class BookingGrpcService extends BookingServiceImplBase {
     }
 
     @Override
-    public void getBooking(BookingProto.GetBookingRequest request,
-            StreamObserver<BookingProto.BookingResponse> responseObserver) {
+    public void getBooking(GetBookingRequest request,
+            StreamObserver<BookingResponse> responseObserver) {
         try {
             UUID bookingId = UUID.fromString(request.getBookingId());
             var booking = bookingService.getBooking(bookingId);
-            responseObserver.onNext(BookingProto.BookingResponse.newBuilder()
+            responseObserver.onNext(BookingResponse.newBuilder()
                     .setSuccess(true)
                     .setBooking(BookingMapperUtil.toProto(bookingMapper, booking))
                     .build());
@@ -113,10 +113,10 @@ public class BookingGrpcService extends BookingServiceImplBase {
     }
 
     private static class BookingMapperUtil {
-        static BookingProto.Booking toProto(BookingMapper mapper, com.ticketing.booking.entity.Booking booking) {
+        static com.ticketing.booking.grpc.Booking toProto(BookingMapper mapper, com.ticketing.booking.entity.Booking booking) {
             var dto = mapper.toResponse(booking);
             double amount = dto.getTotalAmount() == null ? 0D : dto.getTotalAmount().doubleValue();
-            return BookingProto.Booking.newBuilder()
+            return com.ticketing.booking.grpc.Booking.newBuilder()
                     .setId(String.valueOf(booking.getId()))
                     .setBookingReference(dto.getBookingReference())
                     .setUserId(dto.getUserId())
@@ -134,13 +134,13 @@ public class BookingGrpcService extends BookingServiceImplBase {
     }
 
     @Override
-    public void confirmBooking(BookingProto.ConfirmBookingRequest request,
-            StreamObserver<BookingProto.ConfirmBookingResponse> responseObserver) {
+    public void confirmBooking(ConfirmBookingRequest request,
+            StreamObserver<ConfirmBookingResponse> responseObserver) {
         try {
             UUID bookingId = UUID.fromString(request.getBookingId());
             var result = bookingService.confirmBooking(bookingId, request.getPaymentReference());
             var booking = bookingService.getBooking(result.getBookingId());
-            var response = BookingProto.ConfirmBookingResponse.newBuilder()
+            var response = ConfirmBookingResponse.newBuilder()
                     .setSuccess(true)
                     .setBooking(BookingMapperUtil.toProto(bookingMapper, booking))
                     .setMessage("Booking confirmed")
@@ -169,13 +169,13 @@ public class BookingGrpcService extends BookingServiceImplBase {
     }
 
     @Override
-    public void cancelBooking(BookingProto.CancelBookingRequest request,
-            StreamObserver<BookingProto.CancelBookingResponse> responseObserver) {
+    public void cancelBooking(CancelBookingRequest request,
+            StreamObserver<CancelBookingResponse> responseObserver) {
         try {
             bookingService.cancelBooking(
                     UUID.fromString(request.getBookingId()),
                     request.getReason());
-            var response = BookingProto.CancelBookingResponse.newBuilder()
+            var response = CancelBookingResponse.newBuilder()
                     .setSuccess(true)
                     .setMessage("Booking cancelled")
                     .build();
@@ -203,9 +203,9 @@ public class BookingGrpcService extends BookingServiceImplBase {
     }
 
     @Override
-    public void health(BookingProto.HealthRequest request,
-            StreamObserver<BookingProto.HealthResponse> responseObserver) {
-        var response = BookingProto.HealthResponse.newBuilder()
+    public void health(HealthRequest request,
+            StreamObserver<HealthResponse> responseObserver) {
+        var response = HealthResponse.newBuilder()
                 .setStatus("UP")
                 .setMessage("Booking service is healthy")
                 .putDetails("service", "booking-service")
