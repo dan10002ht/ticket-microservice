@@ -298,7 +298,7 @@ JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
 
 # Development Configuration
-DEBUG=true
+# DEBUG=true
 SKIP_EMAIL_VERIFICATION=true
 ENVEOF
 
@@ -694,8 +694,8 @@ echo -e "${GREEN}  All Services Started! (Native Mode)${NC}"
 echo -e "${GREEN}════════════════════════════════════════════════${NC}"
 echo ""
 echo -e "${CYAN}Endpoints:${NC}"
-echo "  Gateway:     http://localhost:3000"
-echo "  Swagger:     http://localhost:3000/api-docs"
+echo "  Gateway:     http://localhost:53000"
+echo "  Swagger:     http://localhost:53000/api-docs"
 echo ""
 echo -e "${CYAN}gRPC Services:${NC}"
 echo "  Auth:        localhost:50051"

@@ -53,6 +53,7 @@ This document describes the integration flows between Auth Service and other mic
 **API Endpoint**: `POST /api/auth/login`
 
 **Request Body**:
+
 ```json
 {
   "email": "user@example.com",
@@ -61,6 +62,7 @@ This document describes the integration flows between Auth Service and other mic
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -93,6 +95,7 @@ This document describes the integration flows between Auth Service and other mic
 **API Endpoint**: `POST /api/auth/register`
 
 **Request Body**:
+
 ```json
 {
   "email": "newuser@example.com",
@@ -128,6 +131,7 @@ This document describes the integration flows between Auth Service and other mic
 ```
 
 **Authentication Header**:
+
 ```
 Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
@@ -167,7 +171,7 @@ Gateway uses Auth Service for token validation on protected routes:
 ```javascript
 // Gateway middleware
 const validateToken = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  const token = req.headers.authorization?.split(" ")[1];
 
   try {
     // Validate with Auth Service or verify locally with public key
@@ -175,7 +179,7 @@ const validateToken = async (req, res, next) => {
     req.userId = decoded.user_id;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Unauthorized' });
+    res.status(401).json({ error: "Unauthorized" });
   }
 };
 ```
@@ -195,15 +199,15 @@ String userId = metadata.get("x-user-id");
 
 Location: `shared-lib/protos/auth.proto`
 
-| Method | Description |
-|--------|-------------|
-| `Login` | Authenticate user with email/password |
-| `Register` | Create new user account |
-| `ValidateToken` | Validate JWT access token |
-| `RefreshToken` | Generate new access token |
-| `Logout` | Invalidate refresh token |
-| `GetUser` | Get user by ID |
-| `UpdatePassword` | Change user password |
+| Method           | Description                           |
+| ---------------- | ------------------------------------- |
+| `Login`          | Authenticate user with email/password |
+| `Register`       | Create new user account               |
+| `ValidateToken`  | Validate JWT access token             |
+| `RefreshToken`   | Generate new access token             |
+| `Logout`         | Invalidate refresh token              |
+| `GetUser`        | Get user by ID                        |
+| `UpdatePassword` | Change user password                  |
 
 ## Environment Variables
 
@@ -265,12 +269,12 @@ grpcurl -plaintext -d '{
 
 ```bash
 # Login
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:53000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com", "password": "password123"}'
 
 # Access protected route
-curl http://localhost:3000/api/users/profile \
+curl http://localhost:53000/api/users/profile \
   -H "Authorization: Bearer <access_token>"
 ```
 
@@ -288,13 +292,13 @@ curl http://localhost:50051/health
 
 ### Common Error Codes
 
-| Code | Description |
-|------|-------------|
-| `INVALID_CREDENTIALS` | Email or password incorrect |
-| `USER_NOT_FOUND` | User does not exist |
-| `EMAIL_EXISTS` | Email already registered |
-| `TOKEN_EXPIRED` | JWT has expired |
-| `TOKEN_INVALID` | JWT signature invalid |
+| Code                    | Description                        |
+| ----------------------- | ---------------------------------- |
+| `INVALID_CREDENTIALS`   | Email or password incorrect        |
+| `USER_NOT_FOUND`        | User does not exist                |
+| `EMAIL_EXISTS`          | Email already registered           |
+| `TOKEN_EXPIRED`         | JWT has expired                    |
+| `TOKEN_INVALID`         | JWT signature invalid              |
 | `REFRESH_TOKEN_INVALID` | Refresh token not found or expired |
 
 ### Error Response Format

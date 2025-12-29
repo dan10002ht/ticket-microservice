@@ -7,7 +7,7 @@ const config = {
   server: {
     port: process.env.PORT || 3000,
     nodeEnv: process.env.NODE_ENV || 'development',
-    allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:53000'],
   },
 
   // Redis Configuration
@@ -90,7 +90,7 @@ const config = {
   // Security Configuration
   security: {
     cors: {
-      origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+      origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:53000'],
       credentials: true,
     },
     helmet: {

@@ -3,9 +3,8 @@ spring:
     activate:
       on-profile: dev
   jpa:
-    show-sql: true
+    show-sql: false
 logging:
   level:
     root: INFO
     com.ticketing.booking: DEBUG
-

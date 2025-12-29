@@ -15,13 +15,13 @@
 
 ### Architecture Integration
 
-| Service | Integration Status | Notes |
-|---------|-------------------|-------|
-| Gateway | Complete | gRPC client for auth operations |
-| User Service | Complete | Profile management after registration |
-| Booking Service | Complete | Receives user context via Gateway |
-| Payment Service | Complete | Receives user context via Gateway |
-| Realtime Service | Complete | JWT validation for WebSocket |
+| Service          | Integration Status | Notes                                 |
+| ---------------- | ------------------ | ------------------------------------- |
+| Gateway          | Complete           | gRPC client for auth operations       |
+| User Service     | Complete           | Profile management after registration |
+| Booking Service  | Complete           | Receives user context via Gateway     |
+| Payment Service  | Complete           | Receives user context via Gateway     |
+| Realtime Service | Complete           | JWT validation for WebSocket          |
 
 ## Potential Enhancements (Backlog)
 
@@ -110,7 +110,7 @@ cd auth-service && npm start
 grpcurl -plaintext localhost:50051 list
 
 # Test login via Gateway
-curl -X POST http://localhost:3000/api/auth/login \
+curl -X POST http://localhost:53000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com", "password": "password"}'
 ```

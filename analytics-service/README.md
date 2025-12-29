@@ -313,7 +313,7 @@ DRUID_BROKER_URL=http://localhost:8082
 DRUID_INDEXER_URL=http://localhost:8090
 
 # Grafana Configuration
-GRAFANA_URL=http://localhost:3000
+GRAFANA_URL=http://localhost:53000
 GRAFANA_API_KEY=your_grafana_api_key
 GRAFANA_DASHBOARD_TEMPLATE_PATH=/templates/dashboards
 

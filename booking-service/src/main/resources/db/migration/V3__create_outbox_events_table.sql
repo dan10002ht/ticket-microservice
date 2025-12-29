@@ -1,7 +1,7 @@
 -- Outbox Events Table for Transactional Outbox Pattern
 -- Ensures exactly-once delivery between DB commit and Kafka publish
 
-CREATE TABLE outbox_events (
+CREATE TABLE IF NOT EXISTS outbox_events (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     aggregate_type VARCHAR(50) NOT NULL,
     aggregate_id VARCHAR(100) NOT NULL,
@@ -16,15 +16,15 @@ CREATE TABLE outbox_events (
 );
 
 -- Index for polling pending events (most frequent query)
-CREATE INDEX idx_outbox_pending ON outbox_events (status, created_at)
+CREATE INDEX IF NOT EXISTS idx_outbox_pending ON outbox_events (status, created_at)
 WHERE status = 'PENDING';
 
 -- Index for cleanup of old published events
-CREATE INDEX idx_outbox_published ON outbox_events (status, published_at)
+CREATE INDEX IF NOT EXISTS idx_outbox_published ON outbox_events (status, published_at)
 WHERE status = 'PUBLISHED';
 
 -- Index for aggregate lookup (debugging/admin)
-CREATE INDEX idx_outbox_aggregate ON outbox_events (aggregate_type, aggregate_id);
+CREATE INDEX IF NOT EXISTS idx_outbox_aggregate ON outbox_events (aggregate_type, aggregate_id);
 
 -- Comment for documentation
 COMMENT ON TABLE outbox_events IS 'Transactional outbox for reliable event publishing to Kafka';

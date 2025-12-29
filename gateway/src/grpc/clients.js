@@ -1,9 +1,11 @@
-import grpc from '@grpc/grpc-js';
-import * as protoLoader from '@grpc/proto-loader';
 import path from 'path';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
 import circuitBreakerService from '../services/circuitBreakerService.js';
+
+// Import grpc modules - handle both ESM and CommonJS exports
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
 
 // gRPC client options
 const clientOptions = {
@@ -36,7 +38,8 @@ const createClient = (serviceUrl, serviceName, packageName, serviceClassName = n
     const proto = loadProto(`${serviceName}.proto`);
 
     // Use provided serviceClassName or derive from serviceName
-    const finalServiceClassName = serviceClassName || `${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)}Service`;
+    const finalServiceClassName =
+      serviceClassName || `${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)}Service`;
 
     if (!proto[packageName]) {
       throw new Error(`Package '${packageName}' not found in proto`);
@@ -197,10 +200,20 @@ const grpcClients = {
   paymentService: createClient(config.grpc.paymentService.url, 'payment', 'payment'),
   ticketService: createClient(config.grpc.ticketService.url, 'ticket', 'ticket'),
   // Event sub-services (all use event.proto)
-  zoneService: createClient(config.grpc.eventService.url, 'event', 'event', 'EventSeatingZoneService'),
+  zoneService: createClient(
+    config.grpc.eventService.url,
+    'event',
+    'event',
+    'EventSeatingZoneService'
+  ),
   seatService: createClient(config.grpc.eventService.url, 'event', 'event', 'EventSeatService'),
   pricingService: createClient(config.grpc.eventService.url, 'event', 'event', 'PricingService'),
-  availabilityService: createClient(config.grpc.eventService.url, 'event', 'event', 'AvailabilityService'),
+  availabilityService: createClient(
+    config.grpc.eventService.url,
+    'event',
+    'event',
+    'AvailabilityService'
+  ),
 };
 
 const healthCheck = async () => {

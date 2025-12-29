@@ -6,18 +6,18 @@ This document describes the inter-service communication setup in the ticket book
 
 ## Service Inventory
 
-| Service | Language | gRPC Port | HTTP Port | Description |
-|---------|----------|-----------|-----------|-------------|
-| Gateway | Node.js | - | 3000 | API Gateway, routing |
-| Auth Service | Node.js | 50051 | - | Authentication, JWT |
-| Event Service | Node.js | 50054 | - | Event management |
-| Ticket Service | Node.js | 50055 | - | Ticket/seat management |
-| Booking Service | Java | 50056 | 8080 | Booking orchestration (Saga) |
-| Payment Service | Java | 50058 | 8081 | Payment processing (Stripe) |
-| User Service | Go | 50052 | - | User profiles, addresses |
-| Booking Worker | Go | - | - | Queue processing |
-| Email Worker | Go | - | - | Email delivery |
-| Realtime Service | Go | 50057 | 3003 | WebSocket notifications |
+| Service          | Language | gRPC Port | HTTP Port | Description                  |
+| ---------------- | -------- | --------- | --------- | ---------------------------- |
+| Gateway          | Node.js  | -         | 3000      | API Gateway, routing         |
+| Auth Service     | Node.js  | 50051     | -         | Authentication, JWT          |
+| Event Service    | Node.js  | 50054     | -         | Event management             |
+| Ticket Service   | Node.js  | 50055     | -         | Ticket/seat management       |
+| Booking Service  | Java     | 50056     | 8080      | Booking orchestration (Saga) |
+| Payment Service  | Java     | 50058     | 8081      | Payment processing (Stripe)  |
+| User Service     | Go       | 50052     | -         | User profiles, addresses     |
+| Booking Worker   | Go       | -         | -         | Queue processing             |
+| Email Worker     | Go       | -         | -         | Email delivery               |
+| Realtime Service | Go       | 50057     | 3003      | WebSocket notifications      |
 
 ## Architecture Diagram
 
@@ -77,37 +77,37 @@ Infrastructure:
 
 ### Gateway → Services (gRPC)
 
-| Target Service | Purpose | Proto File |
-|----------------|---------|------------|
-| Auth Service | Login, register, token validation | `auth.proto` |
-| Event Service | Event CRUD, search | `event.proto` |
-| Ticket Service | Seat availability, pricing | `ticket.proto` |
-| Booking Service | Create/cancel bookings | `booking.proto` |
-| Payment Service | Payment processing | `payment.proto` |
-| User Service | Profile, addresses | `user.proto` |
+| Target Service  | Purpose                           | Proto File      |
+| --------------- | --------------------------------- | --------------- |
+| Auth Service    | Login, register, token validation | `auth.proto`    |
+| Event Service   | Event CRUD, search                | `event.proto`   |
+| Ticket Service  | Seat availability, pricing        | `ticket.proto`  |
+| Booking Service | Create/cancel bookings            | `booking.proto` |
+| Payment Service | Payment processing                | `payment.proto` |
+| User Service    | Profile, addresses                | `user.proto`    |
 
 ### Booking Service → Services (gRPC)
 
-| Target Service | Purpose | When Called |
-|----------------|---------|-------------|
-| Ticket Service | Reserve/release seats | During Saga execution |
+| Target Service  | Purpose                | When Called           |
+| --------------- | ---------------------- | --------------------- |
+| Ticket Service  | Reserve/release seats  | During Saga execution |
 | Payment Service | Create/cancel payments | During Saga execution |
 
 ### Booking Worker → Services
 
-| Target Service | Protocol | Purpose |
-|----------------|----------|---------|
-| Booking Service | gRPC | Create bookings from queue |
-| Realtime Service | gRPC | Notify booking results |
+| Target Service   | Protocol | Purpose                    |
+| ---------------- | -------- | -------------------------- |
+| Booking Service  | gRPC     | Create bookings from queue |
+| Realtime Service | gRPC     | Notify booking results     |
 
 ### Realtime Service Connections
 
-| Direction | Protocol | Purpose |
-|-----------|----------|---------|
-| Frontend → Realtime | WebSocket | Real-time updates |
-| Booking Worker → Realtime | gRPC | Push booking notifications |
-| Payment Service → Realtime | gRPC | Push payment status |
-| Internal (scaling) | Redis Pub/Sub | Multi-instance sync |
+| Direction                  | Protocol      | Purpose                    |
+| -------------------------- | ------------- | -------------------------- |
+| Frontend → Realtime        | WebSocket     | Real-time updates          |
+| Booking Worker → Realtime  | gRPC          | Push booking notifications |
+| Payment Service → Realtime | gRPC          | Push payment status        |
+| Internal (scaling)         | Redis Pub/Sub | Multi-instance sync        |
 
 ## Proto Definitions
 
@@ -238,7 +238,7 @@ grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check
 grpcurl -plaintext localhost:50057 grpc.health.v1.Health/Check
 
 # HTTP Health Check (services with HTTP endpoints)
-curl http://localhost:3000/health    # Gateway
+curl http://localhost:53000/health    # Gateway
 curl http://localhost:3003/health    # Realtime Service
 curl http://localhost:8080/actuator/health  # Booking Service
 curl http://localhost:8081/actuator/health  # Payment Service
@@ -248,26 +248,28 @@ curl http://localhost:8081/actuator/health  # Payment Service
 
 ### Prometheus Metrics Ports
 
-| Service | Metrics Port | Endpoint |
-|---------|--------------|----------|
-| Gateway | 9090 | /metrics |
-| Booking Service | 9091 | /actuator/prometheus |
-| Payment Service | 9092 | /actuator/prometheus |
-| User Service | 9092 | /metrics |
-| Realtime Service | 9057 | /metrics |
-| Booking Worker | 9093 | /metrics |
-| Email Worker | 9094 | /metrics |
+| Service          | Metrics Port | Endpoint             |
+| ---------------- | ------------ | -------------------- |
+| Gateway          | 9090         | /metrics             |
+| Booking Service  | 9091         | /actuator/prometheus |
+| Payment Service  | 9092         | /actuator/prometheus |
+| User Service     | 9092         | /metrics             |
+| Realtime Service | 9057         | /metrics             |
+| Booking Worker   | 9093         | /metrics             |
+| Email Worker     | 9094         | /metrics             |
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Service Not Found**
+
    - Check if service is running on correct port
    - Verify proto file paths
    - Check service URL configuration
 
 2. **Connection Refused**
+
    - Ensure service is started
    - Check firewall settings
    - Verify port availability

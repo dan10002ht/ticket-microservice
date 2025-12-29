@@ -1,7 +1,7 @@
 -- V4: Create idempotency_keys table
 -- Payment Service - Idempotency tracking to prevent duplicate payments
 
-CREATE TABLE idempotency_keys (
+CREATE TABLE IF NOT EXISTS idempotency_keys (
     -- Primary keys
     id BIGSERIAL PRIMARY KEY,
     idempotency_key VARCHAR(255) UNIQUE NOT NULL,

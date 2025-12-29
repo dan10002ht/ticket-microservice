@@ -56,10 +56,10 @@ yarn dev
 
 **Available endpoints:**
 
-- Gateway API: http://localhost:3000
-- Swagger Docs: http://localhost:3000/api/docs
-- Health Check: http://localhost:3000/health
-- Metrics: http://localhost:3000/metrics
+- Gateway API: http://localhost:53000
+- Swagger Docs: http://localhost:53000/api/docs
+- Health Check: http://localhost:53000/health
+- Metrics: http://localhost:53000/metrics
 
 ### 2. Docker Development
 
@@ -167,17 +167,17 @@ yarn run grpc:generate    # Generate gRPC code from proto files
 
 ```bash
 # Check gateway health
-curl http://localhost:3000/health
+curl http://localhost:53000/health
 
 # Detailed health check
-curl http://localhost:3000/health/detailed
+curl http://localhost:53000/health/detailed
 ```
 
 ### Metrics
 
 ```bash
 # View Prometheus metrics
-curl http://localhost:3000/metrics
+curl http://localhost:53000/metrics
 ```
 
 ### Logs
@@ -253,7 +253,7 @@ docker-compose -f ../deploy/docker-compose.dev.yml up gateway -e LOG_LEVEL=debug
 
 ### API Testing
 
-- Use Swagger UI: http://localhost:3000/api/docs
+- Use Swagger UI: http://localhost:53000/api/docs
 - Use curl or Postman for testing endpoints
 
 ### Code Organization

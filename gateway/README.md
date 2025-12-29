@@ -728,9 +728,9 @@ docker logs gateway-service
 
 ### API Documentation
 
-- **Swagger UI**: `http://localhost:3000/api/docs`
-- **Health Check**: `http://localhost:3000/health`
-- **Metrics**: `http://localhost:3000/metrics`
+- **Swagger UI**: `http://localhost:53000/api/docs`
+- **Health Check**: `http://localhost:53000/health`
+- **Metrics**: `http://localhost:53000/metrics`
 
 ### Related Documentation
 

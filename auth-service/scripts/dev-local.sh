@@ -190,7 +190,7 @@ CIRCUIT_BREAKER_TIMEOUT=30000
 CIRCUIT_BREAKER_FALLBACK=true
 
 # CORS Configuration
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:53000
+ALLOWED_ORIGINS=http://localhost:53000,http://localhost:53000
 
 # File Upload Configuration
 MAX_FILE_SIZE=5242880
@@ -217,7 +217,7 @@ BACKUP_SCHEDULE=0 2 * * *
 BACKUP_RETENTION_DAYS=30
 
 # Development Configuration
-DEBUG=true
+# DEBUG=true
 VERBOSE_LOGGING=true
 SKIP_EMAIL_VERIFICATION=true
 SKIP_PHONE_VERIFICATION=true

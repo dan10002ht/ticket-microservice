@@ -1,7 +1,7 @@
 -- V3: Create transaction_logs table
 -- Payment Service - Audit trail for all payment transactions
 
-CREATE TABLE transaction_logs (
+CREATE TABLE IF NOT EXISTS transaction_logs (
     -- Primary keys
     id BIGSERIAL PRIMARY KEY,
     log_id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),

@@ -91,7 +91,7 @@ EXPOSE 3000
 # Health checks should be done externally (Docker Compose, K8s, etc.)
 # Example in docker-compose.yml:
 #   healthcheck:
-#     test: ["CMD", "/nodejs/bin/node", "-e", "require('http').get('http://localhost:3000/health')"]
+#     test: ["CMD", "/nodejs/bin/node", "-e", "require('http').get('http://localhost:53000/health')"]
 
 # Distroless already includes tini-like init, no ENTRYPOINT needed
 # Start application (distroless uses /nodejs/bin/node)

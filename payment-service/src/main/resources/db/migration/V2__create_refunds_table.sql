@@ -1,7 +1,7 @@
 -- V2: Create refunds table
 -- Payment Service - Refund transactions table
 
-CREATE TABLE refunds (
+CREATE TABLE IF NOT EXISTS refunds (
     -- Primary keys
     id BIGSERIAL PRIMARY KEY,
     refund_id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),

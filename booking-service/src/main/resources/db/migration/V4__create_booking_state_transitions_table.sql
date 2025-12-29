@@ -1,7 +1,7 @@
 -- V4: Create booking_state_transitions table for audit trail
 -- This table records all state transitions for debugging and compliance
 
-CREATE TABLE booking_state_transitions (
+CREATE TABLE IF NOT EXISTS booking_state_transitions (
     id BIGSERIAL PRIMARY KEY,
     transition_id UUID NOT NULL UNIQUE,
     booking_id UUID NOT NULL,
@@ -28,9 +28,9 @@ CREATE TABLE booking_state_transitions (
 );
 
 -- Indexes for common queries
-CREATE INDEX idx_transition_booking_id ON booking_state_transitions(booking_id);
-CREATE INDEX idx_transition_created_at ON booking_state_transitions(created_at);
-CREATE INDEX idx_transition_to_state ON booking_state_transitions(to_state);
+CREATE INDEX IF NOT EXISTS idx_transition_booking_id ON booking_state_transitions(booking_id);
+CREATE INDEX IF NOT EXISTS idx_transition_created_at ON booking_state_transitions(created_at);
+CREATE INDEX IF NOT EXISTS idx_transition_to_state ON booking_state_transitions(to_state);
 
 -- Partitioning by month for better cleanup (optional - can be added later)
 -- For now, using simple table with cleanup job

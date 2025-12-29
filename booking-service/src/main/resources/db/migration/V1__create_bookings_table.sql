@@ -1,4 +1,4 @@
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
     id BIGSERIAL PRIMARY KEY,
     booking_id UUID NOT NULL UNIQUE,
     booking_reference VARCHAR(50) NOT NULL UNIQUE,
@@ -19,21 +19,21 @@ CREATE TABLE bookings (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE booking_seats (
+CREATE TABLE IF NOT EXISTS booking_seats (
     booking_id BIGINT REFERENCES bookings(id) ON DELETE CASCADE,
     seat_number VARCHAR(32) NOT NULL
 );
 
-CREATE TABLE booking_metadata (
+CREATE TABLE IF NOT EXISTS booking_metadata (
     booking_id BIGINT REFERENCES bookings(id) ON DELETE CASCADE,
     metadata_key VARCHAR(64) NOT NULL,
     value TEXT,
     CONSTRAINT booking_metadata_pk PRIMARY KEY (booking_id, metadata_key)
 );
 
-CREATE UNIQUE INDEX idx_booking_reference ON bookings (booking_reference);
-CREATE UNIQUE INDEX idx_booking_idempotency ON bookings (idempotency_key);
-CREATE INDEX idx_booking_user ON bookings (user_id);
-CREATE INDEX idx_booking_event ON bookings (event_id);
-CREATE INDEX idx_booking_status ON bookings (status);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_booking_reference ON bookings (booking_reference);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_booking_idempotency ON bookings (idempotency_key);
+CREATE INDEX IF NOT EXISTS idx_booking_user ON bookings (user_id);
+CREATE INDEX IF NOT EXISTS idx_booking_event ON bookings (event_id);
+CREATE INDEX IF NOT EXISTS idx_booking_status ON bookings (status);
 

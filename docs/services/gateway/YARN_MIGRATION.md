@@ -77,19 +77,19 @@ const breaker = new CircuitBreaker(fn, {
 ### **Events:**
 
 ```javascript
-breaker.on('open', () => {
+breaker.on("open", () => {
   // Circuit opened
 });
 
-breaker.on('close', () => {
+breaker.on("close", () => {
   // Circuit closed
 });
 
-breaker.on('halfOpen', () => {
+breaker.on("halfOpen", () => {
   // Circuit half-opened
 });
 
-breaker.on('fallback', (result) => {
+breaker.on("fallback", (result) => {
   // Fallback executed
 });
 ```
@@ -98,11 +98,16 @@ breaker.on('fallback', (result) => {
 
 ```javascript
 // Each gRPC method is wrapped with circuit breaker
-const breaker = circuitBreakerService.createGrpcBreaker('authService', 'login', grpcCallFunction, {
-  timeout: 30000,
-  errorThresholdPercentage: 50,
-  resetTimeout: 30000,
-});
+const breaker = circuitBreakerService.createGrpcBreaker(
+  "authService",
+  "login",
+  grpcCallFunction,
+  {
+    timeout: 30000,
+    errorThresholdPercentage: 50,
+    resetTimeout: 30000,
+  }
+);
 
 // Use circuit breaker
 const result = await breaker.fire(request);
@@ -248,13 +253,13 @@ yarn --version
 
 ```bash
 # Check circuit breaker health
-curl http://localhost:3000/health
+curl http://localhost:53000/health
 
 # Reset circuit breakers
-curl -X POST http://localhost:3000/admin/circuit-breakers/reset
+curl -X POST http://localhost:53000/admin/circuit-breakers/reset
 
 # View circuit breaker stats
-curl http://localhost:3000/admin/circuit-breakers/stats
+curl http://localhost:53000/admin/circuit-breakers/stats
 ```
 
 ---

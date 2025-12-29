@@ -1,4 +1,4 @@
-CREATE TABLE booking_items (
+CREATE TABLE IF NOT EXISTS booking_items (
     id BIGSERIAL PRIMARY KEY,
     booking_fk BIGINT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
     ticket_type_id VARCHAR(36) NOT NULL,
@@ -8,5 +8,5 @@ CREATE TABLE booking_items (
     seat_numbers TEXT
 );
 
-CREATE INDEX idx_booking_items_booking_fk ON booking_items (booking_fk);
+CREATE INDEX IF NOT EXISTS idx_booking_items_booking_fk ON booking_items (booking_fk);
 

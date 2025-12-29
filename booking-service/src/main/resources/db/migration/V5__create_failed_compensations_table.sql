@@ -1,5 +1,5 @@
 -- Failed Compensations table (Dead Letter Queue for saga compensations)
-CREATE TABLE failed_compensations (
+CREATE TABLE IF NOT EXISTS failed_compensations (
     id BIGSERIAL PRIMARY KEY,
     compensation_id UUID NOT NULL UNIQUE,
     booking_id BIGINT,
@@ -17,6 +17,6 @@ CREATE TABLE failed_compensations (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_fc_status ON failed_compensations (status);
-CREATE INDEX idx_fc_type ON failed_compensations (compensation_type);
-CREATE INDEX idx_fc_next_retry ON failed_compensations (next_retry_at);
+CREATE INDEX IF NOT EXISTS idx_fc_status ON failed_compensations (status);
+CREATE INDEX IF NOT EXISTS idx_fc_type ON failed_compensations (compensation_type);
+CREATE INDEX IF NOT EXISTS idx_fc_next_retry ON failed_compensations (next_retry_at);

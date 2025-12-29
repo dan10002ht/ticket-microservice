@@ -3,7 +3,7 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
     -- Primary keys
     id BIGSERIAL PRIMARY KEY,
     payment_id UUID UNIQUE NOT NULL DEFAULT gen_random_uuid(),

@@ -28,7 +28,7 @@ src/swagger/
 
 2. Truy cập Swagger UI tại:
    ```
-   http://localhost:3000/api/docs
+   http://localhost:53000/api/docs
    ```
 
 ## Các API Groups
@@ -141,7 +141,7 @@ Mỗi module có các schemas riêng được định nghĩa trong file swagger 
 
 ```javascript
 // src/routes/example.js
-router.get('/example', exampleHandler);
+router.get("/example", exampleHandler);
 
 // src/swagger/example.js
 /**

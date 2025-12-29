@@ -91,7 +91,7 @@ func (s *Server) CreateEmailJob(ctx context.Context, req *protos.CreateEmailJobR
 
 	return &protos.CreateEmailJobResponse{
 		Job: &protos.EmailJob{
-			Id: job.ID.String(),
+			Id: job.PublicID.String(),
 		},
 		Success: true,
 		Message: "Email job created successfully",
@@ -242,7 +242,7 @@ func (s *Server) SendVerificationEmail(ctx context.Context, req *protos.SendVeri
 	return &protos.SendVerificationEmailResponse{
 		Success: true,
 		Message: "Verification email sent successfully",
-		JobId:   job.ID.String(),
+		JobId:   job.PublicID.String(),
 		PinCode: req.PinCode,
 	}, nil
 }
@@ -281,7 +281,7 @@ func (s *Server) SendVerificationReminder(ctx context.Context, req *protos.SendV
 	return &protos.SendVerificationReminderResponse{
 		Success: true,
 		Message: "Verification reminder sent successfully",
-		JobId:   job.ID.String(),
+		JobId:   job.PublicID.String(),
 	}, nil
 }
 
@@ -320,7 +320,7 @@ func (s *Server) ResendVerificationEmail(ctx context.Context, req *protos.Resend
 	return &protos.SendVerificationEmailResponse{
 		Success: true,
 		Message: "Verification email resent successfully",
-		JobId:   job.ID.String(),
+		JobId:   job.PublicID.String(),
 	}, nil
 }
 
@@ -366,7 +366,7 @@ func (s *Server) SendPasswordResetEmail(ctx context.Context, req *protos.SendPas
 	return &protos.SendPasswordResetEmailResponse{
 		Success: true,
 		Message: "Password reset email sent successfully",
-		JobId:   job.ID.String(),
+		JobId:   job.PublicID.String(),
 	}, nil
 }
 

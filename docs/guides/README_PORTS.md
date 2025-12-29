@@ -4,36 +4,36 @@
 
 ### gRPC Ports
 
-| Service | Port | Language | Description |
-|---------|------|----------|-------------|
-| Auth Service | 50051 | Node.js | Authentication, JWT tokens |
-| User Service | 50052 | Go | User profiles, addresses |
-| Event Service | 50054 | Node.js | Event management |
-| Ticket Service | 50055 | Node.js | Ticket/seat management |
-| Booking Service | 50056 | Java | Booking orchestration (Saga) |
-| Realtime Service | 50057 | Go | Real-time notifications (gRPC) |
-| Payment Service | 50058 | Java | Payment processing |
+| Service          | Port  | Language | Description                    |
+| ---------------- | ----- | -------- | ------------------------------ |
+| Auth Service     | 50051 | Node.js  | Authentication, JWT tokens     |
+| User Service     | 50052 | Go       | User profiles, addresses       |
+| Event Service    | 50054 | Node.js  | Event management               |
+| Ticket Service   | 50055 | Node.js  | Ticket/seat management         |
+| Booking Service  | 50056 | Java     | Booking orchestration (Saga)   |
+| Realtime Service | 50057 | Go       | Real-time notifications (gRPC) |
+| Payment Service  | 50058 | Java     | Payment processing             |
 
 ### HTTP Ports
 
-| Service | Port | Description |
-|---------|------|-------------|
-| Gateway | 3000 | API Gateway (REST) |
-| Realtime Service | 3003 | WebSocket server |
-| Booking Service | 8080 | REST API + Actuator |
-| Payment Service | 8081 | REST API + Actuator |
+| Service          | Port | Description         |
+| ---------------- | ---- | ------------------- |
+| Gateway          | 3000 | API Gateway (REST)  |
+| Realtime Service | 3003 | WebSocket server    |
+| Booking Service  | 8080 | REST API + Actuator |
+| Payment Service  | 8081 | REST API + Actuator |
 
 ### Metrics Ports (Prometheus)
 
-| Service | Port | Endpoint |
-|---------|------|----------|
-| Gateway | 9090 | /metrics |
-| Booking Service | 9091 | /actuator/prometheus |
-| User Service | 9092 | /metrics |
-| Payment Service | 9092 | /actuator/prometheus |
-| Booking Worker | 9093 | /metrics |
-| Email Worker | 9094 | /metrics |
-| Realtime Service | 9057 | /metrics |
+| Service          | Port | Endpoint             |
+| ---------------- | ---- | -------------------- |
+| Gateway          | 9090 | /metrics             |
+| Booking Service  | 9091 | /actuator/prometheus |
+| User Service     | 9092 | /metrics             |
+| Payment Service  | 9092 | /actuator/prometheus |
+| Booking Worker   | 9093 | /metrics             |
+| Email Worker     | 9094 | /metrics             |
+| Realtime Service | 9057 | /metrics             |
 
 ---
 
@@ -41,16 +41,16 @@
 
 Để tránh xung đột với các cổng mặc định trên WSL2/Ubuntu, các service trong docker-compose.dev.yml đã được đổi port như sau:
 
-| Service | Host Port | Container Port | Ghi chú |
-|---------|-----------|----------------|---------|
-| PostgreSQL | 55432 | 5432 | Database |
-| Redis | 56379 | 6379 | Cache/Queue |
-| Zookeeper | 52181 | 2181 | Kafka dependency |
-| Kafka | 59092 | 9092 | Message broker |
-| Prometheus | 59090 | 9090 | Metrics collection |
-| Grafana | 53001 | 3000 | Dashboard |
-| Elasticsearch | 59200 | 9200 | Search engine |
-| Kibana | 55601 | 5601 | Elasticsearch UI |
+| Service       | Host Port | Container Port | Ghi chú            |
+| ------------- | --------- | -------------- | ------------------ |
+| PostgreSQL    | 55432     | 5432           | Database           |
+| Redis         | 56379     | 6379           | Cache/Queue        |
+| Zookeeper     | 52181     | 2181           | Kafka dependency   |
+| Kafka         | 59092     | 9092           | Message broker     |
+| Prometheus    | 59090     | 9090           | Metrics collection |
+| Grafana       | 53001     | 3000           | Dashboard          |
+| Elasticsearch | 59200     | 9200           | Search engine      |
+| Kibana        | 55601     | 5601           | Elasticsearch UI   |
 
 ---
 
@@ -68,11 +68,11 @@
 
 ### Available Ports (for new services)
 
-| Range | Next Available | Purpose |
-|-------|----------------|---------|
-| gRPC | 50059 | New gRPC service |
-| HTTP | 3004 | New HTTP service |
-| Metrics | 9095 | New metrics endpoint |
+| Range   | Next Available | Purpose              |
+| ------- | -------------- | -------------------- |
+| gRPC    | 50059          | New gRPC service     |
+| HTTP    | 3004           | New HTTP service     |
+| Metrics | 9095           | New metrics endpoint |
 
 ---
 
@@ -82,7 +82,7 @@
 
 ```bash
 # Gateway
-curl http://localhost:3000/health
+curl http://localhost:53000/health
 
 # User Service (gRPC)
 grpcurl -plaintext localhost:50052 list
