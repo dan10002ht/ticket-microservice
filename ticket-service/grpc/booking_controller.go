@@ -12,7 +12,7 @@ import (
 	"ticket-service/models"
 	"ticket-service/services"
 
-	ticketpb "shared-lib/protos/ticket"
+	ticketpb "ticket-service/internal/protos/ticket"
 )
 
 // BookingController handles gRPC requests for booking operations

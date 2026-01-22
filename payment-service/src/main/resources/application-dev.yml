@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/booking_system
+    url: jdbc:postgresql://localhost:50433/booking_system
     username: booking_user
     password: booking_pass
 

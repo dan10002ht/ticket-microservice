@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package user;
 
-option go_package = "github.com/ticketing/shared-lib/proto/user";
+option go_package = "user-service/internal/protos";
 
 service UserService {
   // Profile operations

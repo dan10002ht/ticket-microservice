@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package realtime;
 
-option go_package = "github.com/ticketing/shared-lib/proto/realtime";
+option go_package = "realtime-service/internal/protos";
 
 // RealtimeService handles real-time notifications and WebSocket broadcasting
 // Called by internal services (booking-worker, payment-service) to push updates to clients

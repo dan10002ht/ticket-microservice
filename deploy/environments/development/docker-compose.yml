@@ -216,7 +216,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:50092,PLAINTEXT_INTERNAL://kafka:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -226,40 +226,44 @@ services:
     restart: unless-stopped
 
   # ============================================
-  # Monitoring (Optional - uncomment if needed)
+  # Monitoring
   # ============================================
 
-  # prometheus:
-  #   image: prom/prometheus:latest
-  #   container_name: dev-prometheus
-  #   ports:
-  #     - "9090:9090"
-  #   volumes:
-  #     - ../../prometheus.dev.yml:/etc/prometheus/prometheus.yml
-  #     - prometheus_data:/prometheus
-  #   networks:
-  #     - booking-net
-  #   restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: dev-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../../prometheus.dev.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - booking-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
 
-  # grafana:
-  #   image: grafana/grafana:latest
-  #   container_name: dev-grafana
-  #   ports:
-  #     - "3001:3000"
-  #   environment:
-  #     GF_SECURITY_ADMIN_PASSWORD: admin
-  #   volumes:
-  #     - grafana_data:/var/lib/grafana
-  #   networks:
-  #     - booking-net
-  #   restart: unless-stopped
+  grafana:
+    image: grafana/grafana:latest
+    container_name: dev-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - booking-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
 
 volumes:
   postgres_auth_data:
   postgres_main_data:
   redis_data:
-  # prometheus_data:
-  # grafana_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   booking-net:

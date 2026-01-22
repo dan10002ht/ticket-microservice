@@ -11,7 +11,7 @@ import (
 	"ticket-service/models"
 	"ticket-service/services"
 
-	ticketpb "shared-lib/protos/ticket"
+	ticketpb "ticket-service/internal/protos/ticket"
 )
 
 // ReservationController handles gRPC requests for reservation operations
@@ -384,9 +384,15 @@ func (c *ReservationController) GetReservationStats(ctx context.Context, req *ti
 		return nil, status.Errorf(codes.Internal, "failed to get reservation stats: %v", err)
 	}
 
+	// Convert map[string]int to map[string]int32
+	stats32 := make(map[string]int32, len(stats))
+	for k, v := range stats {
+		stats32[k] = int32(v)
+	}
+
 	response := &ticketpb.GetReservationStatsResponse{
 		Success: true,
-		Stats:   stats,
+		Stats:   stats32,
 	}
 
 	return response, nil

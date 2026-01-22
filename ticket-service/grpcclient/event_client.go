@@ -2,7 +2,7 @@ package grpcclient
 
 import (
 	context "context"
-	eventpb "shared-lib/protos/event"
+	eventpb "ticket-service/internal/protos/event"
 
 	"google.golang.org/grpc"
 )

@@ -7,7 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
-	paymentpb "shared-lib/protos/payment"
+	paymentpb "ticket-service/internal/protos/payment"
 	"ticket-service/grpcclient"
 	"ticket-service/metrics"
 	"ticket-service/models"
@@ -93,7 +93,7 @@ func (s *TicketService) CreateTicket(ctx context.Context, req *CreateTicketReque
 
 	// Update seat status in Event Service
 	if s.eventClient != nil {
-		err := s.eventClient.UpdateSeatAvailability(ctx, req.EventID, req.SeatID, "sold", req.UserID, ticket.ID)
+		err := s.eventClient.UpdateSeatAvailability(ctx, req.EventID, req.SeatID, "sold", ticket.ID)
 		if err != nil {
 			s.logger.Warn("Failed to update seat status in Event Service",
 				zap.String("event_id", req.EventID),
@@ -208,23 +208,26 @@ func (s *TicketService) ProcessPayment(ctx context.Context, req *ProcessPaymentR
 
 	// Process payment via Payment Service
 	if s.paymentClient != nil {
-		paymentReq := &paymentpb.ProcessPaymentRequest{
+		paymentReq := &paymentpb.CreatePaymentRequest{
 			TicketId:      req.TicketID,
 			Amount:        ticket.FinalPrice,
 			Currency:      ticket.Currency,
 			PaymentMethod: req.PaymentMethod,
 			UserId:        ticket.UserID,
-			EventId:       ticket.EventID,
 		}
 
-		paymentResp, err := s.paymentClient.ProcessPayment(ctx, paymentReq)
+		paymentResp, err := s.paymentClient.CreatePayment(ctx, paymentReq)
 		if err != nil {
 			return nil, fmt.Errorf("payment processing failed: %w", err)
 		}
 
 		// Update ticket payment status
+		paymentID := ""
+		if paymentResp.Payment != nil {
+			paymentID = paymentResp.Payment.PaymentId
+		}
 		err = s.ticketRepo.UpdatePaymentStatus(ctx, req.TicketID,
-			models.PaymentStatusPaid, req.PaymentMethod, paymentResp.PaymentId, req.UpdatedBy)
+			models.PaymentStatusPaid, req.PaymentMethod, paymentID, req.UpdatedBy)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update payment status: %w", err)
 		}
@@ -248,7 +251,7 @@ func (s *TicketService) ProcessPayment(ctx context.Context, req *ProcessPaymentR
 
 		return &ProcessPaymentResponse{
 			Success:       true,
-			PaymentID:     paymentResp.PaymentId,
+			PaymentID:     paymentID,
 			TicketStatus:  models.TicketStatusConfirmed,
 			PaymentStatus: models.PaymentStatusPaid,
 		}, nil
@@ -278,7 +281,7 @@ func (s *TicketService) CancelTicket(ctx context.Context, req *CancelTicketReque
 
 	// Release seat in Event Service
 	if s.eventClient != nil {
-		err = s.eventClient.UpdateSeatAvailability(ctx, ticket.EventID, ticket.SeatID, "available", "", "")
+		err = s.eventClient.UpdateSeatAvailability(ctx, ticket.EventID, ticket.SeatID, "available", "")
 		if err != nil {
 			s.logger.Warn("Failed to release seat in Event Service",
 				zap.String("event_id", ticket.EventID),
@@ -352,7 +355,10 @@ func (s *TicketService) checkSeatAvailability(ctx context.Context, eventID, seat
 	if err != nil {
 		return false, err
 	}
-	return resp.Available, nil
+	if resp.Availability == nil {
+		return false, nil
+	}
+	return resp.Availability.AvailabilityStatus == "available", nil
 }
 
 func (s *TicketService) generateTicketNumber(eventID, seatID string) string {
@@ -395,7 +401,7 @@ func (s *TicketService) handleTicketConfirmation(ctx context.Context, ticket *mo
 func (s *TicketService) handleTicketCancellation(ctx context.Context, ticket *models.Ticket) {
 	// Release seat in Event Service
 	if s.eventClient != nil {
-		err := s.eventClient.UpdateSeatAvailability(ctx, ticket.EventID, ticket.SeatID, "available", "", "")
+		err := s.eventClient.UpdateSeatAvailability(ctx, ticket.EventID, ticket.SeatID, "available", "")
 		if err != nil {
 			s.logger.Warn("Failed to release seat in Event Service",
 				zap.String("event_id", ticket.EventID),
@@ -431,18 +437,18 @@ func (s *TicketService) processRefund(ctx context.Context, ticket *models.Ticket
 		return fmt.Errorf("payment service not available")
 	}
 
-	refundReq := &grpcclient.RefundPaymentRequest{
+	refundReq := &paymentpb.CreateRefundRequest{
 		PaymentId: *ticket.PaymentReference,
 		Amount:    ticket.FinalPrice,
 		Reason:    reason,
 	}
 
-	refundResp, err := s.paymentClient.RefundPayment(ctx, refundReq)
+	refundResp, err := s.paymentClient.CreateRefund(ctx, refundReq)
 	if err != nil {
 		return fmt.Errorf("refund processing failed: %w", err)
 	}
 
-	if refundResp.Success {
+	if refundResp.Refund != nil {
 		// Update ticket status to refunded
 		err = s.ticketRepo.UpdateStatus(ctx, ticket.ID, models.TicketStatusRefunded, "system")
 		if err != nil {

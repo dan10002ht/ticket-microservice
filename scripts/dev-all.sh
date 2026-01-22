@@ -232,8 +232,8 @@ start_infrastructure() {
     echo -e "${CYAN}Waiting for Kafka to be ready...${NC}"
     attempt=0
     while [ $attempt -lt $max_attempts ]; do
-        # Check if Kafka container is running and can list topics
-        if docker compose -f docker-compose.yml exec -T kafka kafka-topics --bootstrap-server localhost:9092 --list > /dev/null 2>&1; then
+        # Check if Kafka container is running and can list topics via internal network
+        if docker compose -f docker-compose.yml exec -T kafka kafka-topics --bootstrap-server kafka:29092 --list > /dev/null 2>&1; then
             echo -e "${GREEN}  ✓ Kafka ready${NC}"
             break
         fi
@@ -254,13 +254,13 @@ start_infrastructure() {
     echo -e "${GREEN}════════════════════════════════════════════════${NC}"
     echo ""
     echo -e "  ${CYAN}Databases:${NC}"
-    echo "    Auth DB:  localhost:5432 (booking_system_auth)"
-    echo "    Main DB:  localhost:5433 (booking_system)"
+    echo "    Auth DB:  localhost:50432 (booking_system_auth)"
+    echo "    Main DB:  localhost:50433 (booking_system)"
     echo ""
     echo -e "  ${CYAN}Services:${NC}"
-    echo "    Redis:    localhost:6379"
-    echo "    Kafka:    localhost:9092"
-    echo "    Zookeeper: localhost:2181"
+    echo "    Redis:    localhost:50379"
+    echo "    Kafka:    localhost:50092"
+    echo "    Zookeeper: localhost:50181"
     echo ""
     echo -e "  ${CYAN}Credentials:${NC}"
     echo "    User:     booking_user"
@@ -299,14 +299,14 @@ NODE_ENV=development
 
 # Database Configuration (for knexfile)
 DB_MASTER_HOST=localhost
-DB_MASTER_PORT=5432
+DB_MASTER_PORT=50432
 DB_MASTER_NAME=booking_system_auth
 DB_MASTER_USER=booking_user
 DB_MASTER_PASSWORD=booking_pass
 
 # Redis Configuration
 REDIS_HOST=localhost
-REDIS_PORT=6379
+REDIS_PORT=50379
 REDIS_PASSWORD=
 REDIS_DATABASE=0
 
@@ -604,6 +604,20 @@ if [ "$INFRA_ONLY" = true ]; then
     exit 0
 fi
 
+# Generate Protocol Buffers for Go services
+if command -v protoc &> /dev/null; then
+    echo ""
+    echo -e "${CYAN}════════════════════════════════════════════════${NC}"
+    echo -e "${CYAN}  Generating Protocol Buffers${NC}"
+    echo -e "${CYAN}════════════════════════════════════════════════${NC}"
+    if [ -f "$SCRIPT_DIR/generate-protos.sh" ]; then
+        "$SCRIPT_DIR/generate-protos.sh" || echo -e "${YELLOW}  ⚠ Proto generation had warnings (non-critical)${NC}"
+    fi
+else
+    echo -e "${YELLOW}  ⚠ protoc not installed - skipping proto generation${NC}"
+    echo -e "${YELLOW}    Install with: sudo apt-get install -y protobuf-compiler${NC}"
+fi
+
 # Start services
 echo ""
 echo -e "${CYAN}════════════════════════════════════════════════${NC}"
@@ -629,7 +643,7 @@ echo -e "${GREEN}═════════════════════
 echo ""
 echo -e "${CYAN}Endpoints:${NC}"
 echo "  Gateway:     http://localhost:53000"
-echo "  Swagger:     http://localhost:53000/api-docs"
+echo "  Swagger:     http://localhost:53000/api/docs"
 echo ""
 echo -e "${CYAN}gRPC Services:${NC}"
 echo "  Auth:        localhost:50051"

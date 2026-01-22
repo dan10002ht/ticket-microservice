@@ -695,7 +695,7 @@ echo -e "${GREEN}═════════════════════
 echo ""
 echo -e "${CYAN}Endpoints:${NC}"
 echo "  Gateway:     http://localhost:53000"
-echo "  Swagger:     http://localhost:53000/api-docs"
+echo "  Swagger:     http://localhost:53000/api/docs"
 echo ""
 echo -e "${CYAN}gRPC Services:${NC}"
 echo "  Auth:        localhost:50051"

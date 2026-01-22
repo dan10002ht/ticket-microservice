@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package payment;
 
+option go_package = "ticket-service/internal/protos/payment";
 option java_multiple_files = true;
 option java_package = "com.ticketing.payment.grpc";
 option java_outer_classname = "PaymentProto";

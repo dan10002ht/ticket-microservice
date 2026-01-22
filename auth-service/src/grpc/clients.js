@@ -120,19 +120,25 @@ const grpcClients = {
   emailService: createClient(process.env.EMAIL_WORKER_URL || 'localhost:50060', 'email', 'email'),
 };
 
-// Health check for all clients
+// Health check for all clients (non-blocking, for monitoring only)
 const healthCheck = async () => {
   const results = {};
 
   for (const [serviceName, client] of Object.entries(grpcClients)) {
     try {
       if (client.health) {
-        const result = await client.health({});
+        // Use a short timeout for health checks to avoid blocking
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Health check timeout')), 3000)
+        );
+        const result = await Promise.race([client.health({}), timeoutPromise]);
         results[serviceName] = { status: 'healthy', response: result };
       } else {
         results[serviceName] = { status: 'no_health_method' };
       }
     } catch (error) {
+      // Log warning but don't fail - service can still operate without dependencies
+      logger.warn(`gRPC client ${serviceName} health check failed (non-critical):`, error.message);
       results[serviceName] = { status: 'unhealthy', error: error.message };
     }
   }

@@ -80,8 +80,9 @@ func (s *ReservationService) CreateReservation(ctx context.Context, req *CreateR
 
 	// Block seat in Event Service
 	if s.eventClient != nil {
+		blockedReason := fmt.Sprintf("Reserved for session %s by user %s", req.BookingSessionID, req.UserID)
 		_, err := s.eventClient.BlockSeats(ctx, req.EventID, []string{req.SeatID},
-			req.UserID, req.BookingSessionID, expiresAt)
+			blockedReason, expiresAt)
 		if err != nil {
 			s.logger.Warn("Failed to block seat in Event Service",
 				zap.String("event_id", req.EventID),
@@ -215,7 +216,7 @@ func (s *ReservationService) ReleaseReservation(ctx context.Context, req *Releas
 	// Release seat in Event Service
 	if s.eventClient != nil {
 		_, err := s.eventClient.ReleaseSeats(ctx, reservation.EventID,
-			[]string{reservation.SeatID}, req.ReleasedBy, req.Reason)
+			[]string{reservation.SeatID})
 		if err != nil {
 			s.logger.Warn("Failed to release seat in Event Service",
 				zap.String("event_id", reservation.EventID),
@@ -262,7 +263,7 @@ func (s *ReservationService) ReleaseReservationsBySession(ctx context.Context, r
 			seatIDs[i] = reservation.SeatID
 		}
 
-		_, err := s.eventClient.ReleaseSeats(ctx, reservations[0].EventID, seatIDs, req.ReleasedBy, req.Reason)
+		_, err := s.eventClient.ReleaseSeats(ctx, reservations[0].EventID, seatIDs)
 		if err != nil {
 			s.logger.Warn("Failed to release seats in Event Service",
 				zap.String("event_id", reservations[0].EventID),
@@ -360,8 +361,9 @@ func (s *ReservationService) ExtendReservation(ctx context.Context, req *ExtendR
 
 	// Update seat block in Event Service
 	if s.eventClient != nil {
+		blockedReason := fmt.Sprintf("Extended reservation for session %s", reservation.BookingSessionID)
 		_, err := s.eventClient.BlockSeats(ctx, reservation.EventID, []string{reservation.SeatID},
-			reservation.BookingSessionID, reservation.BookingSessionID, newExpiresAt)
+			blockedReason, newExpiresAt)
 		if err != nil {
 			s.logger.Warn("Failed to update seat block in Event Service",
 				zap.String("event_id", reservation.EventID),
@@ -423,7 +425,10 @@ func (s *ReservationService) checkSeatAvailability(ctx context.Context, eventID,
 	if err != nil {
 		return false, err
 	}
-	return resp.Available, nil
+	if resp.Availability == nil {
+		return false, nil
+	}
+	return resp.Availability.AvailabilityStatus == "available", nil
 }
 
 // Request/Response types

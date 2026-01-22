@@ -29,10 +29,10 @@ class CircuitBreakerService {
   createBreaker(name, fn, options = {}) {
     // Bypass circuit breaker in development mode
     if (!config.circuitBreaker.enabled) {
-      logger.info(`Circuit breaker disabled for '${name}' in development mode`, {
-        service: name,
-        timestamp: new Date().toISOString(),
-      });
+      // logger.info(`Circuit breaker disabled for '${name}' in development mode`, {
+      //   service: name,
+      //   timestamp: new Date().toISOString(),
+      // });
 
       // Return a mock circuit breaker that just calls the function directly
       const mockBreaker = {

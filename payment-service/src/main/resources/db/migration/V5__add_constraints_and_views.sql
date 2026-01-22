@@ -198,13 +198,11 @@ WHERE status IN ('pending', 'processing');
 CREATE INDEX idx_refunds_active ON refunds(id, status, created_at)
 WHERE status IN ('pending', 'processing');
 
--- Partial index for recent transaction logs (last 30 days)
-CREATE INDEX idx_transaction_logs_recent ON transaction_logs(created_at, transaction_type)
-WHERE created_at > CURRENT_TIMESTAMP - INTERVAL '30 days';
+-- Index for recent transaction logs (ordered by created_at for efficient queries)
+CREATE INDEX idx_transaction_logs_recent ON transaction_logs(created_at DESC, transaction_type);
 
--- Partial index for non-expired idempotency keys
-CREATE INDEX idx_idempotency_keys_active ON idempotency_keys(idempotency_key, status)
-WHERE expires_at > CURRENT_TIMESTAMP;
+-- Index for idempotency keys by expiration and status
+CREATE INDEX idx_idempotency_keys_active ON idempotency_keys(expires_at, idempotency_key, status);
 
 
 

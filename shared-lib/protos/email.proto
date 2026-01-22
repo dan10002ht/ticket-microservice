@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package email;
 
+option go_package = "booking-system/email-worker/internal/protos";
+
 import "google/protobuf/timestamp.proto";
 
 // Email Service provides comprehensive email management including job queuing, 

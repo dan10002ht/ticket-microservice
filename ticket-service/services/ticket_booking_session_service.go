@@ -7,7 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
-	paymentpb "shared-lib/protos/payment"
+	paymentpb "ticket-service/internal/protos/payment"
 	"ticket-service/grpcclient"
 	"ticket-service/metrics"
 	"ticket-service/models"
@@ -161,8 +161,9 @@ func (s *TicketBookingSessionService) AddSeatToSession(ctx context.Context, req 
 
 	// Block seat in Event Service
 	if s.eventClient != nil {
+		blockedReason := fmt.Sprintf("Booking session %s for user %s", req.SessionID, session.UserID)
 		_, err := s.eventClient.BlockSeats(ctx, req.EventID, []string{req.SeatID},
-			session.UserID, req.SessionID, session.ExpiresAt)
+			blockedReason, session.ExpiresAt)
 		if err != nil {
 			s.logger.Warn("Failed to block seat in Event Service",
 				zap.String("event_id", req.EventID),
@@ -233,7 +234,7 @@ func (s *TicketBookingSessionService) RemoveSeatFromSession(ctx context.Context,
 	// Release seat in Event Service
 	if s.eventClient != nil {
 		_, err := s.eventClient.ReleaseSeats(ctx, targetReservation.EventID,
-			[]string{req.SeatID}, session.UserID, req.Reason)
+			[]string{req.SeatID})
 		if err != nil {
 			s.logger.Warn("Failed to release seat in Event Service",
 				zap.String("event_id", targetReservation.EventID),
@@ -290,21 +291,22 @@ func (s *TicketBookingSessionService) CompleteBookingSession(ctx context.Context
 	// Process payment if required
 	var paymentID string
 	if session.TotalAmount > 0 && s.paymentClient != nil {
-		paymentReq := &paymentpb.ProcessPaymentRequest{
+		paymentReq := &paymentpb.CreatePaymentRequest{
 			BookingId:     req.SessionID,
 			Amount:        session.TotalAmount,
 			Currency:      session.Currency,
 			PaymentMethod: req.PaymentMethod,
 			UserId:        session.UserID,
-			EventId:       session.EventID,
 		}
 
-		paymentResp, err := s.paymentClient.ProcessPayment(ctx, paymentReq)
+		paymentResp, err := s.paymentClient.CreatePayment(ctx, paymentReq)
 		if err != nil {
 			return nil, fmt.Errorf("payment processing failed: %w", err)
 		}
 
-		paymentID = paymentResp.PaymentId
+		if paymentResp.Payment != nil {
+			paymentID = paymentResp.Payment.PaymentId
+		}
 	}
 
 	// Confirm all seat reservations
@@ -373,7 +375,7 @@ func (s *TicketBookingSessionService) CancelBookingSession(ctx context.Context, 
 				seatIDs[i] = reservation.SeatID
 			}
 
-			_, err := s.eventClient.ReleaseSeats(ctx, session.EventID, seatIDs, session.UserID, req.Reason)
+			_, err := s.eventClient.ReleaseSeats(ctx, session.EventID, seatIDs)
 			if err != nil {
 				s.logger.Warn("Failed to release seats in Event Service",
 					zap.String("event_id", session.EventID),
@@ -473,7 +475,10 @@ func (s *TicketBookingSessionService) checkSeatAvailability(ctx context.Context,
 	if err != nil {
 		return false, err
 	}
-	return resp.Available, nil
+	if resp.Availability == nil {
+		return false, nil
+	}
+	return resp.Availability.AvailabilityStatus == "available", nil
 }
 
 // Request/Response types

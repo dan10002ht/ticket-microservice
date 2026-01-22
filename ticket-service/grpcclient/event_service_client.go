@@ -10,14 +10,15 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	eventpb "shared-lib/protos/event"
+	eventpb "ticket-service/internal/protos/event"
 )
 
 // EventServiceClient handles communication with Event Service
 type EventServiceClient struct {
-	conn   *grpc.ClientConn
-	client eventpb.EventServiceClient
-	logger *zap.Logger
+	conn               *grpc.ClientConn
+	client             eventpb.EventServiceClient
+	availabilityClient eventpb.AvailabilityServiceClient
+	logger             *zap.Logger
 }
 
 // NewEventServiceClient creates a new Event Service gRPC client
@@ -30,15 +31,17 @@ func NewEventServiceClient(config config.EventServiceConfig, logger *zap.Logger)
 	}
 
 	client := eventpb.NewEventServiceClient(conn)
+	availabilityClient := eventpb.NewAvailabilityServiceClient(conn)
 
 	logger.Info("Connected to Event Service",
 		zap.String("address", address),
 	)
 
 	return &EventServiceClient{
-		conn:   conn,
-		client: client,
-		logger: logger,
+		conn:               conn,
+		client:             client,
+		availabilityClient: availabilityClient,
+		logger:             logger,
 	}, nil
 }
 
@@ -67,7 +70,7 @@ func (c *EventServiceClient) GetSeatAvailability(ctx context.Context, eventID, s
 		SeatId:  seatID,
 	}
 
-	resp, err := c.client.GetSeatAvailability(ctx, req)
+	resp, err := c.availabilityClient.GetSeatAvailability(ctx, req)
 	if err != nil {
 		c.logger.Error("Failed to get seat availability",
 			zap.String("event_id", eventID),
@@ -81,16 +84,15 @@ func (c *EventServiceClient) GetSeatAvailability(ctx context.Context, eventID, s
 }
 
 // UpdateSeatAvailability updates seat availability status
-func (c *EventServiceClient) UpdateSeatAvailability(ctx context.Context, eventID, seatID, status, userID, bookingID string) error {
+func (c *EventServiceClient) UpdateSeatAvailability(ctx context.Context, eventID, seatID, status, reservationID string) error {
 	req := &eventpb.UpdateSeatAvailabilityRequest{
-		EventId:   eventID,
-		SeatId:    seatID,
-		Status:    status,
-		UserId:    userID,
-		BookingId: bookingID,
+		EventId:            eventID,
+		SeatId:             seatID,
+		AvailabilityStatus: status,
+		ReservationId:      reservationID,
 	}
 
-	resp, err := c.client.UpdateSeatAvailability(ctx, req)
+	resp, err := c.availabilityClient.UpdateSeatAvailability(ctx, req)
 	if err != nil {
 		c.logger.Error("Failed to update seat availability",
 			zap.String("event_id", eventID),
@@ -109,16 +111,15 @@ func (c *EventServiceClient) UpdateSeatAvailability(ctx context.Context, eventID
 }
 
 // BlockSeats blocks multiple seats
-func (c *EventServiceClient) BlockSeats(ctx context.Context, eventID string, seatIDs []string, userID, bookingID string, expiresAt time.Time) (*eventpb.BlockSeatsResponse, error) {
+func (c *EventServiceClient) BlockSeats(ctx context.Context, eventID string, seatIDs []string, blockedReason string, blockedUntil time.Time) (*eventpb.BlockSeatsResponse, error) {
 	req := &eventpb.BlockSeatsRequest{
-		EventId:   eventID,
-		SeatIds:   seatIDs,
-		UserId:    userID,
-		BookingId: bookingID,
-		ExpiresAt: expiresAt.Format(time.RFC3339),
+		EventId:       eventID,
+		SeatIds:       seatIDs,
+		BlockedReason: blockedReason,
+		BlockedUntil:  blockedUntil.Format(time.RFC3339),
 	}
 
-	resp, err := c.client.BlockSeats(ctx, req)
+	resp, err := c.availabilityClient.BlockSeats(ctx, req)
 	if err != nil {
 		c.logger.Error("Failed to block seats",
 			zap.String("event_id", eventID),
@@ -132,15 +133,13 @@ func (c *EventServiceClient) BlockSeats(ctx context.Context, eventID string, sea
 }
 
 // ReleaseSeats releases blocked seats
-func (c *EventServiceClient) ReleaseSeats(ctx context.Context, eventID string, seatIDs []string, userID, reason string) (*eventpb.ReleaseSeatsResponse, error) {
+func (c *EventServiceClient) ReleaseSeats(ctx context.Context, eventID string, seatIDs []string) (*eventpb.ReleaseSeatsResponse, error) {
 	req := &eventpb.ReleaseSeatsRequest{
 		EventId: eventID,
 		SeatIds: seatIDs,
-		UserId:  userID,
-		Reason:  reason,
 	}
 
-	resp, err := c.client.ReleaseSeats(ctx, req)
+	resp, err := c.availabilityClient.ReleaseSeats(ctx, req)
 	if err != nil {
 		c.logger.Error("Failed to release seats",
 			zap.String("event_id", eventID),

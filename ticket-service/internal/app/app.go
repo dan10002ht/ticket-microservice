@@ -43,7 +43,15 @@ func (a *App) Initialize() error {
 	a.logger.Info("Initializing Ticket Service")
 
 	// Initialize database
-	dbConn, err := database.NewConnection(a.config.Database, a.logger)
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		a.config.Database.Host,
+		a.config.Database.Port,
+		a.config.Database.Username,
+		a.config.Database.Password,
+		a.config.Database.Database,
+		a.config.Database.SSLMode,
+	)
+	dbConn, err := database.NewConnection(dsn, a.logger)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}
@@ -78,8 +86,8 @@ func (a *App) Initialize() error {
 	a.paymentClient = paymentClient
 
 	// Initialize services
-	ticketService := services.NewTicketService(ticketRepo, eventClient, a.logger)
-	bookingService := services.NewTicketBookingSessionService(bookingRepo, reservationRepo, eventClient, a.paymentClient, a.logger)
+	ticketService := services.NewTicketService(ticketRepo, eventClient, paymentClient, a.logger)
+	bookingService := services.NewTicketBookingSessionService(bookingRepo, reservationRepo, eventClient, paymentClient, a.logger)
 	reservationService := services.NewReservationService(reservationRepo, eventClient, a.logger)
 
 	a.ticketService = ticketService

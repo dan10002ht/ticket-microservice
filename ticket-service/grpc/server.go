@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 
-	ticketpb "shared-lib/protos/ticket"
+	ticketpb "ticket-service/internal/protos/ticket"
 	"ticket-service/services"
 )
 

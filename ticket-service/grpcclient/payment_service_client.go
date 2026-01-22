@@ -10,7 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	paymentpb "shared-lib/protos/payment"
+	paymentpb "ticket-service/internal/protos/payment"
 )
 
 // PaymentServiceClient handles communication with Payment Service
@@ -42,11 +42,11 @@ func NewPaymentServiceClient(config config.PaymentServiceConfig, logger *zap.Log
 	}, nil
 }
 
-// ProcessPayment processes a payment
-func (c *PaymentServiceClient) ProcessPayment(ctx context.Context, req *paymentpb.ProcessPaymentRequest) (*paymentpb.ProcessPaymentResponse, error) {
-	resp, err := c.client.ProcessPayment(ctx, req)
+// CreatePayment creates a new payment
+func (c *PaymentServiceClient) CreatePayment(ctx context.Context, req *paymentpb.CreatePaymentRequest) (*paymentpb.PaymentResponse, error) {
+	resp, err := c.client.CreatePayment(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to process payment",
+		c.logger.Error("Failed to create payment",
 			zap.String("booking_id", req.BookingId),
 			zap.Error(err),
 		)
@@ -56,11 +56,11 @@ func (c *PaymentServiceClient) ProcessPayment(ctx context.Context, req *paymentp
 	return resp, nil
 }
 
-// RefundPayment processes a refund
-func (c *PaymentServiceClient) RefundPayment(ctx context.Context, req *paymentpb.RefundPaymentRequest) (*paymentpb.RefundPaymentResponse, error) {
-	resp, err := c.client.RefundPayment(ctx, req)
+// CreateRefund creates a refund for a payment
+func (c *PaymentServiceClient) CreateRefund(ctx context.Context, req *paymentpb.CreateRefundRequest) (*paymentpb.RefundResponse, error) {
+	resp, err := c.client.CreateRefund(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to refund payment",
+		c.logger.Error("Failed to create refund",
 			zap.String("payment_id", req.PaymentId),
 			zap.Error(err),
 		)
@@ -70,15 +70,72 @@ func (c *PaymentServiceClient) RefundPayment(ctx context.Context, req *paymentpb
 	return resp, nil
 }
 
-// GetPaymentStatus retrieves payment status
-func (c *PaymentServiceClient) GetPaymentStatus(ctx context.Context, paymentID string) (*paymentpb.GetPaymentStatusResponse, error) {
-	req := &paymentpb.GetPaymentStatusRequest{
+// GetPayment retrieves payment details
+func (c *PaymentServiceClient) GetPayment(ctx context.Context, paymentID string) (*paymentpb.PaymentResponse, error) {
+	req := &paymentpb.GetPaymentRequest{
 		PaymentId: paymentID,
 	}
 
-	resp, err := c.client.GetPaymentStatus(ctx, req)
+	resp, err := c.client.GetPayment(ctx, req)
 	if err != nil {
-		c.logger.Error("Failed to get payment status",
+		c.logger.Error("Failed to get payment",
+			zap.String("payment_id", paymentID),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// MarkPaymentSuccess marks a payment as successful
+func (c *PaymentServiceClient) MarkPaymentSuccess(ctx context.Context, paymentID, externalRef string) (*paymentpb.PaymentResponse, error) {
+	req := &paymentpb.MarkPaymentSuccessRequest{
+		PaymentId:         paymentID,
+		ExternalReference: externalRef,
+	}
+
+	resp, err := c.client.MarkPaymentSuccess(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to mark payment success",
+			zap.String("payment_id", paymentID),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// MarkPaymentFailed marks a payment as failed
+func (c *PaymentServiceClient) MarkPaymentFailed(ctx context.Context, paymentID, reason string) (*paymentpb.PaymentResponse, error) {
+	req := &paymentpb.MarkPaymentFailedRequest{
+		PaymentId:     paymentID,
+		FailureReason: reason,
+	}
+
+	resp, err := c.client.MarkPaymentFailed(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to mark payment failed",
+			zap.String("payment_id", paymentID),
+			zap.Error(err),
+		)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+// CancelPayment cancels a payment
+func (c *PaymentServiceClient) CancelPayment(ctx context.Context, paymentID, reason string) (*paymentpb.PaymentResponse, error) {
+	req := &paymentpb.CancelPaymentRequest{
+		PaymentId: paymentID,
+		Reason:    reason,
+	}
+
+	resp, err := c.client.CancelPayment(ctx, req)
+	if err != nil {
+		c.logger.Error("Failed to cancel payment",
 			zap.String("payment_id", paymentID),
 			zap.Error(err),
 		)
@@ -101,11 +158,11 @@ func (c *PaymentServiceClient) HealthCheck(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	req := &paymentpb.GetPaymentStatusRequest{
-		PaymentId: "health-check",
+	req := &paymentpb.HealthRequest{
+		Service: "ticket-service",
 	}
 
-	_, err := c.client.GetPaymentStatus(ctx, req)
+	_, err := c.client.Health(ctx, req)
 	if err != nil {
 		return fmt.Errorf("Payment Service health check failed: %w", err)
 	}
