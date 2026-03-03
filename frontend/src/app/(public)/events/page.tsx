@@ -1,13 +1,6 @@
-import type { Metadata } from "next";
-import { EventCard } from "@/components/organisms/events/event-card";
 import { PageHeader } from "@/components/molecules/page-header";
-import { SearchInput } from "@/components/molecules/search-input";
+import { EventListingContent } from "@/components/organisms/events/event-listing-content";
 import type { Event } from "@/types";
-
-export const metadata: Metadata = {
-  title: "Events",
-  description: "Browse all upcoming events and find your next experience.",
-};
 
 const sampleEvents: Event[] = [
   {
@@ -122,19 +115,7 @@ export default function EventsPage() {
         description="Browse and discover upcoming events"
       />
 
-      <div className="mt-6">
-        <SearchInput
-          placeholder="Search events by name, venue..."
-          onSearch={() => {}}
-          className="max-w-md"
-        />
-      </div>
-
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {sampleEvents.map((event) => (
-          <EventCard key={event.id} event={event} />
-        ))}
-      </div>
+      <EventListingContent events={sampleEvents} />
     </section>
   );
 }

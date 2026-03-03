@@ -1,14 +1,10 @@
-import type { Metadata } from "next";
+"use client";
+
 import { PageHeader } from "@/components/molecules/page-header";
 import { StatusBadge } from "@/components/molecules/status-badge";
 import { AvatarWithName } from "@/components/molecules/avatar-with-name";
 import { SearchInput } from "@/components/molecules/search-input";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
-
-export const metadata: Metadata = {
-  title: "Manage Users",
-  description: "View and manage all platform users.",
-};
 
 interface AdminUser {
   id: string;

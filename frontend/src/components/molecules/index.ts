@@ -9,3 +9,5 @@ export { NavItem } from "./nav-item";
 export { ThemeToggle } from "./theme-toggle";
 export { Breadcrumbs } from "./breadcrumbs";
 export { SearchDialog } from "./search-dialog";
+export { MotionSection, MotionDiv } from "./motion-wrapper";
+export { PageTransition } from "./page-transition";

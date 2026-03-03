@@ -1,14 +1,10 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/molecules/page-header";
 import { StatusBadge } from "@/components/molecules/status-badge";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
-
-export const metadata: Metadata = {
-  title: "My Events",
-  description: "Manage your events.",
-};
 
 interface OrgEvent {
   id: string;

@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+"use client";
+
 import {
   CalendarDays,
   DollarSign,
@@ -9,11 +10,6 @@ import { PageHeader } from "@/components/molecules/page-header";
 import { StatsCard } from "@/components/molecules/stats-card";
 import { StatusBadge } from "@/components/molecules/status-badge";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
-
-export const metadata: Metadata = {
-  title: "Organizer Dashboard",
-  description: "Overview of your events and sales.",
-};
 
 interface RecentBooking {
   id: string;

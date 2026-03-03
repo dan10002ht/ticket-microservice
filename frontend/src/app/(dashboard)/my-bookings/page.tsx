@@ -1,14 +1,10 @@
-import type { Metadata } from "next";
+"use client";
+
 import { PageHeader } from "@/components/molecules/page-header";
 import { StatusBadge } from "@/components/molecules/status-badge";
 import { PriceDisplay } from "@/components/molecules/price-display";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
 import type { Booking } from "@/types";
-
-export const metadata: Metadata = {
-  title: "My Bookings",
-  description: "View and manage your event bookings.",
-};
 
 const sampleBookings: Booking[] = [
   {
