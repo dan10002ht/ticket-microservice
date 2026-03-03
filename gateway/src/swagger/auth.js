@@ -799,7 +799,7 @@
 
 /**
  * @swagger
- * /api/auth/validate:
+ * /auth/validate:
  *   post:
  *     summary: Validate JWT token
  *     description: Validate a JWT token and return user info if valid
@@ -822,7 +822,7 @@
 
 /**
  * @swagger
- * /api/auth/oauth/login:
+ * /auth/oauth/login:
  *   post:
  *     summary: OAuth login
  *     description: Login using OAuth provider
@@ -846,7 +846,7 @@
 
 /**
  * @swagger
- * /api/auth/verify-email-token:
+ * /auth/verify-email-token:
  *   post:
  *     summary: Verify email with token
  *     description: Verify user email using token from email link
@@ -872,7 +872,7 @@
 
 /**
  * @swagger
- * /api/auth/register:
+ * /auth/register:
  *   post:
  *     summary: Basic registration
  *     description: Register a new user with basic information
@@ -917,7 +917,7 @@
 
 /**
  * @swagger
- * /api/auth/permissions:
+ * /auth/permissions:
  *   get:
  *     summary: Get user permissions
  *     description: Get all permissions for the authenticated user
@@ -944,7 +944,7 @@
 
 /**
  * @swagger
- * /api/auth/permissions/check:
+ * /auth/permissions/check:
  *   post:
  *     summary: Check single permission
  *     description: Check if user has a specific permission
@@ -979,7 +979,7 @@
 
 /**
  * @swagger
- * /api/auth/permissions/resource:
+ * /auth/permissions/resource:
  *   post:
  *     summary: Check resource permission
  *     description: Check if user has permission for a specific resource and action
@@ -1014,7 +1014,7 @@
 
 /**
  * @swagger
- * /api/auth/permissions/batch:
+ * /auth/permissions/batch:
  *   post:
  *     summary: Batch check permissions
  *     description: Check multiple permissions at once
@@ -1051,7 +1051,7 @@
 
 /**
  * @swagger
- * /api/auth/roles:
+ * /auth/roles:
  *   get:
  *     summary: Get user roles
  *     description: Get all roles for the authenticated user
@@ -1078,7 +1078,7 @@
 
 /**
  * @swagger
- * /api/auth/users/{userId}:
+ * /auth/users/{userId}:
  *   get:
  *     summary: Get user by ID (Admin)
  *     description: Get user details by ID (Admin only)
@@ -1181,7 +1181,7 @@
 
 /**
  * @swagger
- * /api/auth/health:
+ * /auth/health:
  *   get:
  *     summary: Health check
  *     description: Check auth service health

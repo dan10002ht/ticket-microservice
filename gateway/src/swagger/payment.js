@@ -172,7 +172,7 @@
 
 /**
  * @swagger
- * /api/payments:
+ * /payments:
  *   post:
  *     summary: Process payment
  *     description: Process a payment for a booking
@@ -255,7 +255,7 @@
 
 /**
  * @swagger
- * /api/payments/admin/list:
+ * /payments/admin/list:
  *   get:
  *     summary: List all payments (Admin)
  *     description: Retrieve all payments with optional filters (Admin only)
@@ -313,7 +313,7 @@
 
 /**
  * @swagger
- * /api/payments/methods:
+ * /payments/methods:
  *   get:
  *     summary: Get available payment methods
  *     description: Retrieve available payment methods
@@ -370,7 +370,7 @@
 
 /**
  * @swagger
- * /api/payments/{paymentId}:
+ * /payments/{paymentId}:
  *   get:
  *     summary: Get payment by ID
  *     description: Retrieve a specific payment by ID
@@ -404,7 +404,7 @@
 
 /**
  * @swagger
- * /api/payments/{paymentId}/capture:
+ * /payments/{paymentId}/capture:
  *   post:
  *     summary: Capture pre-authorized payment
  *     description: Capture a previously authorized payment
@@ -442,7 +442,7 @@
 
 /**
  * @swagger
- * /api/payments/{paymentId}/cancel:
+ * /payments/{paymentId}/cancel:
  *   post:
  *     summary: Cancel payment
  *     description: Cancel a pending or authorized payment
@@ -489,7 +489,7 @@
 
 /**
  * @swagger
- * /api/payments/{paymentId}/refund:
+ * /payments/{paymentId}/refund:
  *   post:
  *     summary: Create refund
  *     description: Create a refund for a completed payment
@@ -531,7 +531,7 @@
 
 /**
  * @swagger
- * /api/payments/{paymentId}/refunds:
+ * /payments/{paymentId}/refunds:
  *   get:
  *     summary: List refunds for payment
  *     description: Get all refunds associated with a payment
@@ -567,7 +567,7 @@
 
 /**
  * @swagger
- * /api/payments/refunds/{refundId}:
+ * /payments/refunds/{refundId}:
  *   put:
  *     summary: Update refund status (Admin)
  *     description: Update the status of a refund (Admin only)

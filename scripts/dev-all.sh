@@ -20,6 +20,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 DEPLOY_DIR="$PROJECT_DIR/deploy"
 
+# Source shared service config (health check utils, prefix_log, colors)
+source "$SCRIPT_DIR/lib/service-config.sh"
+
+# Log directory setup
+LOG_DIR="$PROJECT_DIR/logs"
+mkdir -p "$LOG_DIR"
+# Rotate old logs (keep last run)
+for f in "$LOG_DIR"/*.log; do
+    [ -f "$f" ] && mv "$f" "${f}.prev" 2>/dev/null
+done
+
 echo -e "${GREEN}"
 echo "╔══════════════════════════════════════════════════╗"
 echo "║  Booking System - Development Environment        ║"
@@ -327,11 +338,10 @@ ENVEOF
     yarn seed:run 2>/dev/null || true
 
     # Start with yarn dev (not dev:local, infrastructure already started)
-    yarn dev &
+    yarn dev > >(prefix_log "auth" "$(get_log_color auth)" | tee -a "$LOG_DIR/auth-service.log") 2>&1 &
     AUTH_PID=$!
     cd "$PROJECT_DIR"
-    sleep 5
-    echo -e "${GREEN}  ✓ Auth Service started (gRPC: 50051)${NC}"
+    wait_for_healthy "auth-service" 50051 "port" 30
 }
 
 start_user_service() {
@@ -346,14 +356,13 @@ start_user_service() {
     cd "$PROJECT_DIR/user-service"
     if [ -f "scripts/dev.sh" ]; then
         chmod +x scripts/dev.sh
-        ./scripts/dev.sh &
+        ./scripts/dev.sh > >(prefix_log "user" "$(get_log_color user)" | tee -a "$LOG_DIR/user-service.log") 2>&1 &
     else
-        go run main.go &
+        go run main.go > >(prefix_log "user" "$(get_log_color user)" | tee -a "$LOG_DIR/user-service.log") 2>&1 &
     fi
     USER_PID=$!
     cd "$PROJECT_DIR"
-    sleep 5
-    echo -e "${GREEN}  ✓ User Service started (gRPC: 50052)${NC}"
+    wait_for_healthy "user-service" 50052 "grpc" 30
 }
 
 start_event_service() {
@@ -367,14 +376,13 @@ start_event_service() {
     cd "$PROJECT_DIR/event-service"
     if [ -f "scripts/dev.sh" ]; then
         chmod +x scripts/dev.sh
-        ./scripts/dev.sh &
+        ./scripts/dev.sh > >(prefix_log "event" "$(get_log_color event)" | tee -a "$LOG_DIR/event-service.log") 2>&1 &
     else
-        go run main.go &
+        go run main.go > >(prefix_log "event" "$(get_log_color event)" | tee -a "$LOG_DIR/event-service.log") 2>&1 &
     fi
     EVENT_PID=$!
     cd "$PROJECT_DIR"
-    sleep 5
-    echo -e "${GREEN}  ✓ Event Service started (gRPC: 50053)${NC}"
+    wait_for_healthy "event-service" 50053 "port" 30
 }
 
 start_booking_service() {
@@ -387,11 +395,10 @@ start_booking_service() {
     kill_port 8084 "booking-service-http"
     kill_port 50058 "booking-service-grpc"
     cd "$PROJECT_DIR/booking-service"
-    mvn spring-boot:run -Dspring-boot.run.profiles=dev &
+    mvn spring-boot:run -Dspring-boot.run.profiles=dev > >(prefix_log "booking" "$(get_log_color booking)" | tee -a "$LOG_DIR/booking-service.log") 2>&1 &
     BOOKING_PID=$!
     cd "$PROJECT_DIR"
-    sleep 10
-    echo -e "${GREEN}  ✓ Booking Service started (HTTP: 8084, gRPC: 50058)${NC}"
+    wait_for_healthy "booking-service" 8084 "spring" 60 "http://localhost:8084/actuator/health"
 }
 
 start_payment_service() {
@@ -404,11 +411,10 @@ start_payment_service() {
     kill_port 8081 "payment-service-http"
     kill_port 50056 "payment-service-grpc"
     cd "$PROJECT_DIR/payment-service"
-    mvn spring-boot:run -Dspring-boot.run.profiles=dev &
+    mvn spring-boot:run -Dspring-boot.run.profiles=dev > >(prefix_log "payment" "$(get_log_color payment)" | tee -a "$LOG_DIR/payment-service.log") 2>&1 &
     PAYMENT_PID=$!
     cd "$PROJECT_DIR"
-    sleep 10
-    echo -e "${GREEN}  ✓ Payment Service started (HTTP: 8081, gRPC: 50056)${NC}"
+    wait_for_healthy "payment-service" 50056 "port" 60
 }
 
 start_realtime_service() {
@@ -423,14 +429,13 @@ start_realtime_service() {
     cd "$PROJECT_DIR/realtime-service"
     if [ -f "scripts/dev.sh" ]; then
         chmod +x scripts/dev.sh
-        ./scripts/dev.sh &
+        ./scripts/dev.sh > >(prefix_log "realtime" "$(get_log_color realtime)" | tee -a "$LOG_DIR/realtime-service.log") 2>&1 &
     else
-        go run main.go &
+        go run main.go > >(prefix_log "realtime" "$(get_log_color realtime)" | tee -a "$LOG_DIR/realtime-service.log") 2>&1 &
     fi
     REALTIME_PID=$!
     cd "$PROJECT_DIR"
-    sleep 5
-    echo -e "${GREEN}  ✓ Realtime Service started (HTTP: 3003, gRPC: 50057)${NC}"
+    wait_for_healthy "realtime-service" 3003 "http" 30 "http://localhost:3003/health"
 }
 
 start_ticket_service() {
@@ -444,14 +449,13 @@ start_ticket_service() {
     cd "$PROJECT_DIR/ticket-service"
     if [ -f "scripts/dev.sh" ]; then
         chmod +x scripts/dev.sh
-        ./scripts/dev.sh &
+        ./scripts/dev.sh > >(prefix_log "ticket" "$(get_log_color ticket)" | tee -a "$LOG_DIR/ticket-service.log") 2>&1 &
     else
-        go run main.go &
+        go run main.go > >(prefix_log "ticket" "$(get_log_color ticket)" | tee -a "$LOG_DIR/ticket-service.log") 2>&1 &
     fi
     TICKET_PID=$!
     cd "$PROJECT_DIR"
-    sleep 5
-    echo -e "${GREEN}  ✓ Ticket Service started (gRPC: 50054)${NC}"
+    wait_for_healthy "ticket-service" 50054 "port" 30
 }
 
 start_booking_worker() {
@@ -466,14 +470,13 @@ start_booking_worker() {
     cd "$PROJECT_DIR/booking-worker"
     if [ -f "scripts/dev.sh" ]; then
         chmod +x scripts/dev.sh
-        ./scripts/dev.sh &
+        ./scripts/dev.sh > >(prefix_log "booking-worker" "$(get_log_color booking-worker)" | tee -a "$LOG_DIR/booking-worker.log") 2>&1 &
     else
-        go run main.go &
+        go run main.go > >(prefix_log "booking-worker" "$(get_log_color booking-worker)" | tee -a "$LOG_DIR/booking-worker.log") 2>&1 &
     fi
     BOOKING_WORKER_PID=$!
     cd "$PROJECT_DIR"
-    sleep 5
-    echo -e "${GREEN}  ✓ Booking Worker started (gRPC: 50059)${NC}"
+    wait_for_healthy "booking-worker" 50059 "port" 30
 }
 
 start_email_worker() {
@@ -489,31 +492,29 @@ start_email_worker() {
     # Use scripts/dev.sh or go run (infrastructure already started by dev-all.sh)
     if [ -f "scripts/dev.sh" ]; then
         chmod +x scripts/dev.sh
-        ./scripts/dev.sh &
+        ./scripts/dev.sh > >(prefix_log "email-worker" "$(get_log_color email-worker)" | tee -a "$LOG_DIR/email-worker.log") 2>&1 &
     else
-        go run main.go &
+        go run main.go > >(prefix_log "email-worker" "$(get_log_color email-worker)" | tee -a "$LOG_DIR/email-worker.log") 2>&1 &
     fi
     EMAIL_WORKER_PID=$!
     cd "$PROJECT_DIR"
-    sleep 5
-    echo -e "${GREEN}  ✓ Email Worker started (HTTP: 8080, gRPC: 50060)${NC}"
+    wait_for_healthy "email-worker" 50060 "port" 30
 }
 
 start_gateway() {
     echo ""
     echo -e "${CYAN}Starting API Gateway...${NC}"
-    kill_port 3000 "gateway"
+    kill_port 53000 "gateway"
     cd "$PROJECT_DIR/gateway"
     if [ ! -d "node_modules" ]; then
         echo "  Installing dependencies..."
         yarn install --silent
     fi
     # Use yarn dev instead of dev:local (infrastructure already started)
-    yarn dev &
+    yarn dev > >(prefix_log "gateway" "$(get_log_color gateway)" | tee -a "$LOG_DIR/gateway.log") 2>&1 &
     GATEWAY_PID=$!
     cd "$PROJECT_DIR"
-    sleep 5
-    echo -e "${GREEN}  ✓ Gateway started (HTTP: 3000)${NC}"
+    wait_for_healthy "gateway" 53000 "http" 30 "http://localhost:53000/health"
 }
 
 # Cleanup function (Bash 3 compatible)
@@ -624,6 +625,9 @@ echo -e "${CYAN}═════════════════════�
 echo -e "${CYAN}  Starting Application Services${NC}"
 echo -e "${CYAN}════════════════════════════════════════════════${NC}"
 
+# Disable set -e for app services - one service failing should NOT stop the rest
+set +e
+
 should_start_service "auth" && start_auth_service
 should_start_service "user" && start_user_service
 should_start_service "event" && start_event_service
@@ -635,26 +639,56 @@ should_start_service "booking-worker" && start_booking_worker
 should_start_service "email-worker" && start_email_worker
 should_start_service "gateway" && start_gateway
 
-# Print summary
+set -e
+
+# Print dynamic health summary
 echo ""
 echo -e "${GREEN}════════════════════════════════════════════════${NC}"
-echo -e "${GREEN}  All Services Started!${NC}"
+echo -e "${GREEN}  Startup Complete - Service Status${NC}"
 echo -e "${GREEN}════════════════════════════════════════════════${NC}"
 echo ""
-echo -e "${CYAN}Endpoints:${NC}"
-echo "  Gateway:     http://localhost:53000"
-echo "  Swagger:     http://localhost:53000/api/docs"
+
+TOTAL_STARTED=0
+TOTAL_HEALTHY=0
+TOTAL_FAILED=0
+
+check_and_report() {
+    local name=$1
+    local port=$2
+    local pid_var=$3
+    local label=$4
+    eval "local pid=\$$pid_var"
+
+    TOTAL_STARTED=$((TOTAL_STARTED + 1))
+    if check_port "$port"; then
+        echo -e "  ${GREEN}[OK]${NC}   $name  ($label, PID: ${pid:-?})"
+        TOTAL_HEALTHY=$((TOTAL_HEALTHY + 1))
+    else
+        echo -e "  ${RED}[FAIL]${NC} $name  ($label, PID: ${pid:-?})"
+        TOTAL_FAILED=$((TOTAL_FAILED + 1))
+    fi
+}
+
+[ -n "$AUTH_PID" ]           && check_and_report "auth-service    " 50051 AUTH_PID "gRPC:50051"
+[ -n "$USER_PID" ]           && check_and_report "user-service    " 50052 USER_PID "gRPC:50052"
+[ -n "$EVENT_PID" ]          && check_and_report "event-service   " 50053 EVENT_PID "gRPC:50053"
+[ -n "$TICKET_PID" ]         && check_and_report "ticket-service  " 50054 TICKET_PID "gRPC:50054"
+[ -n "$BOOKING_PID" ]        && check_and_report "booking-service " 8084 BOOKING_PID "HTTP:8084, gRPC:50058"
+[ -n "$PAYMENT_PID" ]        && check_and_report "payment-service " 50056 PAYMENT_PID "gRPC:50056"
+[ -n "$REALTIME_PID" ]       && check_and_report "realtime-service" 3003 REALTIME_PID "HTTP:3003, gRPC:50057"
+[ -n "$BOOKING_WORKER_PID" ] && check_and_report "booking-worker  " 50059 BOOKING_WORKER_PID "gRPC:50059"
+[ -n "$EMAIL_WORKER_PID" ]   && check_and_report "email-worker    " 50060 EMAIL_WORKER_PID "gRPC:50060"
+[ -n "$GATEWAY_PID" ]        && check_and_report "gateway         " 53000 GATEWAY_PID "HTTP:53000"
+
 echo ""
-echo -e "${CYAN}gRPC Services:${NC}"
-echo "  Auth:        localhost:50051"
-echo "  User:        localhost:50052"
-echo "  Event:       localhost:50053"
-echo "  Ticket:      localhost:50054"
-echo "  Payment:     localhost:50056"
-echo "  Realtime:    localhost:50057"
-echo "  Booking:     localhost:50058"
-echo "  BookingWorker: localhost:50059"
-echo "  EmailWorker: localhost:50060"
+echo -e "  Summary: ${GREEN}$TOTAL_HEALTHY healthy${NC} | ${RED}$TOTAL_FAILED failed${NC} | $TOTAL_STARTED total"
+echo ""
+echo -e "${CYAN}Tools:${NC}"
+echo "  Health check:  ./scripts/health-check.sh"
+echo "  Watch mode:    ./scripts/health-check.sh --watch"
+echo "  View logs:     ./scripts/dev-logs.sh <service>"
+echo "  Tail logs:     ./scripts/dev-logs.sh --tail <service>"
+echo "  Log files:     $LOG_DIR/"
 echo ""
 echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
 echo ""

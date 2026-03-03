@@ -1,3 +1,12 @@
+# gRPC port (default 9090 conflicts with Prometheus)
+grpc:
+  server:
+    port: 50056
+
+# HTTP server port
+server:
+  port: 8081
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:50433/booking_system

@@ -1,0 +1,123 @@
+"use client";
+
+import Link from "next/link";
+import { Bell, LogOut, Menu, Ticket, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { AvatarWithName } from "@/components/molecules/avatar-with-name";
+import { SearchDialog } from "@/components/molecules/search-dialog";
+import { ThemeToggle } from "@/components/molecules/theme-toggle";
+import { cn } from "@/lib/utils";
+
+const dashboardLinks = [
+  { href: "/my-bookings", label: "My Bookings" },
+  { href: "/my-tickets", label: "My Tickets" },
+];
+
+interface AuthNavbarProps {
+  className?: string;
+}
+
+export function AuthNavbar({ className }: AuthNavbarProps) {
+  return (
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        className
+      )}
+    >
+      <nav className="container mx-auto flex h-16 items-center justify-between px-4">
+        {/* Logo + Nav links (left-aligned) */}
+        <div className="flex items-center gap-8">
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+            <Ticket className="h-6 w-6 text-primary" />
+            <span>TicketBox</span>
+          </Link>
+
+          {/* Desktop nav */}
+          <div className="hidden items-center gap-6 md:flex">
+            {dashboardLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <SearchDialog />
+          <ThemeToggle />
+          <Button variant="ghost" size="icon" aria-label="Notifications" className="hidden md:inline-flex">
+            <Bell className="h-5 w-5" />
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="gap-2 px-2">
+                <AvatarWithName name="John Doe" size="sm" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link href="/profile" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex items-center gap-2 text-destructive">
+                <LogOut className="h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Mobile menu */}
+        <Sheet>
+          <SheetTrigger asChild className="md:hidden">
+            <Button variant="ghost" size="icon" aria-label="Open menu">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-72">
+            <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+            <div className="flex flex-col gap-4 pt-8">
+              {dashboardLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-sm font-medium transition-colors hover:text-primary"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <Link
+                href="/profile"
+                className="text-sm font-medium transition-colors hover:text-primary"
+              >
+                Profile
+              </Link>
+            </div>
+          </SheetContent>
+        </Sheet>
+      </nav>
+    </header>
+  );
+}

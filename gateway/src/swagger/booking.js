@@ -142,7 +142,7 @@
 
 /**
  * @swagger
- * /api/bookings:
+ * /bookings:
  *   post:
  *     summary: Create a new booking
  *     description: Create a new booking for an event
@@ -227,7 +227,7 @@
 
 /**
  * @swagger
- * /api/bookings/admin/list:
+ * /bookings/admin/list:
  *   get:
  *     summary: List all bookings (Admin)
  *     description: Retrieve all bookings with optional filters (Admin only)
@@ -285,7 +285,7 @@
 
 /**
  * @swagger
- * /api/bookings/seats/reserve:
+ * /bookings/seats/reserve:
  *   post:
  *     summary: Reserve seats
  *     description: Temporarily reserve seats for an event before booking
@@ -320,7 +320,7 @@
 
 /**
  * @swagger
- * /api/bookings/seats/release:
+ * /bookings/seats/release:
  *   post:
  *     summary: Release reserved seats
  *     description: Release previously reserved seats back to available pool
@@ -364,7 +364,7 @@
 
 /**
  * @swagger
- * /api/bookings/{bookingId}:
+ * /bookings/{bookingId}:
  *   get:
  *     summary: Get booking by ID
  *     description: Retrieve a specific booking by ID
@@ -435,7 +435,7 @@
 
 /**
  * @swagger
- * /api/bookings/{bookingId}/cancel:
+ * /bookings/{bookingId}/cancel:
  *   post:
  *     summary: Cancel booking
  *     description: Cancel a booking
@@ -482,7 +482,7 @@
 
 /**
  * @swagger
- * /api/bookings/{bookingId}/confirm:
+ * /bookings/{bookingId}/confirm:
  *   post:
  *     summary: Confirm booking
  *     description: Confirm a booking after successful payment

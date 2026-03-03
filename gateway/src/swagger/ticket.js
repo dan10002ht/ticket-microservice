@@ -155,7 +155,7 @@
 
 /**
  * @swagger
- * /api/tickets:
+ * /tickets:
  *   get:
  *     summary: Get all tickets
  *     tags: [Tickets]
@@ -217,7 +217,7 @@
 
 /**
  * @swagger
- * /api/tickets/{ticketId}:
+ * /tickets/{ticketId}:
  *   get:
  *     summary: Get ticket by ID
  *     tags: [Tickets]
@@ -268,7 +268,7 @@
 
 /**
  * @swagger
- * /api/tickets/types/{eventId}:
+ * /tickets/types/{eventId}:
  *   get:
  *     summary: Get ticket types for an event
  *     tags: [Ticket Types]
@@ -302,7 +302,7 @@
 
 /**
  * @swagger
- * /api/tickets/types:
+ * /tickets/types:
  *   post:
  *     summary: Create a new ticket type
  *     tags: [Ticket Types]
@@ -329,7 +329,7 @@
 
 /**
  * @swagger
- * /api/tickets/types/{typeId}:
+ * /tickets/types/{typeId}:
  *   put:
  *     summary: Update ticket type
  *     tags: [Ticket Types]
@@ -368,7 +368,7 @@
 
 /**
  * @swagger
- * /api/tickets/availability/{eventId}:
+ * /tickets/availability/{eventId}:
  *   get:
  *     summary: Check ticket availability for an event
  *     tags: [Ticket Availability]
@@ -406,7 +406,7 @@
 
 /**
  * @swagger
- * /api/tickets/available/{eventId}:
+ * /tickets/available/{eventId}:
  *   get:
  *     summary: Get available tickets for an event
  *     tags: [Ticket Availability]
@@ -445,7 +445,7 @@
 
 /**
  * @swagger
- * /api/tickets/reserve/{eventId}:
+ * /tickets/reserve/{eventId}:
  *   post:
  *     summary: Reserve tickets for an event
  *     description: Temporarily reserve tickets before purchase. Reservation expires after timeout.
@@ -497,7 +497,7 @@
 
 /**
  * @swagger
- * /api/tickets/release:
+ * /tickets/release:
  *   post:
  *     summary: Release reserved tickets
  *     description: Release previously reserved tickets back to available pool
