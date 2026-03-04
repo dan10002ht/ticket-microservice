@@ -108,6 +108,18 @@ export function useReserveTickets(eventId: string) {
   });
 }
 
+export function useDeleteTicketType() {
+  const queryClient = useQueryClient();
+  return useMutation<void, ApiError, string>({
+    mutationFn: async (typeId) => {
+      await apiClient.delete(API_ENDPOINTS.tickets.typeDetail(typeId));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.all });
+    },
+  });
+}
+
 export function useReleaseTickets() {
   return useMutation<void, ApiError, TicketReleaseRequest>({
     mutationFn: async (input) => {

@@ -47,6 +47,7 @@ export {
   useTicketAvailability,
   useCreateTicketType,
   useUpdateTicketType,
+  useDeleteTicketType,
   useReserveTickets,
   useReleaseTickets,
 } from "./ticket.queries";

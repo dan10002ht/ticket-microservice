@@ -12,3 +12,15 @@ export const createEventSchema = z.object({
 });
 
 export type CreateEventInput = z.infer<typeof createEventSchema>;
+
+export const ticketTypeSchema = z.object({
+  name: z.string().min(1, "Ticket type name is required"),
+  description: z.string().optional(),
+  price: z.number().min(0, "Price must be 0 or more"),
+  currency: z.string().optional(),
+  quantity: z.number().int().min(1, "At least 1 ticket required"),
+  max_per_purchase: z.number().int().min(1).optional(),
+  min_per_purchase: z.number().int().min(1).optional(),
+});
+
+export type TicketTypeInput = z.infer<typeof ticketTypeSchema>;
