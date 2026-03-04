@@ -1,0 +1,12 @@
+version: v1
+lint:
+  use:
+    - DEFAULT
+  except:
+    # Allow package names without a leading domain component (e.g., "auth.v1" instead of "com.example.auth.v1")
+    - PACKAGE_DIRECTORY_MATCH
+    # Allow proto files to be in a flat directory rather than matching package structure
+    - PACKAGE_SAME_DIRECTORY
+  ignore_only:
+    # go_package options use module-relative paths, not fully qualified domain paths
+    IMPORT_NO_PUBLIC: []

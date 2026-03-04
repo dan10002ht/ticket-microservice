@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package booking_worker;
+package booking_worker.v1;
 
 option go_package = "booking-worker/internal/protos/booking_worker";
 option java_multiple_files = true;

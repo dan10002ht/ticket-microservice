@@ -1,7 +1,8 @@
 syntax = "proto3";
 
-package auth;
+package auth.v1;
 
+option go_package = "auth-service/internal/protos/auth";
 
 service AuthService {
   // User authentication

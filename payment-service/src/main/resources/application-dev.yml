@@ -9,9 +9,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:50433/booking_system
-    username: booking_user
-    password: booking_pass
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:50433}/${DB_NAME:booking_system}
+    username: ${DB_USER:booking_user}
+    password: ${DB_PASSWORD:booking_pass}
 
   jpa:
     show-sql: true
@@ -22,9 +22,9 @@ spring:
 
 payment:
   stripe:
-    api-key: sk_test_dev_xxx
-    webhook-secret: whsec_dev_xxx
-    public-key: pk_test_dev_xxx
+    api-key: ${STRIPE_API_KEY:sk_test_dev_placeholder}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_dev_placeholder}
+    public-key: ${STRIPE_PUBLIC_KEY:pk_test_dev_placeholder}
 
   paypal:
     mode: sandbox

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package ticket_booking;
+package ticket_booking.v1;
 
 option go_package = "github.com/booking-system/shared-lib/protos/ticket_booking";
 option java_package = "com.bookingsystem.shared.protos.ticket_booking";

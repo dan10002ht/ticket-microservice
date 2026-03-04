@@ -290,18 +290,64 @@ services:
     restart: unless-stopped
 
   # ============================================
-  # Redis Cluster (Single node for simplicity)
+  # Redis (3 instances — separated by use case)
+  # Service → Redis routing:
+  #   redis-cache  (6379): gateway, auth-service, ticket-service
+  #   redis-queue  (6380): booking-worker, booking-service  [noeviction — CRITICAL]
+  #   redis-pubsub (6381): realtime-service
   # ============================================
-  redis:
+
+  # redis-cache: Session, rate limiting, general caching
+  # Services: gateway, auth-service, ticket-service
+  redis-cache:
     image: redis:7-alpine
-    container_name: prod-redis
+    container_name: prod-redis-cache
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "${REDIS_CACHE_PORT:-6379}:6379"
     volumes:
-      - redis_data:/data
+      - redis_cache_data:/data
     networks:
       - booking-net
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # redis-queue: Booking queue + distributed locks
+  # Services: booking-worker, booking-service
+  # CRITICAL: noeviction — queue items must never be silently dropped
+  redis-queue:
+    image: redis:7-alpine
+    container_name: prod-redis-queue
+    ports:
+      - "${REDIS_QUEUE_PORT:-6380}:6379"
+    volumes:
+      - redis_queue_data:/data
+    networks:
+      - booking-net
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy noeviction
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # redis-pubsub: WebSocket pub/sub for realtime notifications
+  # Services: realtime-service
+  redis-pubsub:
+    image: redis:7-alpine
+    container_name: prod-redis-pubsub
+    ports:
+      - "${REDIS_PUBSUB_PORT:-6381}:6379"
+    volumes:
+      - redis_pubsub_data:/data
+    networks:
+      - booking-net
+    command: redis-server --maxmemory 128mb --maxmemory-policy volatile-ttl
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -392,7 +438,9 @@ volumes:
   main_primary_data:
   main_replica1_data:
   main_replica2_data:
-  redis_data:
+  redis_cache_data:
+  redis_queue_data:
+  redis_pubsub_data:
   zookeeper_data:
   zookeeper_log:
   kafka_data:

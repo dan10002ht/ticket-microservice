@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package checkin.v1;
+
+option go_package = "checkin-service/internal/protos";
+option java_multiple_files = true;
+option java_package = "com.ticketing.checkin.grpc";
+option java_outer_classname = "CheckinProto";
+
+// =============================================================================
+// Checkin Service
+// =============================================================================
+
+service CheckinService {
+  // Process a ticket check-in on event day
+  rpc CheckIn(CheckInRequest) returns (CheckInResponse);
+
+  // Query check-in records
+  rpc GetCheckIn(GetCheckInRequest) returns (GetCheckInResponse);
+  rpc ListCheckIns(ListCheckInsRequest) returns (ListCheckInsResponse);
+
+  // Event-level stats for staff dashboard
+  rpc GetEventStats(GetEventStatsRequest) returns (GetEventStatsResponse);
+
+  // Health check
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+// =============================================================================
+// Request / Response Messages
+// =============================================================================
+
+message CheckInRequest {
+  string ticket_id = 1;
+  string qr_code   = 2;   // scanned QR / barcode value
+  string event_id  = 3;
+  string staff_id  = 4;   // staff member performing check-in
+  string device_id = 5;   // scanner device identifier
+  string gate      = 6;   // e.g. "Gate A", "VIP Entrance"
+}
+
+message CheckInResponse {
+  bool         success    = 1;
+  CheckInRecord record    = 2;
+  CheckInError error_code = 3;
+  string       message    = 4;
+}
+
+message GetCheckInRequest {
+  string checkin_id = 1;
+}
+
+message GetCheckInResponse {
+  bool          success = 1;
+  CheckInRecord record  = 2;
+  string        message = 3;
+}
+
+message ListCheckInsRequest {
+  string event_id  = 1;
+  string user_id   = 2;   // optional filter
+  string gate      = 3;   // optional filter
+  int32  page      = 4;
+  int32  limit     = 5;
+}
+
+message ListCheckInsResponse {
+  bool             success  = 1;
+  repeated CheckInRecord records = 2;
+  int32            total    = 3;
+  int32            page     = 4;
+  int32            limit    = 5;
+  bool             has_more = 6;
+  string           message  = 7;
+}
+
+message GetEventStatsRequest {
+  string event_id = 1;
+}
+
+message GetEventStatsResponse {
+  bool   success          = 1;
+  int32  total_checkins   = 2;
+  int32  unique_tickets   = 3;
+  map<string, int32> by_gate = 4;   // gate → count
+  int64  last_checkin_at  = 5;
+  string message          = 6;
+}
+
+// =============================================================================
+// Health
+// =============================================================================
+
+message HealthRequest {
+  string service = 1;
+}
+
+message HealthResponse {
+  string status  = 1;
+  string message = 2;
+  map<string, string> details = 3;
+}
+
+// =============================================================================
+// Data Models
+// =============================================================================
+
+message CheckInRecord {
+  string id            = 1;
+  string ticket_id     = 2;
+  string event_id      = 3;
+  string user_id       = 4;
+  string staff_id      = 5;
+  string qr_code       = 6;
+  string status        = 7;   // success, invalid, already_used, cancelled
+  int64  check_in_time = 8;   // unix timestamp ms
+  string device_id     = 9;
+  string gate          = 10;
+  string notes         = 11;
+  int64  created_at    = 12;
+}
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+enum CheckInError {
+  CHECKIN_ERROR_UNSPECIFIED  = 0;
+  CHECKIN_SUCCESS            = 1;
+  INVALID_TICKET             = 2;
+  ALREADY_CHECKED_IN         = 3;
+  EVENT_NOT_STARTED          = 4;
+  EVENT_ENDED                = 5;
+  CANCELLED_TICKET           = 6;
+  TICKET_EVENT_MISMATCH      = 7;
+}

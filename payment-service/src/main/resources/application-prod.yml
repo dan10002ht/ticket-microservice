@@ -1,10 +1,36 @@
 spring:
+  datasource:
+    # Production: DB_PASSWORD is required — no default. App will fail to start if not set.
+    password: ${DB_PASSWORD}
+
   jpa:
     show-sql: false
     properties:
       hibernate:
         format_sql: false
         use_sql_comments: false
+
+  security:
+    jwt:
+      # Production: JWT_SECRET is required — no default.
+      secret: ${JWT_SECRET}
+
+# Production: All payment gateway secrets are required — no defaults.
+payment:
+  stripe:
+    api-key: ${STRIPE_API_KEY}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+    public-key: ${STRIPE_PUBLIC_KEY}
+  paypal:
+    client-id: ${PAYPAL_CLIENT_ID}
+    client-secret: ${PAYPAL_CLIENT_SECRET}
+  vnpay:
+    hash-secret: ${VNPAY_HASH_SECRET}
+    merchant-id: ${VNPAY_MERCHANT_ID}
+  momo:
+    access-key: ${MOMO_ACCESS_KEY}
+    secret-key: ${MOMO_SECRET_KEY}
+    partner-code: ${MOMO_PARTNER_CODE}
 
 logging:
   level:

@@ -56,11 +56,7 @@ router.post('/register', validation.validateRegistration, authHandler.registerHa
 // ============================================
 // Permissions & Roles (requires auth)
 // ============================================
-router.get(
-  '/permissions',
-  requireAuth,
-  authHandler.getUserPermissionsHandler
-);
+router.get('/permissions', requireAuth, authHandler.getUserPermissionsHandler);
 router.post(
   '/permissions/check',
   requireAuth,

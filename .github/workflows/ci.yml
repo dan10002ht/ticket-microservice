@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ============================================
+  # Go Services
+  # ============================================
+  test-go:
+    name: Test Go (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - event-service
+          - ticket-service
+          - user-service
+          - booking-worker
+          - email-worker
+          - realtime-service
+          - checkin-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: ${{ matrix.service }}/go.sum
+
+      - name: Download dependencies
+        working-directory: ${{ matrix.service }}
+        run: go mod download
+
+      - name: Vet
+        working-directory: ${{ matrix.service }}
+        run: go vet ./...
+
+      - name: Test
+        working-directory: ${{ matrix.service }}
+        run: go test ./... -race -timeout 60s
+
+  # ============================================
+  # Java Services
+  # ============================================
+  test-java:
+    name: Test Java (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - booking-service
+          - payment-service
+          - invoice-service
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ matrix.service }}-${{ hashFiles(format('{0}/pom.xml', matrix.service)) }}
+          restore-keys: |
+            ${{ runner.os }}-maven-${{ matrix.service }}-
+            ${{ runner.os }}-maven-
+
+      - name: Test
+        working-directory: ${{ matrix.service }}
+        run: mvn test --no-transfer-progress -B
+
+  # ============================================
+  # Node.js Services
+  # ============================================
+  test-node:
+    name: Test Node (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - auth-service
+          - gateway
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: npm
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ${{ matrix.service }}
+        run: npm ci
+
+      - name: Lint
+        working-directory: ${{ matrix.service }}
+        run: npm run lint
+
+      - name: Test
+        working-directory: ${{ matrix.service }}
+        run: npm test -- --passWithNoTests
+
+  # ============================================
+  # Frontend
+  # ============================================
+  test-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        working-directory: frontend
+        run: bun run lint
+
+      - name: Build
+        working-directory: frontend
+        run: bun run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3000/api
+
+  # ============================================
+  # Proto Lint
+  # ============================================
+  proto-lint:
+    name: Proto Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          version: "1.28.1"
+
+      - name: Lint protos
+        working-directory: shared-lib/protos
+        run: buf lint --input .

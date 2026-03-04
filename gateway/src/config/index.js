@@ -2,6 +2,25 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const _DEFAULT_JWT_SECRET = 'your_jwt_secret_key';
+const _DEFAULT_JWT_REFRESH_SECRET = 'your_refresh_secret_key';
+
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === _DEFAULT_JWT_SECRET) {
+    throw new Error('[FATAL] JWT_SECRET must be explicitly set in production. Refusing to start.');
+  }
+  if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET === _DEFAULT_JWT_REFRESH_SECRET) {
+    throw new Error('[FATAL] JWT_REFRESH_SECRET must be explicitly set in production. Refusing to start.');
+  }
+} else {
+  if (!process.env.JWT_SECRET) {
+    console.warn('[WARN] JWT_SECRET not set — using insecure default. Set this before deploying to production.');
+  }
+  if (!process.env.JWT_REFRESH_SECRET) {
+    console.warn('[WARN] JWT_REFRESH_SECRET not set — using insecure default. Set this before deploying to production.');
+  }
+}
+
 const config = {
   // Server Configuration
   server: {

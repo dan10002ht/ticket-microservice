@@ -2,6 +2,18 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const _DEFAULT_JWT_SECRET = 'your-secret-key';
+
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === _DEFAULT_JWT_SECRET) {
+    throw new Error('[FATAL] JWT_SECRET must be explicitly set in production. Refusing to start.');
+  }
+} else {
+  if (!process.env.JWT_SECRET) {
+    console.warn('[WARN] JWT_SECRET not set — using insecure default. Set this before deploying to production.');
+  }
+}
+
 const config = {
   server: {
     port: process.env.PORT || 4000,

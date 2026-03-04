@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package invoice.v1;
+
+option go_package = "invoice-service/internal/protos";
+option java_multiple_files = true;
+option java_package = "com.ticketing.invoice.grpc.proto";
+option java_outer_classname = "InvoiceProto";
+
+// =============================================================================
+// Invoice Service
+// =============================================================================
+
+service InvoiceService {
+  // Retrieve invoices
+  rpc GetInvoice(GetInvoiceRequest) returns (GetInvoiceResponse);
+  rpc ListInvoices(ListInvoicesRequest) returns (ListInvoicesResponse);
+
+  // Download PDF
+  rpc GetInvoicePdf(GetInvoicePdfRequest) returns (GetInvoicePdfResponse);
+
+  // Health check
+  rpc Health(HealthRequest) returns (HealthResponse);
+}
+
+// =============================================================================
+// Request / Response Messages
+// =============================================================================
+
+message GetInvoiceRequest {
+  string invoice_id  = 1;
+  string booking_id  = 2;   // alternative lookup
+}
+
+message GetInvoiceResponse {
+  bool    success = 1;
+  Invoice invoice = 2;
+  string  message = 3;
+}
+
+message ListInvoicesRequest {
+  string user_id   = 1;
+  string status    = 2;   // optional filter
+  int32  page      = 3;
+  int32  limit     = 4;
+}
+
+message ListInvoicesResponse {
+  bool             success  = 1;
+  repeated Invoice invoices = 2;
+  int32            total    = 3;
+  int32            page     = 4;
+  int32            limit    = 5;
+  bool             has_more = 6;
+  string           message  = 7;
+}
+
+message GetInvoicePdfRequest {
+  string invoice_id = 1;
+}
+
+message GetInvoicePdfResponse {
+  bool   success      = 1;
+  bytes  pdf_bytes    = 2;
+  string content_type = 3;   // "application/pdf"
+  string filename     = 4;   // e.g. "INV-202412-000001.pdf"
+  string message      = 5;
+}
+
+// =============================================================================
+// Health
+// =============================================================================
+
+message HealthRequest {
+  string service = 1;
+}
+
+message HealthResponse {
+  string status  = 1;
+  string message = 2;
+  map<string, string> details = 3;
+}
+
+// =============================================================================
+// Data Models
+// =============================================================================
+
+message Invoice {
+  string                id             = 1;
+  string                invoice_number = 2;   // INV-YYYYMM-XXXXXX
+  string                booking_id     = 3;
+  string                payment_id     = 4;
+  string                user_id        = 5;
+  string                event_id       = 6;
+  repeated InvoiceItem  items          = 7;
+  double                subtotal       = 8;
+  double                tax_amount     = 9;
+  double                total_amount   = 10;
+  string                currency       = 11;
+  string                status         = 12;  // PENDING, GENERATED, CANCELLED
+  int64                 issued_at      = 13;
+  int64                 created_at     = 14;
+  int64                 updated_at     = 15;
+}
+
+message InvoiceItem {
+  string id          = 1;
+  string description = 2;
+  int32  quantity    = 3;
+  double unit_price  = 4;
+  double total_price = 5;
+}

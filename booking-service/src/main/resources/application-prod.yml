@@ -2,13 +2,22 @@ spring:
   config:
     activate:
       on-profile: prod
+
+  datasource:
+    # Production: DB credentials are required — no defaults.
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
   jpa:
+    show-sql: false
     properties:
       hibernate:
         jdbc:
           lob:
             non_contextual_creation: true
+
 logging:
   level:
-    root: INFO
+    root: WARN
+    com.ticketing.booking: INFO
 

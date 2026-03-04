@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package event;
+package event.v1;
 
 option go_package = "github.com/booking-system/shared-lib/protos/event";
 option java_package = "com.bookingsystem.shared.protos.event";
