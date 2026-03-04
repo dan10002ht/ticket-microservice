@@ -26,3 +26,7 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
 )
+
+require grpctls v0.0.0
+
+replace grpctls => ../shared-lib/go/grpctls

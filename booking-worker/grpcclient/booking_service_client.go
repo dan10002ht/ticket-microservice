@@ -8,9 +8,10 @@ import (
 	"booking-worker/config"
 	bookingpb "booking-worker/internal/protos/booking"
 
+	"grpctls"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -27,7 +28,7 @@ func NewBookingServiceClient(cfg *config.Config, logger *zap.Logger) (*BookingSe
 	endpoint := cfg.GRPC.BookingServiceEndpoint
 
 	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpctls.DialOption(),
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time:                10 * time.Second,
 			Timeout:             3 * time.Second,

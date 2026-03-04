@@ -2,6 +2,7 @@ import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import path from 'path';
 import logger from '../utils/logger.js';
+import { getGrpcCredentials } from '../utils/grpcCredentials.js';
 
 // gRPC client options
 const clientOptions = {
@@ -43,7 +44,7 @@ const createClient = (serviceUrl, serviceName, packageName) => {
 
     const client = new proto[packageName][serviceClassName](
       serviceUrl,
-      grpc.credentials.createInsecure(),
+      getGrpcCredentials(),
       clientOptions
     );
 

@@ -10,6 +10,8 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 
+	"grpctls"
+
 	"ticket-service/internal/interceptors"
 	ticketpb "ticket-service/internal/protos/ticket"
 	"ticket-service/services"
@@ -33,6 +35,7 @@ func NewServer(
 ) *Server {
 	// Configure gRPC server options
 	opts := []grpc.ServerOption{
+		grpctls.ServerOption(),
 		grpc.ChainUnaryInterceptor(
 			interceptors.CorrelationServerInterceptor(logger),
 		),

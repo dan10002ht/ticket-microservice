@@ -7,6 +7,7 @@ import { requestContext } from '../utils/requestContext.js';
 // Import grpc modules - handle both ESM and CommonJS exports
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
+import { getGrpcCredentials } from '../utils/grpcCredentials.js';
 
 // gRPC client options
 const clientOptions = {
@@ -54,7 +55,7 @@ const createClient = (serviceUrl, serviceName, packageName, serviceClassName = n
 
     const client = new proto[packageName][finalServiceClassName](
       serviceUrl,
-      grpc.credentials.createInsecure(),
+      getGrpcCredentials(),
       clientOptions
     );
 

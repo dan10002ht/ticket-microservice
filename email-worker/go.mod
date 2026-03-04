@@ -94,3 +94,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+require grpctls v0.0.0
+
+replace grpctls => ../shared-lib/go/grpctls

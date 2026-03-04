@@ -119,6 +119,7 @@ services:
       PGDATABASE: ${MAIN_DB_NAME:-booking_system}
       PGUSER: ${DB_USER:-booking_user}
       PGPASSWORD: ${DB_PASSWORD:-booking_pass}
+      PGOPTIONS: "-c search_path=events"
     volumes:
       # Use database/migrations folder (stable schema, not the broken migrations/ folder)
       - ../../../event-service/database/migrations:/migrations:ro

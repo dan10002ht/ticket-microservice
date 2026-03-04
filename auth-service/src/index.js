@@ -1,6 +1,7 @@
 import * as grpc from '@grpc/grpc-js';
 import dotenv from 'dotenv';
 import logger from './utils/logger.js';
+import { getServerCredentials } from './utils/grpcCredentials.js';
 import { server } from './server.js';
 import { initializeBackgroundService } from './background/registerJobHandlers.js';
 import { healthCheck as grpcHealthCheck } from './grpc/clients.js';
@@ -14,7 +15,7 @@ dotenv.config();
 const PORT = process.env.PORT || 50051;
 const HOST = process.env.HOST || '0.0.0.0';
 
-server.bindAsync(`${HOST}:${PORT}`, grpc.ServerCredentials.createInsecure(), async (err, port) => {
+server.bindAsync(`${HOST}:${PORT}`, getServerCredentials(), async (err, port) => {
   if (err) {
     logger.error('Failed to bind server:', err);
     process.exit(1);

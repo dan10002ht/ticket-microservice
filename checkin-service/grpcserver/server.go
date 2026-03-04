@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
+	"grpctls"
+
 	"checkin-service/config"
 	"checkin-service/internal/interceptors"
 	checkinpb "checkin-service/internal/protos/checkin"
@@ -40,6 +42,7 @@ func (s *Server) Start(port int) error {
 	}
 
 	s.server = grpc.NewServer(
+		grpctls.ServerOption(),
 		grpc.ChainUnaryInterceptor(
 			interceptors.CorrelationServerInterceptor(s.logger),
 		),

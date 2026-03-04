@@ -1,0 +1,84 @@
+# TLS overlay for gRPC services in staging/production
+# Usage: docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d
+#
+# Prerequisites:
+#   1. Generate certs: bash scripts/gen-certs.sh
+#   2. Copy certs/ directory to this folder (or adjust volume path)
+
+x-tls-env: &tls-env
+  GRPC_TLS_ENABLED: "true"
+  GRPC_TLS_CERT: /certs/server.crt
+  GRPC_TLS_KEY: /certs/server.key
+  GRPC_TLS_CA: /certs/ca.crt
+
+x-tls-volume: &tls-volume
+  - ./certs:/certs:ro
+
+services:
+  # Go services
+  gateway:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  auth-service:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  user-service:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  event-service:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  ticket-service:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  checkin-service:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  realtime-service:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  booking-worker:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  email-worker:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  # Java services
+  booking-service:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  payment-service:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  invoice-service:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume
+
+  # Boilerplate service
+  boilerplate-service:
+    environment:
+      <<: *tls-env
+    volumes: *tls-volume

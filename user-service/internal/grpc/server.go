@@ -13,6 +13,8 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
+	"grpctls"
+
 	"user-service/config"
 	"user-service/internal/grpc/handlers"
 	pb "user-service/internal/protos"
@@ -57,6 +59,7 @@ func (s *Server) Start(ctx context.Context) error {
 	// Create gRPC server with interceptors
 	grpcprom.EnableHandlingTimeHistogram()
 	s.grpcServer = grpc.NewServer(
+		grpctls.ServerOption(),
 		grpc.ChainUnaryInterceptor(
 			grpcprom.UnaryServerInterceptor,
 			loggingInterceptor,

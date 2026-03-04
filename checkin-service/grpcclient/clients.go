@@ -3,8 +3,9 @@ package grpcclient
 import (
 	"fmt"
 
+	"grpctls"
+
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"checkin-service/config"
 	ticketpb "checkin-service/internal/protos/ticket"
@@ -18,7 +19,7 @@ func NewClients(cfg *config.Config) (*Clients, error) {
 	addr := fmt.Sprintf("%s:%d", cfg.TicketService.Host, cfg.TicketService.Port)
 
 	conn, err := grpc.NewClient(addr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpctls.DialOption(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("connect to ticket-service at %s: %w", addr, err)

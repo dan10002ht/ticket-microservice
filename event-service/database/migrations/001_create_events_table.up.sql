@@ -1,3 +1,7 @@
+-- Schema isolation
+CREATE SCHEMA IF NOT EXISTS events;
+SET search_path TO events;
+
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

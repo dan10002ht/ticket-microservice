@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 
+	"grpctls"
+
 	"booking-worker/config"
 	grpchandler "booking-worker/grpc"
 	pb "booking-worker/internal/protos/booking_worker"
@@ -147,7 +149,7 @@ func (a *App) Shutdown() error {
 
 // initGRPCServer initializes the gRPC server
 func (a *App) initGRPCServer() (*grpc.Server, error) {
-	opts := []grpc.ServerOption{}
+	opts := []grpc.ServerOption{grpctls.ServerOption()}
 
 	// Add Prometheus interceptors if metrics enabled
 	if a.config.Metrics.Enabled {

@@ -52,6 +52,12 @@ server:
 grpc:
   server:
     port: ${GRPC_PORT:50058}
+    security:
+      enabled: ${GRPC_TLS_ENABLED:false}
+      certificateChain: file:${GRPC_TLS_CERT:/certs/server.crt}
+      privateKey: file:${GRPC_TLS_KEY:/certs/server.key}
+      trustCertCollection: file:${GRPC_TLS_CA:/certs/ca.crt}
+      clientAuth: REQUIRE
   payment-service:
     host: ${GRPC_PAYMENT_SERVICE_HOST:localhost}
     port: ${GRPC_PAYMENT_SERVICE_PORT:50062}

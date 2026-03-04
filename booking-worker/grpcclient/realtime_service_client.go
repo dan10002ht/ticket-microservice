@@ -7,9 +7,10 @@ import (
 	"booking-worker/config"
 	realtimepb "booking-worker/internal/protos/realtime"
 
+	"grpctls"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -26,7 +27,7 @@ func NewRealtimeServiceClient(cfg *config.Config, logger *zap.Logger) (*Realtime
 	endpoint := cfg.GRPC.RealtimeServiceEndpoint
 
 	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpctls.DialOption(),
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time:                10 * time.Second,
 			Timeout:             3 * time.Second,

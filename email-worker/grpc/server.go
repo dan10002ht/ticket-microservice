@@ -10,6 +10,8 @@ import (
 	grpcserver "google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
+	"grpctls"
+
 	"booking-system/email-worker/config"
 	"booking-system/email-worker/models"
 	"booking-system/email-worker/processor"
@@ -44,7 +46,7 @@ func (s *Server) Start(port int) error {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
 
-	s.grpcServer = grpcserver.NewServer()
+	s.grpcServer = grpcserver.NewServer(grpctls.ServerOption())
 	protos.RegisterEmailServiceServer(s.grpcServer, s)
 
 	// Enable reflection for debugging

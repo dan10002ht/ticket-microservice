@@ -6,9 +6,10 @@ import (
 	"ticket-service/config"
 	"time"
 
+	"grpctls"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	eventpb "ticket-service/internal/protos/event"
 )
@@ -25,7 +26,7 @@ type EventServiceClient struct {
 func NewEventServiceClient(config config.EventServiceConfig, logger *zap.Logger) (*EventServiceClient, error) {
 	address := fmt.Sprintf("%s:%s", config.Host, config.Port)
 
-	conn, err := grpc.Dial(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.Dial(address, grpctls.DialOption())
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Event Service: %w", err)
 	}

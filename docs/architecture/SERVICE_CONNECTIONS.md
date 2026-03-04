@@ -339,6 +339,61 @@ Each service on `postgres-main` owns its own PostgreSQL schema:
 
 Auth Service uses a **dedicated** `postgres-auth` instance (`:5432` host, `:5432` container).
 
+## gRPC TLS Configuration
+
+All gRPC connections support optional TLS (mTLS) via the `GRPC_TLS_ENABLED` environment variable.
+
+### Environment Variables
+
+| Variable          | Default              | Description                  |
+| ----------------- | -------------------- | ---------------------------- |
+| `GRPC_TLS_ENABLED`| `false`              | Set to `true` to enable TLS  |
+| `GRPC_TLS_CERT`   | `/certs/server.crt`  | Server/client certificate    |
+| `GRPC_TLS_KEY`    | `/certs/server.key`  | Private key                  |
+| `GRPC_TLS_CA`     | `/certs/ca.crt`      | CA certificate for trust     |
+
+### Certificate Generation
+
+```bash
+# Generate self-signed CA + server + client certs
+bash scripts/gen-certs.sh
+
+# Output:
+# certs/ca.crt, ca.key       — Root CA
+# certs/server.crt, server.key — Server cert (SAN: all service DNS names)
+# certs/client.crt, client.key — Client cert (for mTLS)
+```
+
+### Enabling TLS
+
+**Development** (default): No changes needed. All services run plaintext.
+
+**Staging/Production**: Use the TLS docker-compose overlay:
+
+```bash
+cd deploy/environments/staging
+docker compose -f docker-compose.yml -f docker-compose.tls.yml up -d
+```
+
+### Verify TLS
+
+```bash
+# With TLS enabled
+grpcurl -cacert certs/ca.crt -cert certs/client.crt -key certs/client.key \
+  localhost:50052 grpc.health.v1.Health/Check
+
+# Without TLS (default dev)
+grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check
+```
+
+### Implementation Per Language
+
+| Language | Server TLS                                    | Client TLS                            |
+| -------- | --------------------------------------------- | ------------------------------------- |
+| Go       | `grpctls.ServerOption()` (shared-lib/go/grpctls) | `grpctls.DialOption()`             |
+| Node.js  | `getServerCredentials()` (utils/grpcCredentials.js) | `getGrpcCredentials()`          |
+| Java     | `grpc.server.security.*` in application.yml   | `GrpcClientConfig.java` conditional  |
+
 ## Troubleshooting
 
 ### Common Issues

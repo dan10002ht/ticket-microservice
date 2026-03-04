@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type DatabaseConfig struct {
@@ -35,7 +36,10 @@ type Config struct {
 func LoadConfig() (*Config, error) {
 	cfg := &Config{
 		Database: DatabaseConfig{
-			URL: getEnv("EVENT_DB_URL", "postgres://postgres:postgres_password@pgpool-event:5432/booking_system_event?sslmode=disable"),
+			URL: withSearchPath(
+				getEnv("EVENT_DB_URL", "postgres://postgres:postgres_password@pgpool-event:5432/booking_system_event?sslmode=disable"),
+				"events",
+			),
 		},
 		Redis: RedisConfig{
 			Host:     getEnv("REDIS_HOST", "localhost"),
@@ -52,6 +56,17 @@ func LoadConfig() (*Config, error) {
 		Env: getEnv("ENV", "development"),
 	}
 	return cfg, nil
+}
+
+// withSearchPath appends search_path=<schema> to the URL if not already present.
+func withSearchPath(url, schema string) string {
+	if strings.Contains(url, "search_path") {
+		return url
+	}
+	if strings.Contains(url, "?") {
+		return url + "&search_path=" + schema
+	}
+	return url + "?search_path=" + schema
 }
 
 func getEnv(key, defaultVal string) string {

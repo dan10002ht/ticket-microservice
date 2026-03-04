@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/http"
 
+	"grpctls"
+
 	"event-service/internal/interceptors"
 	eventpb "event-service/internal/protos/event"
 
@@ -41,6 +43,7 @@ func main() {
 	availabilityController := grpcapi.NewAvailabilityController(appInstance.GetAvailabilityService())
 
 	grpcServer := grpc.NewServer(
+		grpctls.ServerOption(),
 		grpc.ChainUnaryInterceptor(
 			interceptors.CorrelationServerInterceptor(logger),
 		),

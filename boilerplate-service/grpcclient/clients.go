@@ -3,8 +3,9 @@ package grpcclient
 import (
 	"boilerplate-service/internal/config"
 
+	"grpctls"
+
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 type Clients struct {
@@ -15,23 +16,23 @@ type Clients struct {
 
 func NewClients(cfg config.GRPCConfig) (*Clients, error) {
 	authConn, err := grpc.Dial(cfg.AuthServiceURL, 
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpctls.DialOption(),
 		grpc.WithTimeout(cfg.Timeout),
 	)
 	if err != nil {
 		return nil, err
 	}
-	
-	userConn, err := grpc.Dial(cfg.UserServiceURL, 
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+
+	userConn, err := grpc.Dial(cfg.UserServiceURL,
+		grpctls.DialOption(),
 		grpc.WithTimeout(cfg.Timeout),
 	)
 	if err != nil {
 		return nil, err
 	}
-	
-	bookingConn, err := grpc.Dial(cfg.BookingServiceURL, 
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+
+	bookingConn, err := grpc.Dial(cfg.BookingServiceURL,
+		grpctls.DialOption(),
 		grpc.WithTimeout(cfg.Timeout),
 	)
 	if err != nil {

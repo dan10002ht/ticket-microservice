@@ -9,6 +9,8 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
+	"grpctls"
+
 	"realtime-service/config"
 	"realtime-service/internal/grpc/handlers"
 	pb "realtime-service/internal/protos"
@@ -29,6 +31,7 @@ type Server struct {
 func NewServer(cfg *config.Config, notificationService *service.NotificationService) *Server {
 	// Create gRPC server with options
 	opts := []grpc.ServerOption{
+		grpctls.ServerOption(),
 		grpc.MaxRecvMsgSize(4 * 1024 * 1024), // 4MB
 		grpc.MaxSendMsgSize(4 * 1024 * 1024), // 4MB
 	}

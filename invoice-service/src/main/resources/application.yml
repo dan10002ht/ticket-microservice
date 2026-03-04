@@ -24,6 +24,12 @@ spring:
 grpc:
   server:
     port: 50060
+    security:
+      enabled: ${GRPC_TLS_ENABLED:false}
+      certificateChain: file:${GRPC_TLS_CERT:/certs/server.crt}
+      privateKey: file:${GRPC_TLS_KEY:/certs/server.key}
+      trustCertCollection: file:${GRPC_TLS_CA:/certs/ca.crt}
+      clientAuth: REQUIRE
 
 server:
   port: 8083
