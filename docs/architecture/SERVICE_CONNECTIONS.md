@@ -6,18 +6,20 @@ This document describes the inter-service communication setup in the ticket book
 
 ## Service Inventory
 
-| Service          | Language | gRPC Port | HTTP Port | Description                  |
-| ---------------- | -------- | --------- | --------- | ---------------------------- |
-| Gateway          | Node.js  | -         | 3000      | API Gateway, routing         |
-| Auth Service     | Node.js  | 50051     | -         | Authentication, JWT          |
-| Event Service    | Node.js  | 50054     | -         | Event management             |
-| Ticket Service   | Node.js  | 50055     | -         | Ticket/seat management       |
-| Booking Service  | Java     | 50056     | 8080      | Booking orchestration (Saga) |
-| Payment Service  | Java     | 50058     | 8081      | Payment processing (Stripe)  |
-| User Service     | Go       | 50052     | -         | User profiles, addresses     |
-| Booking Worker   | Go       | -         | -         | Queue processing             |
-| Email Worker     | Go       | -         | -         | Email delivery               |
-| Realtime Service | Go       | 50057     | 3003      | WebSocket notifications      |
+| Service          | Language | gRPC Port | HTTP Port | Description                         |
+| ---------------- | -------- | --------- | --------- | ----------------------------------- |
+| Gateway          | Node.js  | -         | 3000      | API Gateway, routing                |
+| Auth Service     | Node.js  | 50051     | -         | Authentication, JWT                 |
+| User Service     | Go       | 50052     | -         | User profiles, addresses            |
+| Ticket Service   | Go       | 50053     | -         | Ticket inventory & lifecycle        |
+| Event Service    | Go       | 50055     | -         | Event management, zones, seats      |
+| Booking Worker   | Go       | 50056     | -         | Queue processing (gRPC server)      |
+| Realtime Service | Go       | 50057     | 3003      | Real-time notifications             |
+| Booking Service  | Java     | 50058     | 8084      | Booking orchestration (Saga)        |
+| Checkin Service  | Go       | 50059     | -         | Event check-in (QR/barcode)         |
+| Invoice Service  | Java     | 50060     | 8083      | Invoice generation & PDF            |
+| Email Worker     | Go       | 50061     | -         | Email delivery                      |
+| Payment Service  | Java     | 50062     | 8080      | Payment processing (multi-gateway)  |
 
 ## Architecture Diagram
 
@@ -30,7 +32,7 @@ This document describes the inter-service communication setup in the ticket book
                                               ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                            API Gateway (Node.js)                             │
-│                              Port: 3000                                      │
+│                         HTTP :3000 | Metrics :53000                          │
 └────┬──────────┬──────────┬──────────┬──────────┬──────────┬────────────────┘
      │          │          │          │          │          │
      │ gRPC     │ gRPC     │ gRPC     │ gRPC     │ gRPC     │ gRPC
@@ -38,76 +40,102 @@ This document describes the inter-service communication setup in the ticket book
 ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
 │  Auth   │ │  Event  │ │ Ticket  │ │ Booking │ │ Payment │ │  User   │
 │ Service │ │ Service │ │ Service │ │ Service │ │ Service │ │ Service │
-│ :50051  │ │ :50054  │ │ :50055  │ │ :50056  │ │ :50058  │ │ :50052  │
-│ Node.js │ │ Node.js │ │ Node.js │ │  Java   │ │  Java   │ │   Go    │
-└─────────┘ └─────────┘ └────┬────┘ └────┬────┘ └────┬────┘ └─────────┘
-                             │           │           │
-                             │    ┌──────┴───────────┘
-                             │    │ gRPC calls
+│ :50051  │ │ :50055  │ │ :50053  │ │ :50058  │ │ :50062  │ │ :50052  │
+│ Node.js │ │   Go    │ │   Go    │ │  Java   │ │  Java   │ │   Go    │
+└─────────┘ └─────────┘ └────┬────┘ └────┬────┘ └─────────┘ └─────────┘
+                             │           │
+                             │    ┌──────┘
+                             │    │ gRPC calls (Saga)
                              ▼    ▼
                         ┌─────────────┐
                         │   Booking   │      ┌─────────────┐
                         │   Worker    │─────▶│  Realtime   │
                         │    (Go)     │ gRPC │  Service    │
-                        └──────┬──────┘      │ :50057/:3003│
-                               │             │    (Go)     │
+                        │   :50056   │      │:50057/:3003 │
+                        └──────┬──────┘      │    (Go)     │
                                │             └──────┬──────┘
                                │                    │ WebSocket
-                               │                    ▼
-                               │             ┌─────────────┐
-                               │             │  Frontend   │
-                               │             │ (Real-time) │
-                               │             └─────────────┘
-                               │
-                               ▼
+                               ▼                    ▼
+                        ┌─────────────┐      ┌─────────────┐
+                        │   Email     │      │  Frontend   │
+                        │   Worker    │      │ (Real-time) │
+                        │    (Go)     │      └─────────────┘
+                        │   :50061   │
+                        └─────────────┘
+
+Check-in Flow:
                         ┌─────────────┐
-                        │   Email     │
-                        │   Worker    │
-                        │    (Go)     │
+                        │  Checkin    │
+                        │  Service    │──gRPC──▶ Ticket Service :50053
+                        │    (Go)     │         (GetTicket, UpdateStatus)
+                        │   :50059   │
+                        └─────────────┘
+
+Invoice Flow:
+         Kafka (payment-events)
+                        ┌─────────────┐
+                        │  Invoice    │
+                        │  Service    │──gRPC──▶ clients (GetInvoice, GetPDF)
+                        │   (Java)    │
+                        │   :50060   │
                         └─────────────┘
 
 Infrastructure:
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│ PostgreSQL  │  │    Redis    │  │    Kafka    │
-│   (DB)      │  │ (Cache/Queue)│  │  (Events)   │
-└─────────────┘  └─────────────┘  └─────────────┘
+┌──────────────┐  ┌──────────────────────┐  ┌─────────────┐
+│  PostgreSQL  │  │        Redis         │  │    Kafka    │
+│ auth  :5432  │  │ cache   :6379        │  │    :9092    │
+│ main  :5433  │  │ queue   :6380        │  └─────────────┘
+└──────────────┘  │ pubsub  :6381        │
+                  └──────────────────────┘
 ```
 
 ## Connection Matrix
 
 ### Gateway → Services (gRPC)
 
-| Target Service  | Purpose                           | Proto File      |
-| --------------- | --------------------------------- | --------------- |
-| Auth Service    | Login, register, token validation | `auth.proto`    |
-| Event Service   | Event CRUD, search                | `event.proto`   |
-| Ticket Service  | Seat availability, pricing        | `ticket.proto`  |
-| Booking Service | Create/cancel bookings            | `booking.proto` |
-| Payment Service | Payment processing                | `payment.proto` |
-| User Service    | Profile, addresses                | `user.proto`    |
+| Target Service  | gRPC Port | Purpose                             | Proto File      |
+| --------------- | --------- | ----------------------------------- | --------------- |
+| Auth Service    | 50051     | Login, register, token validation   | `auth.proto`    |
+| User Service    | 50052     | Profile, addresses                  | `user.proto`    |
+| Ticket Service  | 50053     | Seat availability, pricing          | `ticket.proto`  |
+| Event Service   | 50055     | Event CRUD, zones, seats            | `event.proto`   |
+| Booking Service | 50058     | Create/cancel bookings              | `booking.proto` |
+| Payment Service | 50062     | Payment processing                  | `payment.proto` |
 
-### Booking Service → Services (gRPC)
+### Booking Service → Services (gRPC — Saga)
 
-| Target Service  | Purpose                | When Called           |
-| --------------- | ---------------------- | --------------------- |
-| Ticket Service  | Reserve/release seats  | During Saga execution |
-| Payment Service | Create/cancel payments | During Saga execution |
+| Target Service  | gRPC Port | Purpose                | When Called           |
+| --------------- | --------- | ---------------------- | --------------------- |
+| Ticket Service  | 50053     | Reserve/release seats  | During Saga execution |
+| Payment Service | 50062     | Create/cancel payments | During Saga execution |
 
 ### Booking Worker → Services
 
-| Target Service   | Protocol | Purpose                    |
-| ---------------- | -------- | -------------------------- |
-| Booking Service  | gRPC     | Create bookings from queue |
-| Realtime Service | gRPC     | Notify booking results     |
+| Target Service   | Protocol | Port  | Purpose                    |
+| ---------------- | -------- | ----- | -------------------------- |
+| Booking Service  | gRPC     | 50058 | Create bookings from queue |
+| Realtime Service | gRPC     | 50057 | Notify booking results     |
+
+### Checkin Service → Services
+
+| Target Service  | Protocol | Port  | Purpose                                  |
+| --------------- | -------- | ----- | ---------------------------------------- |
+| Ticket Service  | gRPC     | 50053 | Validate ticket, update status to "used" |
+
+### Invoice Service (Event-driven)
+
+| Source          | Protocol | Topic            | Trigger Event      |
+| --------------- | -------- | ---------------- | ------------------ |
+| Payment Service | Kafka    | `payment-events` | `PAYMENT_CAPTURED` |
 
 ### Realtime Service Connections
 
 | Direction                  | Protocol      | Purpose                    |
 | -------------------------- | ------------- | -------------------------- |
 | Frontend → Realtime        | WebSocket     | Real-time updates          |
-| Booking Worker → Realtime  | gRPC          | Push booking notifications |
-| Payment Service → Realtime | gRPC          | Push payment status        |
-| Internal (scaling)         | Redis Pub/Sub | Multi-instance sync        |
+| Booking Worker → Realtime  | gRPC :50057   | Push booking notifications |
+| Payment Service → Realtime | gRPC :50057   | Push payment status        |
+| Internal (scaling)         | Redis Pub/Sub | Multi-instance sync :6381  |
 
 ## Proto Definitions
 
@@ -115,12 +143,9 @@ Infrastructure:
 
 ```protobuf
 service UserService {
-  // Profile operations
   rpc GetProfile (GetProfileRequest) returns (GetProfileResponse);
   rpc CreateProfile (CreateProfileRequest) returns (CreateProfileResponse);
   rpc UpdateProfile (UpdateProfileRequest) returns (UpdateProfileResponse);
-
-  // Address operations
   rpc GetAddresses (GetAddressesRequest) returns (GetAddressesResponse);
   rpc AddAddress (AddAddressRequest) returns (AddAddressResponse);
   rpc UpdateAddress (UpdateAddressRequest) returns (UpdateAddressResponse);
@@ -132,22 +157,11 @@ service UserService {
 
 ```protobuf
 service RealtimeService {
-  // Called by booking-worker when booking processing completes
   rpc NotifyBookingResult (NotifyBookingResultRequest) returns (NotifyBookingResultResponse);
-
-  // Called to update user's position in booking queue
   rpc NotifyQueuePosition (NotifyQueuePositionRequest) returns (NotifyQueuePositionResponse);
-
-  // Called by payment-service for payment status updates
   rpc NotifyPaymentStatus (NotifyPaymentStatusRequest) returns (NotifyPaymentStatusResponse);
-
-  // Broadcast event to a room (e.g., ticket availability changes)
   rpc BroadcastEvent (BroadcastEventRequest) returns (BroadcastEventResponse);
-
-  // Send notification to a specific user
   rpc SendToUser (SendToUserRequest) returns (SendToUserResponse);
-
-  // Get current connection statistics (for monitoring)
   rpc GetConnectionStats (GetConnectionStatsRequest) returns (GetConnectionStatsResponse);
 }
 ```
@@ -163,129 +177,197 @@ service BookingService {
 }
 ```
 
+### Checkin Service (checkin.proto)
+
+```protobuf
+service CheckinService {
+  rpc CheckIn (CheckInRequest) returns (CheckInResponse);
+  rpc GetCheckIn (GetCheckInRequest) returns (CheckInRecord);
+  rpc ListCheckIns (ListCheckInsRequest) returns (ListCheckInsResponse);
+  rpc GetEventStats (GetEventStatsRequest) returns (EventStatsResponse);
+  rpc Health (HealthRequest) returns (HealthResponse);
+}
+```
+
+### Invoice Service (invoice.proto)
+
+```protobuf
+service InvoiceService {
+  rpc GetInvoice (GetInvoiceRequest) returns (Invoice);
+  rpc ListInvoices (ListInvoicesRequest) returns (ListInvoicesResponse);
+  rpc GetInvoicePdf (GetInvoicePdfRequest) returns (InvoicePdfResponse);
+  rpc Health (HealthRequest) returns (HealthResponse);
+}
+```
+
 ## Business Flows
 
 ### 1. Booking Flow (Saga Pattern)
 
 ```
-1. User selects seats → Gateway
-2. Gateway → Booking Worker (add to Redis queue)
+1. User selects seats → Gateway :3000
+2. Gateway → Booking Worker :50056 (add to Redis queue :6380)
 3. Booking Worker processes queue
-4. Booking Worker → Booking Service (CreateBooking)
+4. Booking Worker → Booking Service :50058 (CreateBooking)
 5. Booking Service executes Saga:
    a. Create Booking (PENDING)
-   b. Ticket Service → Reserve Seats
-   c. Payment Service → Process Payment
+   b. Ticket Service :50053 → Reserve Seats
+   c. Payment Service :50062 → Process Payment
    d. Confirm Booking (CONFIRMED)
-6. Booking Worker → Realtime Service (NotifyBookingResult)
+6. Booking Worker → Realtime Service :50057 (NotifyBookingResult)
 7. Realtime Service → Frontend (WebSocket push)
 ```
 
-### 2. Real-time Notification Flow
+### 2. Check-in Flow
+
+```
+1. Staff scans QR code → Gateway :3000
+2. Gateway → Checkin Service :50059 (CheckIn)
+3. Checkin Service → Ticket Service :50053 (GetTicket) — validate
+4. Checkin Service → Ticket Service :50053 (UpdateTicketStatus → "used")
+5. Checkin Service → DB (INSERT checkin record)
+6. Response: success / error (ALREADY_CHECKED_IN, INVALID_TICKET, etc.)
+```
+
+### 3. Invoice Generation Flow
+
+```
+1. Payment Service publishes PAYMENT_CAPTURED → Kafka :9092 (payment-events)
+2. Invoice Service consumes event
+3. Invoice Service generates invoice (idempotent — skips if already exists)
+4. Invoice Service → DB (INSERT invoice + invoice_items)
+5. PDF available via gRPC GetInvoicePdf :50060
+```
+
+### 4. Real-time Notification Flow
 
 ```
 1. Service event occurs (booking confirmed, payment processed)
-2. Service → Realtime Service (gRPC: NotifyBookingResult/NotifyPaymentStatus)
+2. Service → Realtime Service :50057 (gRPC)
 3. Realtime Service finds user's WebSocket connection
 4. Realtime Service → Frontend (WebSocket message)
-5. If multiple instances: Redis Pub/Sub broadcasts to all instances
-```
-
-### 3. User Profile Flow
-
-```
-1. User requests profile → Gateway
-2. Gateway → User Service (gRPC: GetProfile)
-3. User Service → PostgreSQL
-4. Response flows back through Gateway
+5. Multi-instance sync: Redis Pub/Sub :6381
 ```
 
 ## Environment Configuration
 
-### Service URLs
+### Service URLs (Development)
 
 ```bash
-# Gateway
-AUTH_SERVICE_URL=localhost:50051
-EVENT_SERVICE_URL=localhost:50054
-TICKET_SERVICE_URL=localhost:50055
-BOOKING_SERVICE_URL=localhost:50056
-PAYMENT_SERVICE_URL=localhost:50058
-USER_SERVICE_URL=localhost:50052
+# Gateway → downstream gRPC services
+GRPC_AUTH_SERVICE_URL=auth-service:50051
+GRPC_USER_SERVICE_URL=user-service:50052
+GRPC_TICKET_SERVICE_URL=ticket-service:50053
+GRPC_EVENT_SERVICE_URL=event-service:50055
+GRPC_BOOKING_SERVICE_URL=booking-service:50058
+GRPC_PAYMENT_SERVICE_URL=payment-service:50062
 
 # Booking Worker
-BOOKING_SERVICE_URL=localhost:50056
-REALTIME_SERVICE_URL=localhost:50057
+BOOKING_SERVICE_GRPC_ADDR=booking-service:50058
+REALTIME_SERVICE_GRPC_ADDR=realtime-service:50057
 
-# Realtime Service
-REDIS_HOST=localhost
-REDIS_PORT=6379
+# Checkin Service → Ticket Service
+TICKET_SERVICE_HOST=ticket-service
+TICKET_SERVICE_PORT=50053
 
-# All Services
-KAFKA_BROKERS=localhost:9092
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
+# All Services — Infrastructure
+KAFKA_BROKERS=kafka:9092
+REDIS_CACHE_URL=redis-cache:6379
+REDIS_QUEUE_URL=redis-queue:6380
+REDIS_PUBSUB_URL=redis-pubsub:6381
+
+# Go services — postgres-main (shared)
+DB_HOST=postgres-main
+DB_PORT=5432          # container port (mapped from host :5433)
+
+# Auth Service — postgres-auth (dedicated)
+DB_HOST=postgres-auth
+DB_PORT=5432
 ```
 
 ## Health Checks
 
-All services implement health check endpoints:
-
 ```bash
-# gRPC Health Check
-grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check
-grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check
-grpcurl -plaintext localhost:50057 grpc.health.v1.Health/Check
+# HTTP Health
+curl http://localhost:3000/health          # Gateway
+curl http://localhost:3003/health          # Realtime Service
+curl http://localhost:8084/actuator/health # Booking Service
+curl http://localhost:8080/actuator/health # Payment Service
+curl http://localhost:8083/actuator/health # Invoice Service
 
-# HTTP Health Check (services with HTTP endpoints)
-curl http://localhost:53000/health    # Gateway
-curl http://localhost:3003/health    # Realtime Service
-curl http://localhost:8080/actuator/health  # Booking Service
-curl http://localhost:8081/actuator/health  # Payment Service
+# gRPC Health
+grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check  # Auth Service
+grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check  # User Service
+grpcurl -plaintext localhost:50053 list                          # Ticket Service
+grpcurl -plaintext localhost:50055 list                          # Event Service
+grpcurl -plaintext localhost:50059 list                          # Checkin Service
+grpcurl -plaintext localhost:50057 grpc.health.v1.Health/Check  # Realtime Service
 ```
 
 ## Monitoring
 
 ### Prometheus Metrics Ports
 
-| Service          | Metrics Port | Endpoint             |
-| ---------------- | ------------ | -------------------- |
-| Gateway          | 9090         | /metrics             |
-| Booking Service  | 9091         | /actuator/prometheus |
-| Payment Service  | 9092         | /actuator/prometheus |
-| User Service     | 9092         | /metrics             |
-| Realtime Service | 9057         | /metrics             |
-| Booking Worker   | 9093         | /metrics             |
-| Email Worker     | 9094         | /metrics             |
+| Service          | Metrics Port | Endpoint              |
+| ---------------- | ------------ | --------------------- |
+| Gateway          | 53000        | /metrics              |
+| Auth Service     | 53001        | /metrics              |
+| User Service     | 9092         | /metrics              |
+| Ticket Service   | 9096         | /metrics              |
+| Event Service    | 9095         | /metrics              |
+| Booking Worker   | 9091         | /metrics              |
+| Email Worker     | 9090         | /metrics              |
+| Realtime Service | 9057         | /metrics              |
+| Checkin Service  | 2112         | /metrics              |
+| Booking Service  | 8084         | /actuator/prometheus  |
+| Payment Service  | 8085         | /actuator/prometheus  |
+| Invoice Service  | 8083         | /actuator/prometheus  |
+
+## Schema Isolation (postgres-main)
+
+Each service on `postgres-main` owns its own PostgreSQL schema:
+
+| Service         | Schema    | DSN / Config                         |
+| --------------- | --------- | ------------------------------------ |
+| User Service    | `users`   | `search_path=users` in DSN           |
+| Ticket Service  | `tickets` | `search_path=tickets` in DSN         |
+| Event Service   | `events`  | `search_path=events` in DSN          |
+| Checkin Service | `checkin` | `search_path=checkin` in DSN         |
+| Booking Service | `booking` | Flyway `schemas: booking`            |
+| Payment Service | `payment` | Flyway `schemas: payment`            |
+| Invoice Service | `invoice` | Flyway `schemas: invoice`            |
+
+Auth Service uses a **dedicated** `postgres-auth` instance (`:5432` host, `:5432` container).
 
 ## Troubleshooting
 
 ### Common Issues
 
 1. **Service Not Found**
-
    - Check if service is running on correct port
-   - Verify proto file paths
-   - Check service URL configuration
+   - Verify proto file paths in `shared-lib/protos/`
+   - Check gRPC service URL configuration
 
 2. **Connection Refused**
-
    - Ensure service is started
-   - Check firewall settings
-   - Verify port availability
+   - Verify port availability: `lsof -i :<port>`
+   - Check Docker network if running in containers
 
 3. **gRPC Deadline Exceeded**
    - Check network latency
-   - Increase timeout settings
-   - Verify service health
+   - Increase timeout settings (gateway default: 60s deadline)
+   - Verify service health via health check endpoints
 
 ### Debug Commands
 
 ```bash
 # List available gRPC services
-grpcurl -plaintext localhost:50051 list
-grpcurl -plaintext localhost:50052 list
-grpcurl -plaintext localhost:50057 list
+grpcurl -plaintext localhost:50051 list   # Auth
+grpcurl -plaintext localhost:50052 list   # User
+grpcurl -plaintext localhost:50053 list   # Ticket
+grpcurl -plaintext localhost:50055 list   # Event
+grpcurl -plaintext localhost:50057 list   # Realtime
+grpcurl -plaintext localhost:50059 list   # Checkin
 
 # Test specific methods
 grpcurl -plaintext -d '{"user_id":"test"}' localhost:50052 user.UserService/GetProfile
@@ -294,7 +376,9 @@ grpcurl -plaintext localhost:50057 realtime.RealtimeService/GetConnectionStats
 # Check Kafka topics
 kafka-topics.sh --list --bootstrap-server localhost:9092
 
-# Check Redis
-redis-cli ping
-redis-cli keys "booking-queue:*"
+# Check Redis instances
+redis-cli -p 6379 ping   # redis-cache
+redis-cli -p 6380 ping   # redis-queue
+redis-cli -p 6381 ping   # redis-pubsub
+redis-cli -p 6380 keys "booking-queue:*"
 ```

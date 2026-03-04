@@ -39,16 +39,19 @@ shared-lib/
 
 ### Service Mappings
 
-| Service          | Proto File       | Package Name | gRPC Port |
-| ---------------- | ---------------- | ------------ | --------- |
-| Auth Service     | `auth.proto`     | `auth`       | 50051     |
-| User Service     | `user.proto`     | `user`       | 50052     |
-| Event Service    | `event.proto`    | `event`      | 50053     |
-| Booking Service  | `booking.proto`  | `booking`    | 50054     |
-| Payment Service  | `payment.proto`  | `payment`    | 50056     |
-| Ticket Service   | `ticket.proto`   | `ticket`     | 50057     |
-| Device Service   | `device.proto`   | `device`     | 50058     |
-| Security Service | `security.proto` | `security`   | 50059     |
+| Service          | Proto File         | Package Name | gRPC Port |
+| ---------------- | ------------------ | ------------ | --------- |
+| Auth Service     | `auth.proto`       | `auth`       | 50051     |
+| User Service     | `user.proto`       | `user`       | 50052     |
+| Ticket Service   | `ticket.proto`     | `ticket`     | 50053     |
+| Event Service    | `event.proto`      | `event`      | 50055     |
+| Booking Worker   | (queue consumer)   | -            | 50056     |
+| Realtime Service | `realtime.proto`   | `realtime`   | 50057     |
+| Booking Service  | `booking.proto`    | `booking`    | 50058     |
+| Checkin Service  | `checkin.proto`    | `checkin`    | 50059     |
+| Invoice Service  | `invoice.proto`    | `invoice`    | 50060     |
+| Email Worker     | (queue consumer)   | -            | 50061     |
+| Payment Service  | `payment.proto`    | `payment`    | 50062     |
 
 ### Loading Proto Files
 

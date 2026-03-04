@@ -1,3 +1,6 @@
+CREATE SCHEMA IF NOT EXISTS tickets;
+SET search_path TO tickets;
+
 -- Migration: Create tickets table
 -- Description: Core ticket information table
 

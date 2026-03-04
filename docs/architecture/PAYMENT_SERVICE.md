@@ -769,7 +769,7 @@ spring:
 
 grpc:
   server:
-    port: 9090
+    port: 50062
 
 server:
   port: 8080

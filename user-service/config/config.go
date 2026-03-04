@@ -86,7 +86,7 @@ func LoadConfig() *Config {
 
 // GetDSN returns PostgreSQL connection string
 func (c *DatabaseConfig) GetDSN() string {
-	return "postgres://" + c.User + ":" + c.Password + "@" + c.Host + ":" + strconv.Itoa(c.Port) + "/" + c.DBName + "?sslmode=" + c.SSLMode
+	return "postgres://" + c.User + ":" + c.Password + "@" + c.Host + ":" + strconv.Itoa(c.Port) + "/" + c.DBName + "?sslmode=" + c.SSLMode + "&search_path=users"
 }
 
 // Helper functions for environment variable parsing

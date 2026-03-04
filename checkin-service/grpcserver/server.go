@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"checkin-service/config"
+	"checkin-service/internal/interceptors"
 	checkinpb "checkin-service/internal/protos/checkin"
 	"checkin-service/models"
 	"checkin-service/services"
@@ -39,6 +40,9 @@ func (s *Server) Start(port int) error {
 	}
 
 	s.server = grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			interceptors.CorrelationServerInterceptor(s.logger),
+		),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			MaxConnectionIdle: 15 * time.Second,
 			Time:              5 * time.Second,

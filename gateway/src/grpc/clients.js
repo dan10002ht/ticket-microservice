@@ -2,6 +2,7 @@ import path from 'path';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
 import circuitBreakerService from '../services/circuitBreakerService.js';
+import { requestContext } from '../utils/requestContext.js';
 
 // Import grpc modules - handle both ESM and CommonJS exports
 import * as grpc from '@grpc/grpc-js';
@@ -80,7 +81,8 @@ const createClient = (serviceUrl, serviceName, packageName, serviceClassName = n
               try {
                 return await new Promise((resolve, reject) => {
                   const metadata = new grpc.Metadata();
-                  metadata.add('correlation-id', request.correlationId || 'unknown');
+                  const ctx = requestContext.get();
+                  metadata.add('correlation-id', ctx?.correlationId || request.correlationId || 'unknown');
 
                   // Create a new deadline for each call
                   const deadline = new Date();

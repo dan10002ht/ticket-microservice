@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
+import redisClient from '../utils/redisClient.js';
 
 const authMiddleware = async (req, res, next) => {
   try {
@@ -16,15 +17,38 @@ const authMiddleware = async (req, res, next) => {
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-    // Verify token
+    // Verify token signature and expiry
     const decoded = jwt.verify(token, config.jwt.secret);
-    
+
+    // Check revocation boundary — auth-service writes token:nbf:{userId} on logout.
+    // Any token with iat ≤ that timestamp is considered revoked.
+    const userId = decoded.sub || decoded.userId;
+    if (userId) {
+      try {
+        const nbf = await redisClient.get(`token:nbf:${userId}`);
+        if (nbf !== null && decoded.iat <= Number(nbf)) {
+          return res.status(401).json({
+            error: 'Unauthorized',
+            message: 'Token has been revoked',
+            correlationId: req.correlationId,
+          });
+        }
+      } catch (redisErr) {
+        // Redis unavailable — log and continue (fail-open to preserve availability)
+        logger.warn('Token revocation check skipped — Redis unavailable', {
+          userId,
+          error: redisErr.message,
+          correlationId: req.correlationId,
+        });
+      }
+    }
+
     // Add user info to request
     req.user = {
-      id: decoded.sub,
+      id: decoded.sub || decoded.userId,
       email: decoded.email,
       role: decoded.role,
-      permissions: decoded.permissions || []
+      permissions: decoded.permissions || [],
     };
 
     // Add correlation ID to response headers

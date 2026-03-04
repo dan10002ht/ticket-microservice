@@ -8,6 +8,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: invoice
 
   flyway:
     enabled: true
@@ -16,6 +17,9 @@ spring:
     baseline-version: 0
     validate-on-migrate: true
     table: flyway_schema_history_invoice
+    schemas: invoice
+    default-schema: invoice
+    create-schemas: true
 
 grpc:
   server:

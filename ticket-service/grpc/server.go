@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/reflection"
 
+	"ticket-service/internal/interceptors"
 	ticketpb "ticket-service/internal/protos/ticket"
 	"ticket-service/services"
 )
@@ -32,6 +33,9 @@ func NewServer(
 ) *Server {
 	// Configure gRPC server options
 	opts := []grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(
+			interceptors.CorrelationServerInterceptor(logger),
+		),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			Time:    30 * time.Second,
 			Timeout: 5 * time.Second,

@@ -20,7 +20,7 @@ export const initializeSwagger = () => {
       openapi: '3.0.0',
       info: {
         title: 'Booking System API Gateway',
-        version: '1.0.0',
+        version: '1.1.0',
         description: 'API Gateway for Booking System Microservices',
         contact: {
           name: 'API Support',
@@ -33,12 +33,16 @@ export const initializeSwagger = () => {
       },
       servers: [
         {
-          url: `http://localhost:${config.server.port}/api`,
-          description: 'Development server',
+          url: `http://localhost:${config.server.port}/api/v1`,
+          description: 'Development server (v1)',
         },
         {
-          url: 'https://api.bookingsystem.com/api',
-          description: 'Production server',
+          url: 'https://api.bookingsystem.com/api/v1',
+          description: 'Production server (v1)',
+        },
+        {
+          url: `http://localhost:${config.server.port}/api`,
+          description: 'Legacy (deprecated — migrate to /api/v1/)',
         },
       ],
       components: {

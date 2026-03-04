@@ -46,7 +46,8 @@ export function generateRefreshToken(userId) {
  */
 export function generateTokens(userId, additionalPayload = {}) {
   const payload = {
-    userId,
+    sub: userId,   // standard JWT subject claim — used by gateway for auth checks
+    userId,        // kept for backward compatibility with existing consumers
     ...additionalPayload,
   };
 

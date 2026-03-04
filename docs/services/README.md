@@ -10,14 +10,16 @@ Per-service detailed documentation for the ticket booking system.
 |---------|----------|-----------|-----------|--------|------|
 | Auth Service | Node.js | 50051 | - | 90% | [docs](./auth/) |
 | User Service | Go | 50052 | - | 100% | [docs](./user/) |
-| Event Service | Go | 50053 | - | 80% | [docs](./event/) |
-| Ticket Service | Go | 50054 | - | 70% | [docs](./ticket/) |
-| Payment Service | Java | 50056 | 8081 | 20% | [docs](./payment/) |
+| Ticket Service | Go | 50053 | - | 70% | [docs](./ticket/) |
+| Event Service | Go | 50055 | - | 80% | [docs](./event/) |
+| Booking Worker | Go | 50056 | - | 100% | [docs](./booking-worker/) |
 | Realtime Service | Go | 50057 | 3003 | 100% | [docs](./realtime/) |
 | Booking Service | Java | 50058 | 8084 | 100% | [docs](./booking/) |
-| Booking Worker | Go | 50059 | - | 100% | [docs](./booking-worker/) |
-| Email Worker | Go | 50060 | 8080 | 85% | [docs](./email-worker/) |
-| API Gateway | Node.js | - | 53000 | 70% | [docs](./gateway/) |
+| Checkin Service | Go | 50059 | - | 100% | [docs](./checkin/) |
+| Invoice Service | Java | 50060 | 8083 | 100% | [docs](./invoice/) |
+| Email Worker | Go | 50061 | - | 85% | [docs](./email-worker/) |
+| Payment Service | Java | 50062 | 8080 | 20% | [docs](./payment/) |
+| API Gateway | Node.js | - | 3000 | 70% | [docs](./gateway/) |
 
 ---
 
@@ -255,23 +257,25 @@ Per-service detailed documentation for the ticket booking system.
 |---------|------|-------|
 | Auth Service | 50051 | auth.proto |
 | User Service | 50052 | user.proto |
-| Event Service | 50053 | event.proto |
-| Ticket Service | 50054 | ticket.proto |
-| Payment Service | 50056 | payment.proto |
+| Ticket Service | 50053 | ticket.proto |
+| Event Service | 50055 | event.proto |
+| Booking Worker | 50056 | booking_worker.proto |
 | Realtime Service | 50057 | realtime.proto |
 | Booking Service | 50058 | booking.proto |
-| Booking Worker | 50059 | booking_worker.proto |
-| Email Worker | 50060 | email.proto |
+| Checkin Service | 50059 | checkin.proto |
+| Invoice Service | 50060 | invoice.proto |
+| Email Worker | 50061 | email.proto |
+| Payment Service | 50062 | payment.proto |
 
 ### REST/HTTP (external or actuator)
 
 | Service | Port | Description |
 |---------|------|-------------|
-| API Gateway | 53000 | Public REST API |
+| API Gateway | 3000 | Public REST API (metrics: 53000) |
 | Realtime Service | 3003 | WebSocket + health |
 | Booking Service | 8084 | Spring Actuator |
-| Payment Service | 8081 | Spring Actuator |
-| Email Worker | 8080 | HTTP health |
+| Invoice Service | 8083 | Spring Actuator |
+| Payment Service | 8080 | Spring Actuator |
 
 ---
 

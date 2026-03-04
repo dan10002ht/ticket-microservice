@@ -34,14 +34,16 @@ cd /Users/dantt1002/projects/ticket-mcrsv
 | `infra` | Docker | Multiple | PostgreSQL, Redis, Kafka, Grafana, Prometheus, Elasticsearch |
 | `auth` | Node.js | 50051 | Authentication & Authorization service |
 | `user` | Go | 50052, 9092 | User profile management service |
-| `event` | Go | 50053 | Event management service |
-| `booking` | Java/Spring | 50054 | Booking service |
-| `payment` | Java/Spring | 8081, 50056 | Payment processing service |
+| `ticket` | Go | 50053, 9096 | Ticket inventory & lifecycle |
+| `event` | Go | 50055, 9095 | Event management service |
+| `booking-worker` | Go | 50056, 9091 | Background worker for bookings |
 | `realtime` | Go | 3003, 50057, 9057 | Real-time notifications service |
-| `ticket` | Go | 50058 | Ticket management service |
-| `booking-worker` | Go | 50059, 9091 | Background worker for bookings |
-| `email-worker` | Go | 8080, 50060, 2112 | Email sending worker |
-| `gateway` | Node.js | 53000 | API Gateway |
+| `booking` | Java/Spring | 8084, 50058 | Booking service |
+| `checkin` | Go | 50059, 2112 | Event check-in service |
+| `invoice` | Java/Spring | 8083, 50060 | Invoice generation service |
+| `email-worker` | Go | 50061, 9090 | Email sending worker |
+| `payment` | Java/Spring | 8080, 50062 | Payment processing service |
+| `gateway` | Node.js | 3000, 53000 | API Gateway (HTTP, metrics) |
 
 ---
 

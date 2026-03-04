@@ -1,5 +1,6 @@
 import express from 'express';
 import logger from '../utils/logger.js';
+import { requestContext } from '../utils/requestContext.js';
 import {
   securityMiddleware,
   compressionMiddleware,
@@ -25,6 +26,11 @@ export const initializeGateway = (app) => {
   compressionMiddleware(app);
   bodyParsingMiddleware(app);
   loggingMiddleware(app);
+
+  // Bind request-scoped context (correlationId flows into gRPC metadata automatically)
+  app.use((req, _res, next) => {
+    requestContext.run({ correlationId: req.correlationId || req.headers['x-correlation-id'] }, next);
+  });
 
   const { limiter, speedLimiter } = rateLimitMiddleware();
   app.use(limiter);

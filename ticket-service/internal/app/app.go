@@ -2,10 +2,12 @@ package app
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
 	"ticket-service/config"
@@ -43,7 +45,7 @@ func (a *App) Initialize() error {
 	a.logger.Info("Initializing Ticket Service")
 
 	// Initialize database
-	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s search_path=tickets",
 		a.config.Database.Host,
 		a.config.Database.Port,
 		a.config.Database.Username,
@@ -114,8 +116,20 @@ func (a *App) Run() error {
 		}
 	}()
 
+	// Prometheus metrics server
+	go func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.Handler())
+		mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+		a.logger.Info("Starting metrics server", zap.String("port", a.config.MetricsPort))
+		if err := http.ListenAndServe(a.config.MetricsPort, mux); err != nil {
+			a.logger.Error("Metrics server error", zap.Error(err))
+		}
+	}()
+
 	a.logger.Info("Ticket Service started successfully",
 		zap.String("grpc_port", a.config.GRPC.Port),
+		zap.String("metrics_port", a.config.MetricsPort),
 	)
 
 	// Wait for shutdown signal

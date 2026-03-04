@@ -18,7 +18,7 @@ public class GrpcClientConfig {
     @Bean
     public ManagedChannel paymentServiceChannel(
             @Value("${grpc.payment-service.host:localhost}") String host,
-            @Value("${grpc.payment-service.port:9090}") int port) {
+            @Value("${grpc.payment-service.port:50062}") int port) {
         log.info("Creating gRPC channel to payment-service: {}:{}", host, port);
         return ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext() // TODO: Use TLS in production
@@ -28,7 +28,7 @@ public class GrpcClientConfig {
     @Bean
     public ManagedChannel ticketServiceChannel(
             @Value("${grpc.ticket-service.host:localhost}") String host,
-            @Value("${grpc.ticket-service.port:50054}") int port) {
+            @Value("${grpc.ticket-service.port:50053}") int port) {
         log.info("Creating gRPC channel to ticket-service: {}:{}", host, port);
         return ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext() // TODO: Use TLS in production

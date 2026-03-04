@@ -21,6 +21,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: payment
         format_sql: true
         use_sql_comments: false
     open-in-view: false
@@ -32,6 +33,9 @@ spring:
     baseline-version: 0
     validate-on-migrate: true
     table: flyway_schema_history_payment
+    schemas: payment
+    default-schema: payment
+    create-schemas: true
 
   security:
     jwt:
@@ -41,7 +45,7 @@ spring:
 # gRPC Configuration
 grpc:
   server:
-    port: ${GRPC_PORT:9090}
+    port: ${GRPC_PORT:50062}
 
 # Server Configuration
 server:

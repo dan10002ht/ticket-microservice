@@ -1,3 +1,6 @@
+CREATE SCHEMA IF NOT EXISTS users;
+SET search_path TO users;
+
 -- User Service Database Schema
 -- Version: 001_init
 

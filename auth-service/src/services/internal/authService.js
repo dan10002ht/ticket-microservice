@@ -33,6 +33,7 @@ import {
   JOB_RETRY_CONFIGS,
 } from '../../const/background.js';
 import { authAttempts } from '../../metrics/authMetrics.js';
+import { revokeUserTokensIssuedBefore } from '../redis/redisService.js';
 // import * as auditService from './auditService.js'; // TODO: Implement audit service
 
 // Get repository instances from factory
@@ -540,6 +541,10 @@ export async function logout(userId, sessionId = null, requestInfo = {}) {
 
     // Execute all operations in parallel for better performance
     await Promise.all(operations);
+
+    // Blacklist all access tokens issued on or before now.
+    // Gateway checks this boundary so tokens remain invalid even within their TTL.
+    await revokeUserTokensIssuedBefore(userId, Math.floor(Date.now() / 1000));
 
     // Log audit trail (async - fire-and-forget)
     // TODO: Implement audit service

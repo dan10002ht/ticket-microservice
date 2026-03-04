@@ -105,7 +105,7 @@ payment-service/
 
 #### docker-compose.dev.yml
 - ✅ Added payment-service service
-- ✅ Port mapping: 8081:8080 (REST), 50056:9090 (gRPC)
+- ✅ Port mapping: 8080:8080 (REST), 50062:50062 (gRPC)
 - ✅ Environment variables configured
 - ✅ PostgreSQL dependency
 - ✅ Redis dependency

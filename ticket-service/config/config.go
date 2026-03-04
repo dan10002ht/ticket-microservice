@@ -8,13 +8,14 @@ import (
 
 // Config holds all configuration for the ticket service
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Redis    RedisConfig
-	GRPC     GRPCConfig
-	Event    EventServiceConfig
-	Payment  PaymentServiceConfig
-	Logging  LoggingConfig
+	Server      ServerConfig
+	Database    DatabaseConfig
+	Redis       RedisConfig
+	GRPC        GRPCConfig
+	Event       EventServiceConfig
+	Payment     PaymentServiceConfig
+	Logging     LoggingConfig
+	MetricsPort string
 }
 
 // ServerConfig holds server configuration
@@ -112,6 +113,7 @@ func LoadConfig() *Config {
 			Level:  getEnv("LOG_LEVEL", "info"),
 			Format: getEnv("LOG_FORMAT", "json"),
 		},
+		MetricsPort: getEnv("METRICS_PORT", ":9096"),
 	}
 }
 

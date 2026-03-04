@@ -159,12 +159,12 @@ func setDefaults() {
 
 	// Server defaults
 	viper.SetDefault("server.port", 8080)
-	viper.SetDefault("server.grpc_port", 50060)
+	viper.SetDefault("server.grpc_port", 50061)
 
 	// gRPC defaults
 	viper.SetDefault("grpc.auth_service", "localhost:50051")
 	viper.SetDefault("grpc.user_service", "localhost:50052")
-	viper.SetDefault("grpc.booking_service", "localhost:50053")
+	viper.SetDefault("grpc.booking_service", "localhost:50058")
 	viper.SetDefault("grpc.timeout", "30s")
 
 	// Email defaults

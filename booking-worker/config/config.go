@@ -68,7 +68,7 @@ func LoadConfig() *Config {
 			DB:       getEnvAsInt("REDIS_DATABASE", 0),
 		},
 		GRPC: GRPCConfig{
-			Port:                   getEnv("GRPC_PORT", "50059"),
+			Port:                   getEnv("GRPC_PORT", "50056"),
 			BookingServiceEndpoint: getEnv("GRPC_BOOKING_SERVICE_ENDPOINT", "localhost:50058"),
 			RealtimeServiceEndpoint: getEnv("GRPC_REALTIME_SERVICE_ENDPOINT", "localhost:50057"),
 		},

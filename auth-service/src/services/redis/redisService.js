@@ -529,5 +529,36 @@ redisClient.on('reconnecting', () => {
   logger.info('🔄 Redis reconnecting...');
 });
 
+// ========== TOKEN REVOCATION (not-before) ==========
+//
+// When a user logs out, we record the current unix timestamp as the
+// "not-before" boundary for that user.  Any access token with iat ≤ this
+// value is treated as revoked, even if it has not yet expired.
+//
+// TTL = 7 days (matches refresh token lifetime so the key auto-expires).
+
+const TOKEN_REVOCATION_TTL = 7 * 24 * 60 * 60; // 7 days in seconds
+
+/**
+ * Record a revocation boundary for a user.
+ * Call this on logout so all tokens issued on or before `now` are rejected.
+ * @param {string} userId - The user's public_id / sub claim
+ */
+export async function revokeUserTokensIssuedBefore(userId, unixSeconds) {
+  const key = `token:nbf:${userId}`;
+  await redisClient.setex(key, TOKEN_REVOCATION_TTL, String(unixSeconds));
+}
+
+/**
+ * Return the not-before unix timestamp for a user, or null if none stored.
+ * @param {string} userId
+ * @returns {number|null}
+ */
+export async function getTokenNotBefore(userId) {
+  const key = `token:nbf:${userId}`;
+  const value = await redisClient.get(key);
+  return value !== null ? Number(value) : null;
+}
+
 // Export Redis client for advanced operations
 export { redisClient };

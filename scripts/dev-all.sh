@@ -77,13 +77,15 @@ while [[ $# -gt 0 ]]; do
             echo "  - infra          Infrastructure (Postgres, Redis, Kafka)"
             echo "  - auth           Auth Service (Node.js, gRPC 50051)"
             echo "  - user           User Service (Go, gRPC 50052)"
-            echo "  - event          Event Service (Go, gRPC 50053)"
-            echo "  - booking        Booking Service (Java, HTTP 8084, gRPC 50058)"
-            echo "  - payment        Payment Service (Java, gRPC 50056)"
+            echo "  - ticket         Ticket Service (Go, gRPC 50053)"
+            echo "  - event          Event Service (Go, gRPC 50055)"
+            echo "  - booking-worker Booking Worker (Go, gRPC 50056)"
             echo "  - realtime       Realtime Service (Go, HTTP 3003, gRPC 50057)"
-            echo "  - ticket         Ticket Service (Go, gRPC 50054)"
-            echo "  - booking-worker Booking Worker (Go, gRPC 50059)"
-            echo "  - email-worker   Email Worker (Go, HTTP 8080, gRPC 50060)"
+            echo "  - booking        Booking Service (Java, HTTP 8084, gRPC 50058)"
+            echo "  - checkin        Checkin Service (Go, gRPC 50059)"
+            echo "  - invoice        Invoice Service (Java, HTTP 8083, gRPC 50060)"
+            echo "  - email-worker   Email Worker (Go, gRPC 50061)"
+            echo "  - payment        Payment Service (Java, HTTP 8080, gRPC 50062)"
             echo "  - gateway        API Gateway (Node.js, HTTP 3000)"
             echo ""
             echo "Examples:"
@@ -408,13 +410,13 @@ start_payment_service() {
     fi
     echo ""
     echo -e "${CYAN}Starting Payment Service...${NC}"
-    kill_port 8081 "payment-service-http"
-    kill_port 50056 "payment-service-grpc"
+    kill_port 8080 "payment-service-http"
+    kill_port 50062 "payment-service-grpc"
     cd "$PROJECT_DIR/payment-service"
     mvn spring-boot:run -Dspring-boot.run.profiles=dev > >(prefix_log "payment" "$(get_log_color payment)" | tee -a "$LOG_DIR/payment-service.log") 2>&1 &
     PAYMENT_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "payment-service" 50056 "port" 60
+    wait_for_healthy "payment-service" 50062 "port" 60
 }
 
 start_realtime_service() {
@@ -671,13 +673,13 @@ check_and_report() {
 
 [ -n "$AUTH_PID" ]           && check_and_report "auth-service    " 50051 AUTH_PID "gRPC:50051"
 [ -n "$USER_PID" ]           && check_and_report "user-service    " 50052 USER_PID "gRPC:50052"
-[ -n "$EVENT_PID" ]          && check_and_report "event-service   " 50053 EVENT_PID "gRPC:50053"
-[ -n "$TICKET_PID" ]         && check_and_report "ticket-service  " 50054 TICKET_PID "gRPC:50054"
+[ -n "$TICKET_PID" ]         && check_and_report "ticket-service  " 50053 TICKET_PID "gRPC:50053"
+[ -n "$EVENT_PID" ]          && check_and_report "event-service   " 50055 EVENT_PID "gRPC:50055"
 [ -n "$BOOKING_PID" ]        && check_and_report "booking-service " 8084 BOOKING_PID "HTTP:8084, gRPC:50058"
-[ -n "$PAYMENT_PID" ]        && check_and_report "payment-service " 50056 PAYMENT_PID "gRPC:50056"
+[ -n "$PAYMENT_PID" ]        && check_and_report "payment-service " 50062 PAYMENT_PID "HTTP:8080, gRPC:50062"
 [ -n "$REALTIME_PID" ]       && check_and_report "realtime-service" 3003 REALTIME_PID "HTTP:3003, gRPC:50057"
-[ -n "$BOOKING_WORKER_PID" ] && check_and_report "booking-worker  " 50059 BOOKING_WORKER_PID "gRPC:50059"
-[ -n "$EMAIL_WORKER_PID" ]   && check_and_report "email-worker    " 50060 EMAIL_WORKER_PID "gRPC:50060"
+[ -n "$BOOKING_WORKER_PID" ] && check_and_report "booking-worker  " 50056 BOOKING_WORKER_PID "gRPC:50056"
+[ -n "$EMAIL_WORKER_PID" ]   && check_and_report "email-worker    " 50061 EMAIL_WORKER_PID "gRPC:50061"
 [ -n "$GATEWAY_PID" ]        && check_and_report "gateway         " 53000 GATEWAY_PID "HTTP:53000"
 
 echo ""

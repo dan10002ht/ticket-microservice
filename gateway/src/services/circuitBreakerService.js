@@ -27,38 +27,6 @@ class CircuitBreakerService {
    * @returns {CircuitBreaker} Circuit breaker instance
    */
   createBreaker(name, fn, options = {}) {
-    // Bypass circuit breaker in development mode
-    if (!config.circuitBreaker.enabled) {
-      // logger.info(`Circuit breaker disabled for '${name}' in development mode`, {
-      //   service: name,
-      //   timestamp: new Date().toISOString(),
-      // });
-
-      // Return a mock circuit breaker that just calls the function directly
-      const mockBreaker = {
-        fire: async (...args) => {
-          try {
-            return await fn(...args);
-          } catch (error) {
-            logger.error(`Direct call failed for '${name}'`, {
-              service: name,
-              error: error.message,
-              timestamp: new Date().toISOString(),
-            });
-            throw error;
-          }
-        },
-        stats: { totalCount: 0, errorCount: 0, errorPercentage: 0 },
-        opened: false,
-        close: () => {},
-        open: () => {},
-        on: () => {},
-      };
-
-      this.breakers.set(name, mockBreaker);
-      return mockBreaker;
-    }
-
     const breakerOptions = { ...this.defaultOptions, ...options };
 
     const breaker = new CircuitBreaker(fn, breakerOptions);

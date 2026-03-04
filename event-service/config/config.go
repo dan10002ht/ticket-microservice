@@ -20,10 +20,15 @@ type GRPCConfig struct {
 	Port string
 }
 
+type MetricsConfig struct {
+	Port string
+}
+
 type Config struct {
 	Database DatabaseConfig
 	Redis    RedisConfig
 	GRPC     GRPCConfig
+	Metrics  MetricsConfig
 	Env      string
 }
 
@@ -39,7 +44,10 @@ func LoadConfig() (*Config, error) {
 			DB:       getEnvInt("REDIS_DB", 0),
 		},
 		GRPC: GRPCConfig{
-			Port: getEnv("EVENT_GRPC_PORT", ":50052"),
+			Port: getEnv("EVENT_GRPC_PORT", ":50055"),
+		},
+		Metrics: MetricsConfig{
+			Port: getEnv("EVENT_METRICS_PORT", ":9095"),
 		},
 		Env: getEnv("ENV", "development"),
 	}

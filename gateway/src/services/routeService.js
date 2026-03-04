@@ -27,12 +27,31 @@ export const initializeRoutes = (app, swaggerSpec) => {
   // API documentation
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-  // API routes with authentication middleware
-  app.use('/api/auth', authRoutes);
-  app.use('/api/users', authMiddleware, userRoutes);
-  app.use('/api/events', authMiddleware, eventRoutes);
-  app.use('/api/bookings', authMiddleware, bookingRoutes);
-  app.use('/api/payments', authMiddleware, paymentRoutes);
-  app.use('/api/tickets', authMiddleware, ticketRoutes);
-  app.use('/api/organizations', authMiddleware, organizationRoutes);
+  // ============================================
+  // API v1 — primary versioned routes
+  // ============================================
+  app.use('/api/v1/auth', authRoutes);
+  app.use('/api/v1/users', authMiddleware, userRoutes);
+  app.use('/api/v1/events', authMiddleware, eventRoutes);
+  app.use('/api/v1/bookings', authMiddleware, bookingRoutes);
+  app.use('/api/v1/payments', authMiddleware, paymentRoutes);
+  app.use('/api/v1/tickets', authMiddleware, ticketRoutes);
+  app.use('/api/v1/organizations', authMiddleware, organizationRoutes);
+
+  // ============================================
+  // Legacy /api/* — backward-compat aliases (deprecated)
+  // Clients should migrate to /api/v1/
+  // ============================================
+  const deprecationWarning = (_req, res, next) => {
+    res.setHeader('Deprecation', 'true');
+    res.setHeader('Link', '</api/v1/>; rel="successor-version"');
+    next();
+  };
+  app.use('/api/auth', deprecationWarning, authRoutes);
+  app.use('/api/users', deprecationWarning, authMiddleware, userRoutes);
+  app.use('/api/events', deprecationWarning, authMiddleware, eventRoutes);
+  app.use('/api/bookings', deprecationWarning, authMiddleware, bookingRoutes);
+  app.use('/api/payments', deprecationWarning, authMiddleware, paymentRoutes);
+  app.use('/api/tickets', deprecationWarning, authMiddleware, ticketRoutes);
+  app.use('/api/organizations', deprecationWarning, authMiddleware, organizationRoutes);
 };

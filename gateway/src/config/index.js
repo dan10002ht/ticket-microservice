@@ -69,28 +69,32 @@ const config = {
       url: process.env.GRPC_USER_SERVICE_URL || 'localhost:50052',
     },
     eventService: {
-      url: process.env.GRPC_EVENT_SERVICE_URL || 'event-management-service:50053',
+      url: process.env.GRPC_EVENT_SERVICE_URL || 'event-service:50055',
     },
     bookingService: {
-      url: process.env.GRPC_BOOKING_SERVICE_URL || 'booking-service:50054',
+      url: process.env.GRPC_BOOKING_SERVICE_URL || 'booking-service:50058',
     },
     paymentService: {
-      url: process.env.GRPC_PAYMENT_SERVICE_URL || 'payment-service:50055',
+      url: process.env.GRPC_PAYMENT_SERVICE_URL || 'payment-service:50062',
     },
     ticketService: {
-      url: process.env.GRPC_TICKET_SERVICE_URL || 'ticket-service:50056',
+      url: process.env.GRPC_TICKET_SERVICE_URL || 'ticket-service:50053',
     },
   },
 
   // Circuit Breaker Configuration
+  // Always enabled. Dev uses relaxed thresholds so failures trip the breaker
+  // less aggressively, but the behaviour is still tested end-to-end.
   circuitBreaker: {
-    threshold: parseInt(process.env.CIRCUIT_BREAKER_THRESHOLD),
-    timeout: parseInt(process.env.CIRCUIT_BREAKER_TIMEOUT),
-    resetTimeout: parseInt(process.env.CIRCUIT_BREAKER_RESET_TIMEOUT),
-    errorThresholdPercentage: parseInt(process.env.CIRCUIT_BREAKER_ERROR_PERCENTAGE),
-    volumeThreshold: parseInt(process.env.CIRCUIT_BREAKER_VOLUME_THRESHOLD),
-    enabled:
-      process.env.CIRCUIT_BREAKER_ENABLED !== 'false' && process.env.NODE_ENV !== 'development',
+    enabled: process.env.CIRCUIT_BREAKER_ENABLED !== 'false',
+    timeout: parseInt(process.env.CIRCUIT_BREAKER_TIMEOUT) || 30000,
+    resetTimeout: parseInt(process.env.CIRCUIT_BREAKER_RESET_TIMEOUT) || 30000,
+    errorThresholdPercentage:
+      parseInt(process.env.CIRCUIT_BREAKER_ERROR_PERCENTAGE) ||
+      (process.env.NODE_ENV === 'production' ? 50 : 75),
+    volumeThreshold:
+      parseInt(process.env.CIRCUIT_BREAKER_VOLUME_THRESHOLD) ||
+      (process.env.NODE_ENV === 'production' ? 5 : 20),
   },
 
   // Logging Configuration

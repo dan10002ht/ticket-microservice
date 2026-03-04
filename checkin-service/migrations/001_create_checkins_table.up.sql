@@ -1,3 +1,6 @@
+CREATE SCHEMA IF NOT EXISTS checkin;
+SET search_path TO checkin;
+
 -- Checkin records: one row per successful (or attempted) ticket scan on event day.
 -- ticket_id has a UNIQUE constraint — idempotent check-ins at the DB level.
 

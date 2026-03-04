@@ -1,11 +1,9 @@
-# gRPC port (default 9090 conflicts with Prometheus)
 grpc:
   server:
-    port: 50056
+    port: 50062
 
-# HTTP server port
 server:
-  port: 8081
+  port: 8080
 
 spring:
   datasource:
