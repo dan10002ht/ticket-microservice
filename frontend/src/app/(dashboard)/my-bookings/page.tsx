@@ -1,105 +1,56 @@
 "use client";
 
+import Link from "next/link";
 import { PageHeader } from "@/components/molecules/page-header";
 import { StatusBadge } from "@/components/molecules/status-badge";
 import { PriceDisplay } from "@/components/molecules/price-display";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
-import type { Booking } from "@/types";
-
-const sampleBookings: Booking[] = [
-  {
-    id: "BK-001",
-    userId: "user-1",
-    eventId: "1",
-    status: "confirmed",
-    totalAmount: 1000000,
-    ticketCount: 2,
-    createdAt: "2026-03-01T10:00:00Z",
-    event: {
-      id: "1",
-      title: "Summer Music Festival 2026",
-      description: "",
-      venue: "Sân vận động Mỹ Đình",
-      address: "Hà Nội",
-      startDate: "2026-07-15T18:00:00Z",
-      endDate: "2026-07-15T23:00:00Z",
-      status: "published",
-      organizerId: "org-1",
-      totalCapacity: 5000,
-      availableCapacity: 1200,
-      minPrice: 500000,
-      maxPrice: 2000000,
-      createdAt: "2026-01-01T00:00:00Z",
-    },
-  },
-  {
-    id: "BK-002",
-    userId: "user-1",
-    eventId: "2",
-    status: "pending",
-    totalAmount: 600000,
-    ticketCount: 1,
-    createdAt: "2026-03-02T14:00:00Z",
-    event: {
-      id: "2",
-      title: "Tech Conference Vietnam",
-      description: "",
-      venue: "GEM Center",
-      address: "TP. Hồ Chí Minh",
-      startDate: "2026-08-20T09:00:00Z",
-      endDate: "2026-08-21T17:00:00Z",
-      status: "published",
-      organizerId: "org-2",
-      totalCapacity: 800,
-      availableCapacity: 350,
-      minPrice: 300000,
-      maxPrice: 1500000,
-      createdAt: "2026-02-01T00:00:00Z",
-    },
-  },
-  {
-    id: "BK-003",
-    userId: "user-1",
-    eventId: "3",
-    status: "cancelled",
-    totalAmount: 400000,
-    ticketCount: 1,
-    createdAt: "2026-02-20T09:00:00Z",
-    event: {
-      id: "3",
-      title: "Stand-up Comedy Night",
-      description: "",
-      venue: "Nhà hát Lớn",
-      address: "Hà Nội",
-      startDate: "2026-06-10T19:30:00Z",
-      endDate: "2026-06-10T22:00:00Z",
-      status: "published",
-      organizerId: "org-3",
-      totalCapacity: 300,
-      availableCapacity: 45,
-      minPrice: 200000,
-      maxPrice: 800000,
-      createdAt: "2026-03-01T00:00:00Z",
-    },
-  },
-];
+import { Button } from "@/components/ui/button";
+import { useBookings, useCancelBooking } from "@/lib/api/queries";
+import { showToast } from "@/lib/toast";
+import type { Booking } from "@/lib/api/types/booking";
+import type { ApiError } from "@/lib/api/types/common";
 
 const columns: Column<Booking>[] = [
-  { key: "id", header: "Booking ID" },
   {
-    key: "event",
-    header: "Event",
-    render: (booking) => booking.event?.title ?? "-",
+    key: "id",
+    header: "Booking ID",
+    render: (booking) => (
+      <Link
+        href={`/my-bookings/${booking.id}`}
+        className="font-mono text-xs text-primary hover:underline"
+      >
+        {booking.id.slice(0, 8)}...
+      </Link>
+    ),
   },
   {
-    key: "ticketCount",
+    key: "event_id",
+    header: "Event",
+    render: (booking) => (
+      <Link
+        href={`/events/${booking.event_id}`}
+        className="text-primary hover:underline"
+      >
+        View Event
+      </Link>
+    ),
+  },
+  {
+    key: "ticket_quantity",
     header: "Tickets",
     className: "text-center",
   },
   {
-    key: "totalAmount",
+    key: "total_amount",
     header: "Total",
-    render: (booking) => <PriceDisplay amount={booking.totalAmount} size="sm" />,
+    render: (booking) => (
+      <PriceDisplay
+        amount={booking.total_amount}
+        currency={booking.currency || "VND"}
+        size="sm"
+      />
+    ),
   },
   {
     key: "status",
@@ -107,14 +58,52 @@ const columns: Column<Booking>[] = [
     render: (booking) => <StatusBadge status={booking.status} />,
   },
   {
-    key: "createdAt",
+    key: "created_at",
     header: "Date",
     render: (booking) =>
-      new Date(booking.createdAt).toLocaleDateString("vi-VN"),
+      new Date(booking.created_at).toLocaleDateString("en-US"),
   },
 ];
 
 export default function MyBookingsPage() {
+  const { data, isLoading, error } = useBookings();
+  const cancelMutation = useCancelBooking();
+
+  const handleCancel = async (id: string) => {
+    try {
+      await cancelMutation.mutateAsync({ id });
+      showToast.success("Booking cancelled successfully");
+    } catch (err) {
+      showToast.apiError(err as ApiError);
+    }
+  };
+
+  const columnsWithActions: Column<Booking>[] = [
+    ...columns,
+    {
+      key: "actions",
+      header: "",
+      render: (booking) => (
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={`/my-bookings/${booking.id}`}>View</Link>
+          </Button>
+          {booking.status === "pending" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive"
+              onClick={() => handleCancel(booking.id)}
+              disabled={cancelMutation.isPending}
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
+
   return (
     <>
       <PageHeader
@@ -122,10 +111,18 @@ export default function MyBookingsPage() {
         description="View and manage your event bookings"
       />
 
+      {error && (
+        <div className="mt-4 rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error.error || "Failed to load bookings."}
+        </div>
+      )}
+
       <div className="mt-6">
         <DataTable
-          columns={columns}
-          data={sampleBookings}
+          columns={columnsWithActions}
+          data={data?.items ?? []}
+          isLoading={isLoading}
+          emptyMessage="No bookings yet"
           keyExtractor={(b) => b.id}
         />
       </div>

@@ -10,8 +10,8 @@ Per-service detailed documentation for the ticket booking system.
 |---------|----------|-----------|-----------|--------|------|
 | Auth Service | Node.js | 50051 | - | 90% | [docs](./auth/) |
 | User Service | Go | 50052 | - | 100% | [docs](./user/) |
-| Ticket Service | Go | 50053 | - | 70% | [docs](./ticket/) |
-| Event Service | Go | 50055 | - | 80% | [docs](./event/) |
+| Ticket Service | Go | 50054 | - | 70% | [docs](./ticket/) |
+| Event Service | Go | 50053 | - | 80% | [docs](./event/) |
 | Booking Worker | Go | 50056 | - | 100% | [docs](./booking-worker/) |
 | Realtime Service | Go | 50057 | 3003 | 100% | [docs](./realtime/) |
 | Booking Service | Java | 50058 | 8084 | 100% | [docs](./booking/) |
@@ -19,7 +19,7 @@ Per-service detailed documentation for the ticket booking system.
 | Invoice Service | Java | 50060 | 8083 | 100% | [docs](./invoice/) |
 | Email Worker | Go | 50061 | - | 85% | [docs](./email-worker/) |
 | Payment Service | Java | 50062 | 8080 | 20% | [docs](./payment/) |
-| API Gateway | Node.js | - | 3000 | 70% | [docs](./gateway/) |
+| API Gateway | Node.js | - | 53000 | 70% | [docs](./gateway/) |
 
 ---
 
@@ -111,7 +111,7 @@ Per-service detailed documentation for the ticket booking system.
 ## Payment Service
 
 **Language**: Java 17 + Spring Boot 3.2
-**Ports**: gRPC: 50056, REST: 8081
+**Ports**: gRPC: 50062, REST: 8080
 **Status**: 20% Complete
 
 ### Features
@@ -183,7 +183,7 @@ Per-service detailed documentation for the ticket booking system.
 ## Booking Worker
 
 **Language**: Go 1.22+
-**Port**: gRPC: 50059
+**Port**: gRPC: 50056
 **Status**: 100% Complete
 
 ### Features
@@ -207,7 +207,7 @@ Per-service detailed documentation for the ticket booking system.
 ## Email Worker
 
 **Language**: Go 1.22+
-**Ports**: HTTP: 8080, gRPC: 50060
+**Ports**: HTTP: 8080, gRPC: 50061
 **Status**: 85% Complete
 
 ### Features
@@ -257,8 +257,8 @@ Per-service detailed documentation for the ticket booking system.
 |---------|------|-------|
 | Auth Service | 50051 | auth.proto |
 | User Service | 50052 | user.proto |
-| Ticket Service | 50053 | ticket.proto |
-| Event Service | 50055 | event.proto |
+| Ticket Service | 50054 | ticket.proto |
+| Event Service | 50053 | event.proto |
 | Booking Worker | 50056 | booking_worker.proto |
 | Realtime Service | 50057 | realtime.proto |
 | Booking Service | 50058 | booking.proto |
@@ -271,7 +271,7 @@ Per-service detailed documentation for the ticket booking system.
 
 | Service | Port | Description |
 |---------|------|-------------|
-| API Gateway | 3000 | Public REST API (metrics: 53000) |
+| API Gateway | 53000 | Public REST API |
 | Realtime Service | 3003 | WebSocket + health |
 | Booking Service | 8084 | Spring Actuator |
 | Invoice Service | 8083 | Spring Actuator |

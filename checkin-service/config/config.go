@@ -53,7 +53,7 @@ func LoadConfig() (*Config, error) {
 		},
 		Database: DatabaseConfig{
 			Host:            getEnv("DB_HOST", "localhost"),
-			Port:            getEnvAsInt("DB_PORT", 5432),
+			Port:            getEnvAsInt("DB_PORT", 50433),
 			Name:            getEnv("DB_NAME", "booking_system"),
 			User:            getEnv("DB_USER", "booking_user"),
 			Password:        getEnv("DB_PASSWORD", "booking_pass"),
@@ -67,7 +67,7 @@ func LoadConfig() (*Config, error) {
 		},
 		TicketService: TicketServiceConfig{
 			Host: getEnv("TICKET_SERVICE_HOST", "ticket-service"),
-			Port: getEnvAsInt("TICKET_SERVICE_PORT", 50053),
+			Port: getEnvAsInt("TICKET_SERVICE_PORT", 50054),
 		},
 		Logging: LoggingConfig{
 			Level:  getEnv("LOG_LEVEL", "info"),

@@ -23,22 +23,22 @@ INFRA_PORTS=("50432" "50433" "50379" "50092" "50181")
 INFRA_CONTAINERS=("dev-postgres-auth" "dev-postgres-main" "dev-redis" "dev-kafka" "dev-zookeeper")
 
 # --- Application services ---
-APP_NAMES=("auth" "user" "event" "ticket" "payment" "realtime" "booking" "booking-worker" "email-worker" "gateway")
+APP_NAMES=("auth" "user" "event" "ticket" "payment" "realtime" "booking" "booking-worker" "checkin" "invoice" "email-worker" "gateway")
 
 # Primary port for each app service (used for basic port check)
-APP_PORTS=("50051" "50052" "50053" "50054" "50056" "3003" "8084" "50059" "8080" "53000")
+APP_PORTS=("50051" "50052" "50053" "50054" "50062" "3003" "8084" "50056" "50059" "8083" "50061" "53000")
 
 # gRPC ports (empty if no gRPC)
-APP_GRPC_PORTS=("50051" "50052" "50053" "50054" "50056" "50057" "50058" "50059" "50060" "")
+APP_GRPC_PORTS=("50051" "50052" "50053" "50054" "50062" "50057" "50058" "50056" "50059" "50060" "50061" "")
 
 # HTTP health endpoints (empty if none)
-APP_HEALTH_URLS=("" "" "" "" "" "http://localhost:3003/health" "http://localhost:8084/actuator/health" "" "" "http://localhost:53000/health")
+APP_HEALTH_URLS=("" "" "" "" "" "http://localhost:3003/health" "http://localhost:8084/actuator/health" "" "" "http://localhost:8083/actuator/health" "" "http://localhost:53000/health")
 
 # Check type: port, grpc, http, spring, http+grpc
-APP_CHECK_TYPES=("port" "grpc" "port" "port" "port" "http" "spring" "port" "port" "http")
+APP_CHECK_TYPES=("port" "grpc" "port" "port" "port" "http" "spring" "port" "port" "spring" "port" "http")
 
 # Display labels (keep under 19 chars for table alignment)
-APP_PORT_LABELS=("gRPC:50051" "gRPC:50052" "gRPC:50053" "gRPC:50054" "gRPC:50056" ":3003/:50057" ":8084/:50058" "gRPC:50059" ":8080/:50060" "HTTP:53000")
+APP_PORT_LABELS=("gRPC:50051" "gRPC:50052" "gRPC:50053" "gRPC:50054" "gRPC:50062" ":3003/:50057" ":8084/:50058" "gRPC:50056" "gRPC:50059" ":8083/:50060" "gRPC:50061" "HTTP:53000")
 
 # ============================================================================
 # Log color codes for each service (for prefix_log)
@@ -53,6 +53,8 @@ get_log_color() {
         realtime)      echo "94" ;;   # light blue
         booking)       echo "95" ;;   # light magenta
         booking-worker) echo "93" ;;  # light yellow
+        checkin)       echo "34" ;;   # blue
+        invoice)       echo "92" ;;   # light green
         email-worker)  echo "96" ;;   # light cyan
         gateway)       echo "97" ;;   # white/bright
         *)             echo "0"  ;;

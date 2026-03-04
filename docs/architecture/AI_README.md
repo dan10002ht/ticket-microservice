@@ -11,22 +11,18 @@ This file is intended for AI agents and automated tools to understand the struct
 
 ## 📦 Core Services
 
-- **gateway/**: API Gateway, entrypoint for all client requests
-- **auth-service/**: Authentication and authorization
-- **booking-service/**: Booking logic and ticket reservation
-- **booking-worker/**: Queue-based booking worker (Go), handles high concurrency
-- **ticket-service/**: Ticket inventory management
-- **payment-service/**: Payment processing
-- **realtime-service/**: WebSocket real-time updates
-- **notification-service/**: Notification delivery
-- **email-worker/**: Asynchronous email sending
-- **invoice-service/**: Invoice and PDF generation
-- **analytics-service/**: Data analytics and reporting
-- **event-management/**: Event and venue management
-- **user-profile/**: User profile and preferences
-- **pricing-service/**: Dynamic pricing and promotions
-- **support-service/**: Customer support and chat
-- **rate-limiter/**: API rate limiting
+- **gateway/**: API Gateway (Node.js, HTTP :53000), entrypoint for all client requests, Swagger docs
+- **auth-service/**: Authentication and authorization (Node.js, gRPC :50051)
+- **user-service/**: User profiles and address management (Go, gRPC :50052)
+- **event-service/**: Event and venue management (Go, gRPC :50053)
+- **ticket-service/**: Ticket inventory and types (Go, gRPC :50054)
+- **booking-worker/**: Queue-based booking worker (Go, gRPC :50056), handles high concurrency
+- **realtime-service/**: WebSocket real-time updates (Go, HTTP :3003, gRPC :50057)
+- **booking-service/**: Booking orchestration with Saga pattern (Java, HTTP :8084, gRPC :50058)
+- **checkin-service/**: Event check-in and QR code scanning (Go, gRPC :50059)
+- **invoice-service/**: Invoice generation and PDF export (Java, HTTP :8083, gRPC :50060)
+- **email-worker/**: Asynchronous email sending (Go, gRPC :50061)
+- **payment-service/**: Payment processing with Stripe (Java, HTTP :8080, gRPC :50062)
 
 ## 🔗 Communication
 
@@ -36,10 +32,12 @@ This file is intended for AI agents and automated tools to understand the struct
 
 ## 🧩 Integration Points
 
-- **Booking Flow**: gateway → booking-worker (Go) → booking-service/ticket-service → payment-service → notification/realtime
+- **Booking Flow**: gateway → booking-worker (Go) → booking-service/ticket-service → payment-service → realtime-service
+- **Check-in Flow**: gateway → checkin-service (validates ticket QR code, records check-in)
+- **Invoice Flow**: payment confirmed → invoice-service generates invoice → PDF available via gateway
 - **Queue Handling**: booking-worker manages distributed queue, notifies clients via realtime-service
 - **Timeouts**: booking-worker enforces timeouts, releases tickets if payment not completed
-- **Rate Limiting**: All APIs are protected by rate-limiter service
+- **Email Flow**: auth-service → email-worker (verification emails, notifications)
 
 ## 📝 Conventions
 
@@ -85,7 +83,7 @@ This file is intended for AI agents and automated tools to understand the struct
 3. `booking-worker` enqueues request, notifies client via `realtime-service`
 4. When turn comes, `booking-worker` reserves ticket via `booking-service`/`ticket-service`
 5. Client proceeds to payment via `payment-service`
-6. On success, notifications sent via `notification-service`/`email-worker`
+6. On success, notifications sent via `realtime-service`/`email-worker`
 
 ---
 

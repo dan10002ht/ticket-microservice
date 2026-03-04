@@ -1,33 +1,54 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { User, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { showToast } from "@/lib/toast";
 import { registerSchema, type RegisterInput } from "@/lib/validators/auth";
+import { useRegister } from "@/lib/api/queries";
+import type { ApiError } from "@/lib/api/types/common";
+
+// Map API field paths to react-hook-form field names
+const API_FIELD_MAP: Record<string, keyof RegisterInput> = {
+  email: "email",
+  password: "password",
+  first_name: "first_name",
+  last_name: "last_name",
+};
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const registerMutation = useRegister();
+
   const {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isSubmitting },
+    setValue,
+    setError,
+    formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      first_name: "",
+      last_name: "",
       email: "",
       password: "",
       confirmPassword: "",
+      role: "user",
+      organization_name: "",
     },
   });
 
   const password = watch("password");
+  const selectedRole = watch("role");
 
   const getPasswordStrength = (
     pwd: string
@@ -50,9 +71,31 @@ export default function RegisterPage() {
   const strength = getPasswordStrength(password);
 
   const onSubmit = async (data: RegisterInput) => {
-    // TODO: Call register API
-    console.log("Register:", data);
-    toast.success("Account created successfully!");
+    try {
+      const { confirmPassword: _, organization_name, ...rest } = data;
+      const registerData = {
+        ...rest,
+        ...(data.role === "organization" && organization_name
+          ? { organization: { name: organization_name.trim() } }
+          : {}),
+      };
+      await registerMutation.mutateAsync(registerData);
+      showToast.success("Tạo tài khoản thành công!");
+      router.push(data.role === "organization" ? "/org/dashboard" : "/");
+    } catch (err: unknown) {
+      // Map API validation details to form field errors
+      const apiErr = err as ApiError;
+      if (apiErr.details && Array.isArray(apiErr.details)) {
+        for (const detail of apiErr.details) {
+          const d = detail as { path: string; msg: string };
+          const formField = API_FIELD_MAP[d.path];
+          if (formField) {
+            setError(formField, { message: d.msg });
+          }
+        }
+      }
+      // Toast is already shown by error interceptor — no double toast
+    }
   };
 
   return (
@@ -65,32 +108,88 @@ export default function RegisterPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Role selection */}
+        <div className="space-y-2">
+          <Label>Account type</Label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setValue("role", "user", { shouldValidate: true })}
+              className={cn(
+                "flex flex-col items-center gap-2 rounded-lg border p-4 transition-all",
+                selectedRole === "user"
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "hover:border-muted-foreground/50"
+              )}
+            >
+              <User className="h-5 w-5" />
+              <span className="text-sm font-medium">Individual</span>
+              <span className="text-xs text-muted-foreground">
+                Browse & book events
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setValue("role", "organization", { shouldValidate: true })}
+              className={cn(
+                "flex flex-col items-center gap-2 rounded-lg border p-4 transition-all",
+                selectedRole === "organization"
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "hover:border-muted-foreground/50"
+              )}
+            >
+              <Building2 className="h-5 w-5" />
+              <span className="text-sm font-medium">Organization</span>
+              <span className="text-xs text-muted-foreground">
+                Create & manage events
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Organization name (visible only for org role) */}
+        {selectedRole === "organization" && (
+          <div className="space-y-2">
+            <Label htmlFor="organization_name">Organization name</Label>
+            <Input
+              id="organization_name"
+              placeholder="Your company or team name"
+              {...register("organization_name")}
+            />
+            {errors.organization_name && (
+              <p className="text-xs text-destructive">
+                {errors.organization_name.message}
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="firstName">First name</Label>
+            <Label htmlFor="first_name">First name</Label>
             <Input
-              id="firstName"
+              id="first_name"
               placeholder="John"
               autoComplete="given-name"
-              {...register("firstName")}
+              {...register("first_name")}
             />
-            {errors.firstName && (
+            {errors.first_name && (
               <p className="text-xs text-destructive">
-                {errors.firstName.message}
+                {errors.first_name.message}
               </p>
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="lastName">Last name</Label>
+            <Label htmlFor="last_name">Last name</Label>
             <Input
-              id="lastName"
+              id="last_name"
               placeholder="Doe"
               autoComplete="family-name"
-              {...register("lastName")}
+              {...register("last_name")}
             />
-            {errors.lastName && (
+            {errors.last_name && (
               <p className="text-xs text-destructive">
-                {errors.lastName.message}
+                {errors.last_name.message}
               </p>
             )}
           </div>
@@ -119,7 +218,12 @@ export default function RegisterPage() {
             autoComplete="new-password"
             {...register("password")}
           />
-          {password && (
+          {errors.password && (
+            <p className="text-xs text-destructive">
+              {errors.password.message}
+            </p>
+          )}
+          {password && !errors.password && (
             <div className="space-y-1">
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
@@ -129,11 +233,6 @@ export default function RegisterPage() {
               </div>
               <p className="text-xs text-muted-foreground">{strength.label}</p>
             </div>
-          )}
-          {errors.password && (
-            <p className="text-xs text-destructive">
-              {errors.password.message}
-            </p>
           )}
         </div>
 
@@ -153,8 +252,12 @@ export default function RegisterPage() {
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Creating account..." : "Create account"}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={registerMutation.isPending}
+        >
+          {registerMutation.isPending ? "Creating account..." : "Create account"}
         </Button>
       </form>
 

@@ -8,6 +8,8 @@ import eventRoutes from '../routes/event.js';
 import bookingRoutes from '../routes/booking.js';
 import paymentRoutes from '../routes/payment.js';
 import ticketRoutes from '../routes/ticket.js';
+import checkinRoutes from '../routes/checkin.js';
+import invoiceRoutes from '../routes/invoice.js';
 import healthRoutes from '../routes/health.js';
 import organizationRoutes from '../routes/organization.js';
 import webhookRoutes from '../routes/webhook.js';
@@ -36,6 +38,8 @@ export const initializeRoutes = (app, swaggerSpec) => {
   app.use('/api/v1/bookings', authMiddleware, bookingRoutes);
   app.use('/api/v1/payments', authMiddleware, paymentRoutes);
   app.use('/api/v1/tickets', authMiddleware, ticketRoutes);
+  app.use('/api/v1/checkins', authMiddleware, checkinRoutes);
+  app.use('/api/v1/invoices', authMiddleware, invoiceRoutes);
   app.use('/api/v1/organizations', authMiddleware, organizationRoutes);
 
   // ============================================
@@ -53,5 +57,7 @@ export const initializeRoutes = (app, swaggerSpec) => {
   app.use('/api/bookings', deprecationWarning, authMiddleware, bookingRoutes);
   app.use('/api/payments', deprecationWarning, authMiddleware, paymentRoutes);
   app.use('/api/tickets', deprecationWarning, authMiddleware, ticketRoutes);
+  app.use('/api/checkins', deprecationWarning, authMiddleware, checkinRoutes);
+  app.use('/api/invoices', deprecationWarning, authMiddleware, invoiceRoutes);
   app.use('/api/organizations', deprecationWarning, authMiddleware, organizationRoutes);
 };

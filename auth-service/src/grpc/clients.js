@@ -34,15 +34,21 @@ const createClient = (serviceUrl, serviceName, packageName) => {
 
     const serviceClassName = `${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)}Service`;
 
-    if (!proto[packageName]) {
-      throw new Error(`Package '${packageName}' not found in proto`);
+    // Support nested package names like "email.v1" -> proto.email.v1
+    const packageParts = packageName.split('.');
+    let servicePackage = proto;
+    for (const part of packageParts) {
+      if (!servicePackage[part]) {
+        throw new Error(`Package '${packageName}' not found in proto`);
+      }
+      servicePackage = servicePackage[part];
     }
 
-    if (!proto[packageName][serviceClassName]) {
+    if (!servicePackage[serviceClassName]) {
       throw new Error(`Service '${serviceClassName}' not found in package '${packageName}'`);
     }
 
-    const client = new proto[packageName][serviceClassName](
+    const client = new servicePackage[serviceClassName](
       serviceUrl,
       getGrpcCredentials(),
       clientOptions
@@ -118,7 +124,7 @@ const createClient = (serviceUrl, serviceName, packageName) => {
 
 // Initialize gRPC clients
 const grpcClients = {
-  emailService: createClient(process.env.EMAIL_WORKER_URL || 'localhost:50060', 'email', 'email'),
+  emailService: createClient(process.env.EMAIL_WORKER_URL || 'localhost:50061', 'email', 'email.v1'),
 };
 
 // Health check for all clients (non-blocking, for monitoring only)

@@ -19,64 +19,11 @@ import {
 import { m } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EventCard } from "@/components/organisms/events/event-card";
 import { MotionSection, MotionDiv } from "@/components/molecules/motion-wrapper";
 import { fadeIn, fadeInUp, staggerContainer } from "@/lib/motion";
-import type { Event } from "@/types";
-
-const sampleEvents: Event[] = [
-  {
-    id: "1",
-    title: "Summer Music Festival 2026",
-    description: "The biggest music festival of the year",
-    venue: "Sân vận động Mỹ Đình",
-    address: "Hà Nội",
-    startDate: "2026-07-15T18:00:00Z",
-    endDate: "2026-07-15T23:00:00Z",
-    status: "published",
-    organizerId: "org-1",
-    totalCapacity: 5000,
-    availableCapacity: 1200,
-    minPrice: 500000,
-    maxPrice: 2000000,
-    category: "Music",
-    createdAt: "2026-01-01T00:00:00Z",
-  },
-  {
-    id: "2",
-    title: "Tech Conference Vietnam",
-    description: "Annual tech conference for developers",
-    venue: "GEM Center",
-    address: "TP. Hồ Chí Minh",
-    startDate: "2026-08-20T09:00:00Z",
-    endDate: "2026-08-21T17:00:00Z",
-    status: "published",
-    organizerId: "org-2",
-    totalCapacity: 800,
-    availableCapacity: 350,
-    minPrice: 300000,
-    maxPrice: 1500000,
-    category: "Tech",
-    createdAt: "2026-02-01T00:00:00Z",
-  },
-  {
-    id: "3",
-    title: "Stand-up Comedy Night",
-    description: "An evening of laughs with top comedians",
-    venue: "Nhà hát Lớn",
-    address: "Hà Nội",
-    startDate: "2026-06-10T19:30:00Z",
-    endDate: "2026-06-10T22:00:00Z",
-    status: "published",
-    organizerId: "org-3",
-    totalCapacity: 300,
-    availableCapacity: 45,
-    minPrice: 200000,
-    maxPrice: 800000,
-    category: "Comedy",
-    createdAt: "2026-03-01T00:00:00Z",
-  },
-];
+import { useEvents } from "@/lib/api/queries";
 
 const categories = [
   { label: "Music", icon: Music, href: "/events?category=music" },
@@ -112,7 +59,27 @@ const stats = [
   { value: "99.9%", label: "Uptime", icon: TrendingUp },
 ];
 
+function EventCardSkeleton() {
+  return (
+    <div className="rounded-lg border overflow-hidden">
+      <Skeleton className="aspect-[16/9] w-full" />
+      <div className="p-4 space-y-2">
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-4 w-2/3" />
+      </div>
+      <div className="border-t px-4 py-3 flex justify-between">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-4 w-16" />
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
+  const { data, isLoading } = useEvents({ limit: 3 });
+  const events = data?.items ?? [];
+
   return (
     <>
       {/* Hero */}
@@ -225,12 +192,21 @@ export default function HomePage() {
           </Button>
         </div>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {sampleEvents.map((event) => (
-            <MotionDiv key={event.id} variants={fadeIn}>
-              <EventCard event={event} />
-            </MotionDiv>
-          ))}
+          {isLoading
+            ? Array.from({ length: 3 }).map((_, i) => (
+                <EventCardSkeleton key={i} />
+              ))
+            : events.map((event) => (
+                <MotionDiv key={event.id} variants={fadeIn}>
+                  <EventCard event={event} />
+                </MotionDiv>
+              ))}
         </div>
+        {!isLoading && events.length === 0 && (
+          <p className="mt-8 text-center text-muted-foreground">
+            No upcoming events at the moment. Check back soon!
+          </p>
+        )}
       </MotionSection>
 
       {/* Social Proof */}

@@ -1,58 +1,62 @@
 "use client";
 
+import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/molecules/page-header";
-import { StatusBadge } from "@/components/molecules/status-badge";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
+import { useEvents } from "@/lib/api/queries";
+import type { Event } from "@/lib/api/types/event";
 
-interface OrgEvent {
-  id: string;
-  title: string;
-  date: string;
-  venue: string;
-  capacity: number;
-  sold: number;
-  status: string;
-}
-
-const events: OrgEvent[] = [
-  { id: "1", title: "Summer Music Festival 2026", date: "Jul 15, 2026", venue: "Mỹ Đình Stadium", capacity: 5000, sold: 3800, status: "published" },
-  { id: "2", title: "Tech Conference Vietnam", date: "Aug 20, 2026", venue: "GEM Center", capacity: 800, sold: 450, status: "published" },
-  { id: "3", title: "Stand-up Comedy Night", date: "Jun 10, 2026", venue: "Nhà hát Lớn", capacity: 300, sold: 255, status: "published" },
-  { id: "4", title: "New Year Countdown 2027", date: "Dec 31, 2026", venue: "Phú Mỹ Hưng", capacity: 10000, sold: 0, status: "draft" },
-];
-
-const columns: Column<OrgEvent>[] = [
-  { key: "title", header: "Event" },
-  { key: "date", header: "Date" },
-  { key: "venue", header: "Venue" },
+const columns: Column<Event>[] = [
   {
-    key: "sold",
-    header: "Sold / Capacity",
+    key: "name",
+    header: "Event",
     render: (e) => (
-      <span className="tabular-nums">
-        {e.sold} / {e.capacity}
-      </span>
+      <Link
+        href={`/events/${e.id}`}
+        className="font-medium hover:underline"
+      >
+        {e.name}
+      </Link>
     ),
   },
   {
-    key: "status",
-    header: "Status",
-    render: (e) => <StatusBadge status={e.status} />,
+    key: "start_date",
+    header: "Date",
+    render: (e) =>
+      new Date(e.start_date).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+  },
+  { key: "venue_name", header: "Venue" },
+  {
+    key: "venue_capacity",
+    header: "Capacity",
+    render: (e) => (
+      <span className="tabular-nums">{e.venue_capacity ?? "—"}</span>
+    ),
+    className: "text-center",
   },
 ];
 
 export default function OrgEventsPage() {
+  const { data, isLoading } = useEvents();
+  const events = data?.items ?? [];
+
   return (
     <>
       <PageHeader
         title="My Events"
         description="Create and manage your events"
       >
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Event
+        <Button asChild>
+          <Link href="/org/events/create">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Event
+          </Link>
         </Button>
       </PageHeader>
 
@@ -60,6 +64,8 @@ export default function OrgEventsPage() {
         <DataTable
           columns={columns}
           data={events}
+          isLoading={isLoading}
+          emptyMessage="No events yet. Create your first event!"
           keyExtractor={(e) => e.id}
         />
       </div>

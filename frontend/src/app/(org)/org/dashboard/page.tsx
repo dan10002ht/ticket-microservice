@@ -1,47 +1,74 @@
 "use client";
 
+import Link from "next/link";
 import {
   CalendarDays,
-  DollarSign,
+  CheckCircle,
+  MapPin,
   Ticket,
-  Users,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/molecules/page-header";
 import { StatsCard } from "@/components/molecules/stats-card";
-import { StatusBadge } from "@/components/molecules/status-badge";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
+import { useEvents } from "@/lib/api/queries";
+import type { Event } from "@/lib/api/types/event";
 
-interface RecentBooking {
-  id: string;
-  customer: string;
-  event: string;
-  tickets: number;
-  total: string;
-  status: string;
-}
-
-const recentBookings: RecentBooking[] = [
-  { id: "BK-101", customer: "Nguyen Van A", event: "Summer Music Festival", tickets: 3, total: "1,500,000 VND", status: "confirmed" },
-  { id: "BK-102", customer: "Tran Thi B", event: "Tech Conference", tickets: 1, total: "300,000 VND", status: "pending" },
-  { id: "BK-103", customer: "Le Van C", event: "Summer Music Festival", tickets: 2, total: "1,000,000 VND", status: "confirmed" },
-  { id: "BK-104", customer: "Pham Thi D", event: "Comedy Night", tickets: 4, total: "3,200,000 VND", status: "confirmed" },
-  { id: "BK-105", customer: "Hoang Van E", event: "Tech Conference", tickets: 1, total: "1,500,000 VND", status: "cancelled" },
-];
-
-const columns: Column<RecentBooking>[] = [
-  { key: "id", header: "ID" },
-  { key: "customer", header: "Customer" },
-  { key: "event", header: "Event" },
-  { key: "tickets", header: "Tickets", className: "text-center" },
-  { key: "total", header: "Total" },
+const recentColumns: Column<Event>[] = [
   {
-    key: "status",
-    header: "Status",
-    render: (booking) => <StatusBadge status={booking.status} />,
+    key: "name",
+    header: "Event",
+    render: (e) => (
+      <Link
+        href={`/events/${e.id}`}
+        className="font-medium hover:underline"
+      >
+        {e.name}
+      </Link>
+    ),
+  },
+  {
+    key: "start_date",
+    header: "Date",
+    render: (e) =>
+      new Date(e.start_date).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+  },
+  { key: "venue_name", header: "Venue" },
+  {
+    key: "venue_capacity",
+    header: "Capacity",
+    render: (e) => (
+      <span className="tabular-nums">{e.venue_capacity ?? "—"}</span>
+    ),
+    className: "text-center",
   },
 ];
 
+function StatsSkeleton() {
+  return (
+    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <Skeleton key={i} className="h-[106px] rounded-lg" />
+      ))}
+    </div>
+  );
+}
+
 export default function OrgDashboardPage() {
+  const { data, isLoading } = useEvents();
+  const events = data?.items ?? [];
+
+  const totalEvents = events.length;
+  const totalCapacity = events.reduce(
+    (sum, e) => sum + (e.venue_capacity ?? 0),
+    0
+  );
+  const uniqueVenues = new Set(events.map((e) => e.venue_name)).size;
+
   return (
     <>
       <PageHeader
@@ -49,39 +76,41 @@ export default function OrgDashboardPage() {
         description="Overview of your events and sales"
       />
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Total Events"
-          value={12}
-          icon={CalendarDays}
-          trend={{ value: 8, isPositive: true }}
-        />
-        <StatsCard
-          title="Tickets Sold"
-          value="1,234"
-          icon={Ticket}
-          trend={{ value: 12, isPositive: true }}
-        />
-        <StatsCard
-          title="Total Revenue"
-          value="45.2M VND"
-          icon={DollarSign}
-          trend={{ value: 5, isPositive: true }}
-        />
-        <StatsCard
-          title="Attendees"
-          value="856"
-          icon={Users}
-          trend={{ value: 3, isPositive: false }}
-        />
-      </div>
+      {isLoading ? (
+        <StatsSkeleton />
+      ) : (
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatsCard
+            title="Total Events"
+            value={totalEvents}
+            icon={CalendarDays}
+          />
+          <StatsCard
+            title="Published"
+            value={totalEvents}
+            icon={CheckCircle}
+          />
+          <StatsCard
+            title="Total Capacity"
+            value={totalCapacity.toLocaleString("vi-VN")}
+            icon={Ticket}
+          />
+          <StatsCard
+            title="Venues"
+            value={uniqueVenues}
+            icon={MapPin}
+          />
+        </div>
+      )}
 
       <div className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold">Recent Bookings</h2>
+        <h2 className="mb-4 text-lg font-semibold">Recent Events</h2>
         <DataTable
-          columns={columns}
-          data={recentBookings}
-          keyExtractor={(b) => b.id}
+          columns={recentColumns}
+          data={events.slice(0, 5)}
+          isLoading={isLoading}
+          emptyMessage="No events yet. Create your first event!"
+          keyExtractor={(e) => e.id}
         />
       </div>
     </>

@@ -10,11 +10,15 @@ class BaseRepository extends IRepository {
   constructor(tableName) {
     super();
     this.tableName = tableName;
-    // PgPool-II sẽ tự động route queries dựa trên loại operation:
-    // - SELECT queries → slave databases
-    // - INSERT/UPDATE/DELETE queries → master database
-    // - Transactions → master database
-    this.db = db(tableName);
+  }
+
+  /**
+   * Fresh query builder mỗi lần gọi.
+   * Knex query builders are mutable — reusing a single instance
+   * causes state (where, join, limit…) to leak between queries.
+   */
+  get db() {
+    return db(this.tableName);
   }
 
   // ========== READ OPERATIONS (Sử dụng Slave) ==========

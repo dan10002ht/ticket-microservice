@@ -19,6 +19,8 @@ import {
 import { AvatarWithName } from "@/components/molecules/avatar-with-name";
 import { SearchDialog } from "@/components/molecules/search-dialog";
 import { ThemeToggle } from "@/components/molecules/theme-toggle";
+import { useAuthStore } from "@/stores";
+import { useLogout } from "@/lib/api/queries";
 import { cn } from "@/lib/utils";
 
 const dashboardLinks = [
@@ -31,6 +33,13 @@ interface AuthNavbarProps {
 }
 
 export function AuthNavbar({ className }: AuthNavbarProps) {
+  const { user } = useAuthStore();
+  const logoutMutation = useLogout();
+
+  const displayName = user
+    ? `${user.first_name} ${user.last_name}`.trim()
+    : "User";
+
   return (
     <header
       className={cn(
@@ -63,14 +72,19 @@ export function AuthNavbar({ className }: AuthNavbarProps) {
         <div className="flex items-center gap-2">
           <SearchDialog />
           <ThemeToggle />
-          <Button variant="ghost" size="icon" aria-label="Notifications" className="hidden md:inline-flex">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Notifications"
+            className="hidden md:inline-flex"
+          >
             <Bell className="h-5 w-5" />
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="gap-2 px-2">
-                <AvatarWithName name="John Doe" size="sm" />
+                <AvatarWithName name={displayName} size="sm" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -81,9 +95,13 @@ export function AuthNavbar({ className }: AuthNavbarProps) {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-center gap-2 text-destructive">
+              <DropdownMenuItem
+                className="flex items-center gap-2 text-destructive"
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+              >
                 <LogOut className="h-4 w-4" />
-                Logout
+                {logoutMutation.isPending ? "Logging out..." : "Logout"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -114,6 +132,17 @@ export function AuthNavbar({ className }: AuthNavbarProps) {
               >
                 Profile
               </Link>
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  className="w-full text-destructive"
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {logoutMutation.isPending ? "Logging out..." : "Logout"}
+                </Button>
+              </div>
             </div>
           </SheetContent>
         </Sheet>

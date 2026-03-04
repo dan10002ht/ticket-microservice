@@ -9,6 +9,8 @@ import '../swagger/event.js';
 import '../swagger/payment.js';
 import '../swagger/health.js';
 import '../swagger/ticket.js';
+import '../swagger/checkin.js';
+import '../swagger/invoice.js';
 
 /**
  * Initialize Swagger documentation
@@ -135,6 +137,14 @@ export const initializeSwagger = () => {
         {
           name: 'Refunds Admin',
           description: 'Admin refund management',
+        },
+        {
+          name: 'Check-in',
+          description: 'Event check-in management',
+        },
+        {
+          name: 'Invoices',
+          description: 'Invoice and billing management',
         },
         {
           name: 'Health',

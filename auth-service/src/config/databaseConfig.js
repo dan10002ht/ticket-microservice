@@ -7,11 +7,11 @@ dotenv.config();
 const dbConfig = {
   client: 'postgresql',
   connection: {
-    host: process.env.PGPOOL_AUTH_HOST || 'pgpool-auth',
-    port: process.env.PGPOOL_AUTH_PORT || 5432,
-    database: process.env.DB_NAME || 'booking_system_auth',
-    user: process.env.DB_USER || 'postgres',
-    password: process.env.DB_PASSWORD || 'postgres_password',
+    host: process.env.PGPOOL_AUTH_HOST || process.env.DB_MASTER_HOST || 'localhost',
+    port: process.env.PGPOOL_AUTH_PORT || process.env.DB_MASTER_PORT || 50432,
+    database: process.env.DB_NAME || process.env.DB_MASTER_NAME || 'booking_system_auth',
+    user: process.env.DB_USER || process.env.DB_MASTER_USER || 'booking_user',
+    password: process.env.DB_PASSWORD || process.env.DB_MASTER_PASSWORD || 'booking_pass',
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
   },
   pool: {

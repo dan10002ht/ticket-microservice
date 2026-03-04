@@ -1,81 +1,24 @@
-export interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: "individual" | "organization" | "admin";
-  phone?: string;
-  createdAt: string;
-}
-
-export interface Event {
-  id: string;
-  title: string;
-  description: string;
-  venue: string;
-  address: string;
-  startDate: string;
-  endDate: string;
-  imageUrl?: string;
-  status: "draft" | "published" | "cancelled" | "completed";
-  organizerId: string;
-  totalCapacity: number;
-  availableCapacity: number;
-  minPrice: number;
-  maxPrice: number;
-  category?: string;
-  createdAt: string;
-}
-
-export interface Booking {
-  id: string;
-  userId: string;
-  eventId: string;
-  status: "pending" | "confirmed" | "cancelled" | "completed";
-  totalAmount: number;
-  ticketCount: number;
-  createdAt: string;
-  event?: Event;
-}
-
-export interface Ticket {
-  id: string;
-  bookingId: string;
-  eventId: string;
-  seatId?: string;
-  zoneName: string;
-  seatLabel?: string;
-  status: "active" | "used" | "cancelled" | "expired";
-  qrCode?: string;
-  price: number;
-}
-
-export interface Payment {
-  id: string;
-  bookingId: string;
-  amount: number;
-  currency: string;
-  status: "pending" | "completed" | "failed" | "refunded";
-  method: string;
-  transactionId?: string;
-  createdAt: string;
-}
-
-export interface Zone {
-  id: string;
-  eventId: string;
-  name: string;
-  capacity: number;
-  price: number;
-  color: string;
-}
-
-export interface Seat {
-  id: string;
-  zoneId: string;
-  label: string;
-  row: string;
-  number: number;
-  status: "available" | "reserved" | "sold";
-  price: number;
-}
+// Canonical API types — re-exported for convenience
+export type { AuthUser, AuthResponse } from "@/lib/api/types/auth";
+export type {
+  Event,
+  EventSeatingZone,
+  EventSeat,
+  EventStatus,
+  Pricing,
+  Availability,
+} from "@/lib/api/types/event";
+export type { Booking, BookingStatus, SeatReservation } from "@/lib/api/types/booking";
+export type {
+  Ticket,
+  TicketType,
+  TicketStatus,
+  TicketTypeStatus,
+} from "@/lib/api/types/ticket";
+export type {
+  Payment,
+  PaymentStatus,
+  Refund,
+  PaymentMethodInfo,
+} from "@/lib/api/types/payment";
+export type { UserProfile, UserAddress } from "@/lib/api/types/user";

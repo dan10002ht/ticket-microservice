@@ -43,8 +43,8 @@ shared-lib/
 | ---------------- | ------------------ | ------------ | --------- |
 | Auth Service     | `auth.proto`       | `auth`       | 50051     |
 | User Service     | `user.proto`       | `user`       | 50052     |
-| Ticket Service   | `ticket.proto`     | `ticket`     | 50053     |
-| Event Service    | `event.proto`      | `event`      | 50055     |
+| Ticket Service   | `ticket.proto`     | `ticket`     | 50054     |
+| Event Service    | `event.proto`      | `event`      | 50053     |
 | Booking Worker   | (queue consumer)   | -            | 50056     |
 | Realtime Service | `realtime.proto`   | `realtime`   | 50057     |
 | Booking Service  | `booking.proto`    | `booking`    | 50058     |

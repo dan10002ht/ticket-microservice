@@ -56,7 +56,7 @@ docs/
      ▼          ▼          ▼       ▼       ▼          ▼          ▼
 ┌─────────┐┌─────────┐┌─────────┐┌──────┐┌─────────┐┌─────────┐┌─────────┐
 │  Auth   ││  User   ││  Event  ││Ticket││ Booking ││ Payment ││Realtime │
-│ :50051  ││ :50052  ││ :50053  ││:50054││ :50058  ││ :50056  ││ :50057  │
+│ :50051  ││ :50052  ││ :50053  ││:50054││ :50058  ││ :50062  ││ :50057  │
 │ Node.js ││   Go    ││   Go    ││  Go  ││  Java   ││  Java   ││   Go    │
 └────┬────┘└────┬────┘└────┬────┘└──┬───┘└────┬────┘└────┬────┘└────┬────┘
      │          │          │        │         │          │          │
@@ -66,11 +66,11 @@ docs/
           ▼                ▼        ▼        ▼                ▼
    ┌────────────┐  ┌────────────┐┌──────┐┌───────┐  ┌──────────────┐
    │ PostgreSQL │  │ PostgreSQL ││Redis ││ Kafka │  │Booking Worker│
-   │   Auth     │  │    Main    ││:50379││:50092 │  │   Go :50059  │
+   │   Auth     │  │    Main    ││:50379││:50092 │  │   Go :50056  │
    │  :50432    │  │   :50433   │└──────┘└───────┘  └──────────────┘
    └────────────┘  └────────────┘                   ┌──────────────┐
                                                     │ Email Worker │
-                                                    │  Go :50060   │
+                                                    │  Go :50061   │
                                                     └──────────────┘
 ```
 
@@ -111,7 +111,7 @@ See [Development Setup Guide](./guides/development-setup.md) for detailed instru
 | API Gateway (REST) | http://localhost:53000 |
 | API Documentation (Swagger) | http://localhost:53000/api/docs |
 | Booking Service (Actuator) | http://localhost:8084/actuator/health |
-| Payment Service (Actuator) | http://localhost:8081/actuator/health |
+| Payment Service (Actuator) | http://localhost:8080/actuator/health |
 | Realtime (WebSocket) | ws://localhost:3003 |
 
 ---
@@ -124,11 +124,13 @@ See [Development Setup Guide](./guides/development-setup.md) for detailed instru
 | User Service | Go | 50052 | - | 100% |
 | Event Service | Go | 50053 | - | 80% |
 | Ticket Service | Go | 50054 | - | 70% |
-| Payment Service | Java | 50056 | 8081 | 20% |
-| Realtime Service | Go | 50057 | 3003 | 100% |
 | Booking Service | Java | 50058 | 8084 | 100% |
-| Booking Worker | Go | 50059 | - | 100% |
-| Email Worker | Go | 50060 | 8080 | 85% |
+| Payment Service | Java | 50062 | 8080 | 20% |
+| Realtime Service | Go | 50057 | 3003 | 100% |
+| Checkin Service | Go | 50059 | - | 100% |
+| Booking Worker | Go | 50056 | - | 100% |
+| Email Worker | Go | 50061 | - | 85% |
+| Invoice Service | Java | 50060 | 8083 | 70% |
 | API Gateway | Node.js | - | 53000 | 70% |
 
 See [Services Documentation](./services/README.md) for detailed per-service info.

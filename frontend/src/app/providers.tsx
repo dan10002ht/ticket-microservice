@@ -6,6 +6,7 @@ import { LazyMotion, domAnimation } from "framer-motion";
 import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthInitializer } from "@/components/auth-initializer";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -30,6 +31,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <LazyMotion features={domAnimation} strict>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
+            <AuthInitializer />
             {children}
           </TooltipProvider>
           <Toaster richColors position="top-right" />

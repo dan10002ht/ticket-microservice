@@ -43,17 +43,23 @@ const createClient = (serviceUrl, serviceName, packageName, serviceClassName = n
     const finalServiceClassName =
       serviceClassName || `${serviceName.charAt(0).toUpperCase() + serviceName.slice(1)}Service`;
 
-    if (!proto[packageName]) {
-      throw new Error(`Package '${packageName}' not found in proto`);
+    // Support nested package names like "auth.v1" -> proto.auth.v1
+    const packageParts = packageName.split('.');
+    let servicePackage = proto;
+    for (const part of packageParts) {
+      if (!servicePackage[part]) {
+        throw new Error(`Package '${packageName}' not found in proto`);
+      }
+      servicePackage = servicePackage[part];
     }
 
-    if (!proto[packageName][finalServiceClassName]) {
+    if (!servicePackage[finalServiceClassName]) {
       throw new Error(`Service '${finalServiceClassName}' not found in package '${packageName}'`);
     }
 
     console.log(`✅ Proto loaded successfully for ${serviceName} (${finalServiceClassName})`);
 
-    const client = new proto[packageName][finalServiceClassName](
+    const client = new servicePackage[finalServiceClassName](
       serviceUrl,
       getGrpcCredentials(),
       clientOptions
@@ -83,7 +89,10 @@ const createClient = (serviceUrl, serviceName, packageName, serviceClassName = n
                 return await new Promise((resolve, reject) => {
                   const metadata = new grpc.Metadata();
                   const ctx = requestContext.get();
-                  metadata.add('correlation-id', ctx?.correlationId || request.correlationId || 'unknown');
+                  metadata.add(
+                    'correlation-id',
+                    ctx?.correlationId || request.correlationId || 'unknown'
+                  );
 
                   // Create a new deadline for each call
                   const deadline = new Date();
@@ -196,25 +205,32 @@ const createClient = (serviceUrl, serviceName, packageName, serviceClassName = n
 };
 
 const grpcClients = {
-  authService: createClient(config.grpc.authService.url, 'auth', 'auth'),
-  userService: createClient(config.grpc.userService.url, 'user', 'user'),
-  eventService: createClient(config.grpc.eventService.url, 'event', 'event'),
-  bookingService: createClient(config.grpc.bookingService.url, 'booking', 'booking'),
-  paymentService: createClient(config.grpc.paymentService.url, 'payment', 'payment'),
-  ticketService: createClient(config.grpc.ticketService.url, 'ticket', 'ticket'),
+  authService: createClient(config.grpc.authService.url, 'auth', 'auth.v1'),
+  userService: createClient(config.grpc.userService.url, 'user', 'user.v1'),
+  eventService: createClient(config.grpc.eventService.url, 'event', 'event.v1'),
+  bookingService: createClient(config.grpc.bookingService.url, 'booking', 'booking.v1'),
+  paymentService: createClient(config.grpc.paymentService.url, 'payment', 'payment.v1'),
+  ticketService: createClient(config.grpc.ticketService.url, 'ticket', 'ticket.v1'),
+  checkinService: createClient(
+    config.grpc.checkinService.url,
+    'checkin',
+    'checkin.v1',
+    'CheckinService'
+  ),
+  invoiceService: createClient(config.grpc.invoiceService.url, 'invoice', 'invoice.v1'),
   // Event sub-services (all use event.proto)
   zoneService: createClient(
     config.grpc.eventService.url,
     'event',
-    'event',
+    'event.v1',
     'EventSeatingZoneService'
   ),
-  seatService: createClient(config.grpc.eventService.url, 'event', 'event', 'EventSeatService'),
-  pricingService: createClient(config.grpc.eventService.url, 'event', 'event', 'PricingService'),
+  seatService: createClient(config.grpc.eventService.url, 'event', 'event.v1', 'EventSeatService'),
+  pricingService: createClient(config.grpc.eventService.url, 'event', 'event.v1', 'PricingService'),
   availabilityService: createClient(
     config.grpc.eventService.url,
     'event',
-    'event',
+    'event.v1',
     'AvailabilityService'
   ),
 };

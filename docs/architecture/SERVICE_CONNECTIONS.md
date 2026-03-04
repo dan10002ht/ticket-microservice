@@ -8,11 +8,11 @@ This document describes the inter-service communication setup in the ticket book
 
 | Service          | Language | gRPC Port | HTTP Port | Description                         |
 | ---------------- | -------- | --------- | --------- | ----------------------------------- |
-| Gateway          | Node.js  | -         | 3000      | API Gateway, routing                |
+| Gateway          | Node.js  | -         | 53000     | API Gateway, routing                |
 | Auth Service     | Node.js  | 50051     | -         | Authentication, JWT                 |
 | User Service     | Go       | 50052     | -         | User profiles, addresses            |
-| Ticket Service   | Go       | 50053     | -         | Ticket inventory & lifecycle        |
-| Event Service    | Go       | 50055     | -         | Event management, zones, seats      |
+| Ticket Service   | Go       | 50054     | -         | Ticket inventory & lifecycle        |
+| Event Service    | Go       | 50053     | -         | Event management, zones, seats      |
 | Booking Worker   | Go       | 50056     | -         | Queue processing (gRPC server)      |
 | Realtime Service | Go       | 50057     | 3003      | Real-time notifications             |
 | Booking Service  | Java     | 50058     | 8084      | Booking orchestration (Saga)        |
@@ -32,7 +32,7 @@ This document describes the inter-service communication setup in the ticket book
                                               ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                            API Gateway (Node.js)                             │
-│                         HTTP :3000 | Metrics :53000                          │
+│                         HTTP :53000 | Metrics :53000                         │
 └────┬──────────┬──────────┬──────────┬──────────┬──────────┬────────────────┘
      │          │          │          │          │          │
      │ gRPC     │ gRPC     │ gRPC     │ gRPC     │ gRPC     │ gRPC
@@ -40,7 +40,7 @@ This document describes the inter-service communication setup in the ticket book
 ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
 │  Auth   │ │  Event  │ │ Ticket  │ │ Booking │ │ Payment │ │  User   │
 │ Service │ │ Service │ │ Service │ │ Service │ │ Service │ │ Service │
-│ :50051  │ │ :50055  │ │ :50053  │ │ :50058  │ │ :50062  │ │ :50052  │
+│ :50051  │ │ :50053  │ │ :50054  │ │ :50058  │ │ :50062  │ │ :50052  │
 │ Node.js │ │   Go    │ │   Go    │ │  Java   │ │  Java   │ │   Go    │
 └─────────┘ └─────────┘ └────┬────┘ └────┬────┘ └─────────┘ └─────────┘
                              │           │
@@ -66,7 +66,7 @@ This document describes the inter-service communication setup in the ticket book
 Check-in Flow:
                         ┌─────────────┐
                         │  Checkin    │
-                        │  Service    │──gRPC──▶ Ticket Service :50053
+                        │  Service    │──gRPC──▶ Ticket Service :50054
                         │    (Go)     │         (GetTicket, UpdateStatus)
                         │   :50059   │
                         └─────────────┘
@@ -97,8 +97,8 @@ Infrastructure:
 | --------------- | --------- | ----------------------------------- | --------------- |
 | Auth Service    | 50051     | Login, register, token validation   | `auth.proto`    |
 | User Service    | 50052     | Profile, addresses                  | `user.proto`    |
-| Ticket Service  | 50053     | Seat availability, pricing          | `ticket.proto`  |
-| Event Service   | 50055     | Event CRUD, zones, seats            | `event.proto`   |
+| Ticket Service  | 50054     | Seat availability, pricing          | `ticket.proto`  |
+| Event Service   | 50053     | Event CRUD, zones, seats            | `event.proto`   |
 | Booking Service | 50058     | Create/cancel bookings              | `booking.proto` |
 | Payment Service | 50062     | Payment processing                  | `payment.proto` |
 
@@ -106,7 +106,7 @@ Infrastructure:
 
 | Target Service  | gRPC Port | Purpose                | When Called           |
 | --------------- | --------- | ---------------------- | --------------------- |
-| Ticket Service  | 50053     | Reserve/release seats  | During Saga execution |
+| Ticket Service  | 50054     | Reserve/release seats  | During Saga execution |
 | Payment Service | 50062     | Create/cancel payments | During Saga execution |
 
 ### Booking Worker → Services
@@ -120,7 +120,7 @@ Infrastructure:
 
 | Target Service  | Protocol | Port  | Purpose                                  |
 | --------------- | -------- | ----- | ---------------------------------------- |
-| Ticket Service  | gRPC     | 50053 | Validate ticket, update status to "used" |
+| Ticket Service  | gRPC     | 50054 | Validate ticket, update status to "used" |
 
 ### Invoice Service (Event-driven)
 
@@ -205,13 +205,13 @@ service InvoiceService {
 ### 1. Booking Flow (Saga Pattern)
 
 ```
-1. User selects seats → Gateway :3000
+1. User selects seats → Gateway :53000
 2. Gateway → Booking Worker :50056 (add to Redis queue :6380)
 3. Booking Worker processes queue
 4. Booking Worker → Booking Service :50058 (CreateBooking)
 5. Booking Service executes Saga:
    a. Create Booking (PENDING)
-   b. Ticket Service :50053 → Reserve Seats
+   b. Ticket Service :50054 → Reserve Seats
    c. Payment Service :50062 → Process Payment
    d. Confirm Booking (CONFIRMED)
 6. Booking Worker → Realtime Service :50057 (NotifyBookingResult)
@@ -221,10 +221,10 @@ service InvoiceService {
 ### 2. Check-in Flow
 
 ```
-1. Staff scans QR code → Gateway :3000
+1. Staff scans QR code → Gateway :53000
 2. Gateway → Checkin Service :50059 (CheckIn)
-3. Checkin Service → Ticket Service :50053 (GetTicket) — validate
-4. Checkin Service → Ticket Service :50053 (UpdateTicketStatus → "used")
+3. Checkin Service → Ticket Service :50054 (GetTicket) — validate
+4. Checkin Service → Ticket Service :50054 (UpdateTicketStatus → "used")
 5. Checkin Service → DB (INSERT checkin record)
 6. Response: success / error (ALREADY_CHECKED_IN, INVALID_TICKET, etc.)
 ```
@@ -257,8 +257,8 @@ service InvoiceService {
 # Gateway → downstream gRPC services
 GRPC_AUTH_SERVICE_URL=auth-service:50051
 GRPC_USER_SERVICE_URL=user-service:50052
-GRPC_TICKET_SERVICE_URL=ticket-service:50053
-GRPC_EVENT_SERVICE_URL=event-service:50055
+GRPC_TICKET_SERVICE_URL=ticket-service:50054
+GRPC_EVENT_SERVICE_URL=event-service:50053
 GRPC_BOOKING_SERVICE_URL=booking-service:50058
 GRPC_PAYMENT_SERVICE_URL=payment-service:50062
 
@@ -268,7 +268,7 @@ REALTIME_SERVICE_GRPC_ADDR=realtime-service:50057
 
 # Checkin Service → Ticket Service
 TICKET_SERVICE_HOST=ticket-service
-TICKET_SERVICE_PORT=50053
+TICKET_SERVICE_PORT=50054
 
 # All Services — Infrastructure
 KAFKA_BROKERS=kafka:9092
@@ -289,7 +289,7 @@ DB_PORT=5432
 
 ```bash
 # HTTP Health
-curl http://localhost:3000/health          # Gateway
+curl http://localhost:53000/health         # Gateway
 curl http://localhost:3003/health          # Realtime Service
 curl http://localhost:8084/actuator/health # Booking Service
 curl http://localhost:8080/actuator/health # Payment Service
@@ -298,8 +298,8 @@ curl http://localhost:8083/actuator/health # Invoice Service
 # gRPC Health
 grpcurl -plaintext localhost:50051 grpc.health.v1.Health/Check  # Auth Service
 grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check  # User Service
-grpcurl -plaintext localhost:50053 list                          # Ticket Service
-grpcurl -plaintext localhost:50055 list                          # Event Service
+grpcurl -plaintext localhost:50054 list                          # Ticket Service
+grpcurl -plaintext localhost:50053 list                          # Event Service
 grpcurl -plaintext localhost:50059 list                          # Checkin Service
 grpcurl -plaintext localhost:50057 grpc.health.v1.Health/Check  # Realtime Service
 ```
@@ -419,8 +419,8 @@ grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check
 # List available gRPC services
 grpcurl -plaintext localhost:50051 list   # Auth
 grpcurl -plaintext localhost:50052 list   # User
-grpcurl -plaintext localhost:50053 list   # Ticket
-grpcurl -plaintext localhost:50055 list   # Event
+grpcurl -plaintext localhost:50054 list   # Ticket
+grpcurl -plaintext localhost:50053 list   # Event
 grpcurl -plaintext localhost:50057 list   # Realtime
 grpcurl -plaintext localhost:50059 list   # Checkin
 

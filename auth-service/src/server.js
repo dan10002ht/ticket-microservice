@@ -37,7 +37,7 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   oneofs: true,
 });
 
-const authProto = grpc.loadPackageDefinition(packageDefinition).auth;
+const authProto = grpc.loadPackageDefinition(packageDefinition).auth.v1;
 
 // Create gRPC server
 const server = new grpc.Server();

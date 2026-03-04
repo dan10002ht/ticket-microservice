@@ -48,7 +48,7 @@ func LoadConfig() (*Config, error) {
 			DB:       getEnvInt("REDIS_DB", 0),
 		},
 		GRPC: GRPCConfig{
-			Port: getEnv("EVENT_GRPC_PORT", ":50055"),
+			Port: getEnv("EVENT_GRPC_PORT", ":50053"),
 		},
 		Metrics: MetricsConfig{
 			Port: getEnv("EVENT_METRICS_PORT", ":9095"),

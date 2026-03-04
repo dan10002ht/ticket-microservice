@@ -228,8 +228,57 @@ export const PAYMENT_ERROR_MAPPING = {
 };
 
 /**
+ * Check-in Service Error Mapping
+ */
+export const CHECKIN_ERROR_MAPPING = {
+  ...DEFAULT_ERROR_MAPPING,
+  [GRPC_STATUS_CODES.NOT_FOUND]: {
+    status: 404,
+    message: 'Check-in record not found',
+    code: 'CHECKIN_NOT_FOUND',
+  },
+  [GRPC_STATUS_CODES.INVALID_ARGUMENT]: {
+    status: 400,
+    message: 'Invalid check-in data',
+    code: 'INVALID_CHECKIN_DATA',
+  },
+  [GRPC_STATUS_CODES.ALREADY_EXISTS]: {
+    status: 409,
+    message: 'Already checked in',
+    code: 'ALREADY_CHECKED_IN',
+  },
+  [GRPC_STATUS_CODES.FAILED_PRECONDITION]: {
+    status: 400,
+    message: 'Check-in not allowed for this ticket',
+    code: 'CHECKIN_NOT_ALLOWED',
+  },
+};
+
+/**
+ * Invoice Service Error Mapping
+ */
+export const INVOICE_ERROR_MAPPING = {
+  ...DEFAULT_ERROR_MAPPING,
+  [GRPC_STATUS_CODES.NOT_FOUND]: {
+    status: 404,
+    message: 'Invoice not found',
+    code: 'INVOICE_NOT_FOUND',
+  },
+  [GRPC_STATUS_CODES.INVALID_ARGUMENT]: {
+    status: 400,
+    message: 'Invalid invoice data',
+    code: 'INVALID_INVOICE_DATA',
+  },
+  [GRPC_STATUS_CODES.FAILED_PRECONDITION]: {
+    status: 400,
+    message: 'Invoice cannot be generated',
+    code: 'INVOICE_GENERATION_FAILED',
+  },
+};
+
+/**
  * Get error mapping for a specific service
- * @param {string} serviceName - Service name (auth, user, event, booking, payment)
+ * @param {string} serviceName - Service name (auth, user, event, booking, payment, checkin, invoice)
  * @returns {Object} Error mapping object
  */
 export const getErrorMapping = (serviceName) => {
@@ -239,6 +288,8 @@ export const getErrorMapping = (serviceName) => {
     event: EVENT_ERROR_MAPPING,
     booking: BOOKING_ERROR_MAPPING,
     payment: PAYMENT_ERROR_MAPPING,
+    checkin: CHECKIN_ERROR_MAPPING,
+    invoice: INVOICE_ERROR_MAPPING,
   };
 
   return mappings[serviceName.toLowerCase()] || DEFAULT_ERROR_MAPPING;

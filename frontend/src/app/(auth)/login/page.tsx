@@ -1,29 +1,40 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
+import { useLogin } from "@/lib/api/queries";
+import { showToast } from "@/lib/toast";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const loginMutation = useLogin();
+
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
   const onSubmit = async (data: LoginInput) => {
-    // TODO: Call login API
-    console.log("Login:", data);
-    toast.success("Logged in successfully!");
+    try {
+      await loginMutation.mutateAsync(data);
+      showToast.success("Signed in successfully!");
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
+      router.push(callbackUrl);
+    } catch {
+      // Error toast is handled by the API error interceptor
+    }
   };
 
   return (
@@ -54,7 +65,7 @@ export default function LoginPage() {
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
             <Link
-              href="#"
+              href="/forgot-password"
               className="text-xs text-muted-foreground hover:text-primary"
             >
               Forgot password?
@@ -74,8 +85,12 @@ export default function LoginPage() {
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Signing in..." : "Sign in"}
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={loginMutation.isPending}
+        >
+          {loginMutation.isPending ? "Signing in..." : "Sign in"}
         </Button>
       </form>
 

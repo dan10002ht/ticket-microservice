@@ -90,8 +90,8 @@ func setDefaults() {
 	viper.SetDefault("worker.cleanup_interval", "1h")
 
 	// Server defaults
-	viper.SetDefault("server.port", 8080)
-	viper.SetDefault("server.grpc_port", 50060)
+	viper.SetDefault("server.port", 8085)
+	viper.SetDefault("server.grpc_port", 50061)
 
 	// Email defaults
 	viper.SetDefault("email.default_provider", "sendgrid")

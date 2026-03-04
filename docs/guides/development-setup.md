@@ -93,8 +93,8 @@ Started automatically by `dev-all.sh` via Docker Compose:
 |---------|------|---------|---------------|
 | Auth | gRPC | 50051 | `cd auth-service && yarn dev` |
 | User | gRPC | 50052 | `cd user-service && go run main.go` |
-| Ticket | gRPC | 50053 | `cd ticket-service && go run main.go` |
-| Event | gRPC | 50055 | `cd event-service && go run main.go` |
+| Ticket | gRPC | 50054 | `cd ticket-service && go run main.go` |
+| Event | gRPC | 50053 | `cd event-service && go run main.go` |
 | Booking Worker | gRPC | 50056 | `cd booking-worker && go run main.go` |
 | Realtime | gRPC+HTTP | 50057, 3003 | `cd realtime-service && go run main.go` |
 | Booking | gRPC+REST | 50058, 8084 | `cd booking-service && mvn spring-boot:run -Dspring-boot.run.profiles=dev` |
@@ -102,7 +102,7 @@ Started automatically by `dev-all.sh` via Docker Compose:
 | Invoice | gRPC+REST | 50060, 8083 | `cd invoice-service && mvn spring-boot:run -Dspring-boot.run.profiles=dev` |
 | Email Worker | gRPC | 50061 | `cd email-worker && go run main.go` |
 | Payment | gRPC+REST | 50062, 8080 | `cd payment-service && mvn spring-boot:run -Dspring-boot.run.profiles=dev` |
-| Gateway | HTTP | 3000 | `cd gateway && yarn dev` |
+| Gateway | HTTP | 53000 | `cd gateway && yarn dev` |
 
 ---
 
@@ -113,7 +113,7 @@ Started automatically by `dev-all.sh` via Docker Compose:
 | http://localhost:53000/api/docs | Swagger API Documentation |
 | http://localhost:53000/health | Gateway Health Check |
 | http://localhost:8084/actuator/health | Booking Service Health |
-| http://localhost:8081/actuator/health | Payment Service Health |
+| http://localhost:8080/actuator/health | Payment Service Health |
 | ws://localhost:3003 | WebSocket (Realtime) |
 
 ---

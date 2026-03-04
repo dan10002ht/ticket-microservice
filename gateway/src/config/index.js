@@ -69,7 +69,7 @@ const config = {
       url: process.env.GRPC_USER_SERVICE_URL || 'localhost:50052',
     },
     eventService: {
-      url: process.env.GRPC_EVENT_SERVICE_URL || 'event-service:50055',
+      url: process.env.GRPC_EVENT_SERVICE_URL || 'event-service:50053',
     },
     bookingService: {
       url: process.env.GRPC_BOOKING_SERVICE_URL || 'booking-service:50058',
@@ -78,7 +78,13 @@ const config = {
       url: process.env.GRPC_PAYMENT_SERVICE_URL || 'payment-service:50062',
     },
     ticketService: {
-      url: process.env.GRPC_TICKET_SERVICE_URL || 'ticket-service:50053',
+      url: process.env.GRPC_TICKET_SERVICE_URL || 'ticket-service:50054',
+    },
+    checkinService: {
+      url: process.env.GRPC_CHECKIN_SERVICE_URL || 'checkin-service:50059',
+    },
+    invoiceService: {
+      url: process.env.GRPC_INVOICE_SERVICE_URL || 'invoice-service:50060',
     },
   },
 

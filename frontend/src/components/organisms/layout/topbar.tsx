@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Bell, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,8 @@ import {
 import { AvatarWithName } from "@/components/molecules/avatar-with-name";
 import { Breadcrumbs } from "@/components/molecules/breadcrumbs";
 import { ThemeToggle } from "@/components/molecules/theme-toggle";
+import { useAuthStore } from "@/stores";
+import { useLogout } from "@/lib/api/queries";
 import { cn } from "@/lib/utils";
 
 interface TopbarProps {
@@ -19,6 +22,13 @@ interface TopbarProps {
 }
 
 export function Topbar({ className }: TopbarProps) {
+  const { user } = useAuthStore();
+  const logoutMutation = useLogout();
+
+  const displayName = user
+    ? `${user.first_name} ${user.last_name}`.trim()
+    : "User";
+
   return (
     <header
       className={cn(
@@ -37,18 +47,24 @@ export function Topbar({ className }: TopbarProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2 px-2">
-              <AvatarWithName name="Admin User" size="sm" />
+              <AvatarWithName name={displayName} size="sm" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Profile
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Profile
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex items-center gap-2 text-destructive">
+            <DropdownMenuItem
+              className="flex items-center gap-2 text-destructive"
+              onClick={() => logoutMutation.mutate()}
+              disabled={logoutMutation.isPending}
+            >
               <LogOut className="h-4 w-4" />
-              Logout
+              {logoutMutation.isPending ? "Logging out..." : "Logout"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

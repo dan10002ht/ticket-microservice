@@ -8,8 +8,8 @@
 |-------------------|-------|----------|-------------------------------------|
 | Auth Service      | 50051 | Node.js  | Authentication, JWT tokens          |
 | User Service      | 50052 | Go       | User profiles, addresses            |
-| Ticket Service    | 50053 | Go       | Ticket inventory & lifecycle        |
-| Event Service     | 50055 | Go       | Event management, zones, seats      |
+| Ticket Service    | 50054 | Go       | Ticket inventory & lifecycle        |
+| Event Service     | 50053 | Go       | Event management, zones, seats      |
 | Booking Worker    | 50056 | Go       | Queue processing (gRPC server)      |
 | Realtime Service  | 50057 | Go       | Real-time notifications             |
 | Booking Service   | 50058 | Java     | Booking orchestration (Saga)        |
@@ -22,7 +22,7 @@
 
 | Service           | Port | Description                    |
 |-------------------|------|--------------------------------|
-| Gateway           | 3000 | REST API Gateway               |
+| Gateway           | 53000 | REST API Gateway               |
 | Realtime Service  | 3003 | WebSocket server               |
 | Invoice Service   | 8083 | REST API + Actuator            |
 | Booking Service   | 8084 | REST API + Actuator            |
@@ -88,18 +88,18 @@
 
 ```bash
 # Gateway
-curl http://localhost:3000/health
-curl http://localhost:3000/api/v1/auth/health   # v1 routes
-curl http://localhost:3000/api/auth/health      # legacy (deprecated)
+curl http://localhost:53000/health
+curl http://localhost:53000/api/v1/auth/health   # v1 routes
+curl http://localhost:53000/api/auth/health      # legacy (deprecated)
 
 # User Service (gRPC)
 grpcurl -plaintext localhost:50052 list
 
 # Event Service (gRPC)
-grpcurl -plaintext localhost:50055 list
+grpcurl -plaintext localhost:50053 list
 
 # Ticket Service (gRPC)
-grpcurl -plaintext localhost:50053 list
+grpcurl -plaintext localhost:50054 list
 
 # Checkin Service (gRPC)
 grpcurl -plaintext localhost:50059 list

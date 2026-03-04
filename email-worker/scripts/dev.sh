@@ -29,10 +29,10 @@ SMTP_PASSWORD=
 SMTP_FROM=noreply@ticketing.local
 
 # gRPC Configuration
-GRPC_PORT=50060
+GRPC_PORT=50061
 
 # HTTP Configuration
-HTTP_PORT=8080
+HTTP_PORT=8085
 
 # Redis Configuration
 REDIS_HOST=localhost
@@ -69,5 +69,5 @@ echo "Installing dependencies..."
 go mod tidy
 
 # Run the service
-echo "Starting email-worker on HTTP port ${HTTP_PORT:-8080}, gRPC port ${GRPC_PORT:-50060}..."
+echo "Starting email-worker on HTTP port ${HTTP_PORT:-8085}, gRPC port ${GRPC_PORT:-50061}..."
 go run main.go

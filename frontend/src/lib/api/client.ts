@@ -1,22 +1,25 @@
 import axios from "axios";
+import { attachAuthToken, createRefreshInterceptor } from "./interceptors/auth";
+import { handleResponseError, handleResponseSuccess } from "./interceptors/error";
 
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:53000/api/v1",
   timeout: 15000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-apiClient.interceptors.request.use((config) => {
-  // TODO: Attach auth token from store
-  return config;
-});
+// Request: attach JWT token
+apiClient.interceptors.request.use(attachAuthToken, (error) =>
+  Promise.reject(error)
+);
 
+// Response: auto-refresh on 401 (must register BEFORE error handler)
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // TODO: Handle 401 → refresh token or redirect to login
-    return Promise.reject(error);
-  }
+  createRefreshInterceptor(apiClient)
 );
+
+// Response: normalize errors + auto-toast
+apiClient.interceptors.response.use(handleResponseSuccess, handleResponseError);

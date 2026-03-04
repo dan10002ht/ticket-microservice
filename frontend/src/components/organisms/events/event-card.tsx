@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { CalendarDays, MapPin } from "lucide-react";
 import { m } from "framer-motion";
 import {
@@ -10,18 +9,24 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/molecules/price-display";
 import { cn } from "@/lib/utils";
-import type { Event } from "@/types";
+import type { Event } from "@/lib/api/types/event";
 
 interface EventCardProps {
   event: Event;
+  minPrice?: number;
+  availableSeats?: number;
   className?: string;
 }
 
-export function EventCard({ event, className }: EventCardProps) {
-  const formattedDate = new Date(event.startDate).toLocaleDateString("vi-VN", {
+export function EventCard({
+  event,
+  minPrice,
+  availableSeats,
+  className,
+}: EventCardProps) {
+  const formattedDate = new Date(event.start_date).toLocaleDateString("vi-VN", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -42,47 +47,47 @@ export function EventCard({ event, className }: EventCardProps) {
         >
           <CardHeader className="p-0">
             <div className="relative aspect-[16/9] overflow-hidden bg-muted">
-              {event.imageUrl ? (
-                <Image
-                  src={event.imageUrl}
-                  alt={event.title}
-                  fill
-                  className="object-cover transition-transform group-hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center gradient-brand-subtle">
-                  <CalendarDays className="h-12 w-12 text-primary/30" />
-                </div>
-              )}
-              {event.category && (
-                <Badge className="absolute left-3 top-3">{event.category}</Badge>
-              )}
+              <div className="flex h-full items-center justify-center gradient-brand-subtle">
+                <CalendarDays className="h-12 w-12 text-primary/30" />
+              </div>
             </div>
           </CardHeader>
 
           <CardContent className="p-4">
             <h3 className="line-clamp-1 font-semibold text-lg group-hover:text-primary transition-colors">
-              {event.title}
+              {event.name}
             </h3>
 
             <div className="mt-2 flex flex-col gap-1">
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <CalendarDays className="h-3.5 w-3.5" />
-                <time dateTime={event.startDate}>{formattedDate}</time>
+                <time dateTime={event.start_date}>{formattedDate}</time>
               </div>
               <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin className="h-3.5 w-3.5" />
-                <span className="line-clamp-1">{event.venue}</span>
+                <span className="line-clamp-1">
+                  {event.venue_name}
+                  {event.venue_city && `, ${event.venue_city}`}
+                </span>
               </div>
             </div>
           </CardContent>
 
           <CardFooter className="flex items-center justify-between border-t px-4 py-3">
-            <PriceDisplay amount={event.minPrice} size="sm" />
-            <span className="text-xs text-muted-foreground">
-              {event.availableCapacity} seats left
-            </span>
+            {minPrice != null ? (
+              <PriceDisplay amount={minPrice} size="sm" />
+            ) : (
+              <span className="text-sm text-muted-foreground">--</span>
+            )}
+            {availableSeats != null ? (
+              <span className="text-xs text-muted-foreground">
+                {availableSeats} seats left
+              </span>
+            ) : event.venue_capacity != null ? (
+              <span className="text-xs text-muted-foreground">
+                {event.venue_capacity} capacity
+              </span>
+            ) : null}
           </CardFooter>
         </Card>
       </Link>
