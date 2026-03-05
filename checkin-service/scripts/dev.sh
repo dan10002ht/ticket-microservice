@@ -24,6 +24,6 @@ set +a
 echo "Installing Go dependencies..."
 go mod tidy
 
-# Start the service
-echo "Starting Checkin Service on gRPC port ${GRPC_PORT:-50059}..."
-go run main.go
+# Start the service with hot reload
+echo "Starting Checkin Service on gRPC port ${GRPC_PORT:-50059} (air hot reload)..."
+air

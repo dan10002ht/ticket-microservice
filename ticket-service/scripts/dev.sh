@@ -47,5 +47,5 @@ echo "  gRPC Port: ${GRPC_PORT:-50054}"
 echo "  Database: ${DB_NAME:-booking_system_ticket}"
 echo ""
 
-# Run the service
-go run main.go
+# Run the service with hot reload
+air

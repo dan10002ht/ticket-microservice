@@ -32,7 +32,7 @@ if [ ! -d "internal/protos" ] || [ -z "$(ls -A internal/protos 2>/dev/null)" ]; 
     fi
 fi
 
-# Run the service
-echo "🚀 Starting service..."
-go run main.go
+# Run the service with hot reload
+echo "🚀 Starting service (air hot reload)..."
+air
 

@@ -361,7 +361,7 @@ start_user_service() {
         chmod +x scripts/dev.sh
         ./scripts/dev.sh > >(prefix_log "user" "$(get_log_color user)" | tee -a "$LOG_DIR/user-service.log") 2>&1 &
     else
-        go run main.go > >(prefix_log "user" "$(get_log_color user)" | tee -a "$LOG_DIR/user-service.log") 2>&1 &
+        air > >(prefix_log "user" "$(get_log_color user)" | tee -a "$LOG_DIR/user-service.log") 2>&1 &
     fi
     USER_PID=$!
     cd "$PROJECT_DIR"
@@ -380,7 +380,7 @@ start_event_service() {
         chmod +x scripts/dev.sh
         ./scripts/dev.sh > >(prefix_log "event" "$(get_log_color event)" | tee -a "$LOG_DIR/event-service.log") 2>&1 &
     else
-        go run main.go > >(prefix_log "event" "$(get_log_color event)" | tee -a "$LOG_DIR/event-service.log") 2>&1 &
+        air > >(prefix_log "event" "$(get_log_color event)" | tee -a "$LOG_DIR/event-service.log") 2>&1 &
     fi
     EVENT_PID=$!
     cd "$PROJECT_DIR"
@@ -430,7 +430,7 @@ start_realtime_service() {
         chmod +x scripts/dev.sh
         ./scripts/dev.sh > >(prefix_log "realtime" "$(get_log_color realtime)" | tee -a "$LOG_DIR/realtime-service.log") 2>&1 &
     else
-        go run main.go > >(prefix_log "realtime" "$(get_log_color realtime)" | tee -a "$LOG_DIR/realtime-service.log") 2>&1 &
+        air > >(prefix_log "realtime" "$(get_log_color realtime)" | tee -a "$LOG_DIR/realtime-service.log") 2>&1 &
     fi
     REALTIME_PID=$!
     cd "$PROJECT_DIR"
@@ -449,7 +449,7 @@ start_ticket_service() {
         chmod +x scripts/dev.sh
         ./scripts/dev.sh > >(prefix_log "ticket" "$(get_log_color ticket)" | tee -a "$LOG_DIR/ticket-service.log") 2>&1 &
     else
-        go run main.go > >(prefix_log "ticket" "$(get_log_color ticket)" | tee -a "$LOG_DIR/ticket-service.log") 2>&1 &
+        air > >(prefix_log "ticket" "$(get_log_color ticket)" | tee -a "$LOG_DIR/ticket-service.log") 2>&1 &
     fi
     TICKET_PID=$!
     cd "$PROJECT_DIR"
@@ -469,7 +469,7 @@ start_booking_worker() {
         chmod +x scripts/dev.sh
         ./scripts/dev.sh > >(prefix_log "booking-worker" "$(get_log_color booking-worker)" | tee -a "$LOG_DIR/booking-worker.log") 2>&1 &
     else
-        go run main.go > >(prefix_log "booking-worker" "$(get_log_color booking-worker)" | tee -a "$LOG_DIR/booking-worker.log") 2>&1 &
+        air > >(prefix_log "booking-worker" "$(get_log_color booking-worker)" | tee -a "$LOG_DIR/booking-worker.log") 2>&1 &
     fi
     BOOKING_WORKER_PID=$!
     cd "$PROJECT_DIR"
@@ -489,7 +489,7 @@ start_email_worker() {
         chmod +x scripts/dev.sh
         ./scripts/dev.sh > >(prefix_log "email-worker" "$(get_log_color email-worker)" | tee -a "$LOG_DIR/email-worker.log") 2>&1 &
     else
-        go run main.go > >(prefix_log "email-worker" "$(get_log_color email-worker)" | tee -a "$LOG_DIR/email-worker.log") 2>&1 &
+        air > >(prefix_log "email-worker" "$(get_log_color email-worker)" | tee -a "$LOG_DIR/email-worker.log") 2>&1 &
     fi
     EMAIL_WORKER_PID=$!
     cd "$PROJECT_DIR"
@@ -509,7 +509,7 @@ start_checkin_service() {
         chmod +x scripts/dev.sh
         ./scripts/dev.sh > >(prefix_log "checkin" "$(get_log_color checkin)" | tee -a "$LOG_DIR/checkin-service.log") 2>&1 &
     else
-        go run main.go > >(prefix_log "checkin" "$(get_log_color checkin)" | tee -a "$LOG_DIR/checkin-service.log") 2>&1 &
+        air > >(prefix_log "checkin" "$(get_log_color checkin)" | tee -a "$LOG_DIR/checkin-service.log") 2>&1 &
     fi
     CHECKIN_PID=$!
     cd "$PROJECT_DIR"

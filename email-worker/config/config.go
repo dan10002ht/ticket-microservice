@@ -120,12 +120,60 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
+	// Manually populate providers map from env vars
+	// (Viper can't properly unmarshal nested map keys from BindEnv into map[string]ProviderConfig)
+	populateProviders(&config)
+
 	// Validate configuration
 	if err := validateConfig(&config); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
 	return &config, nil
+}
+
+// populateProviders manually builds the providers map from Viper keys
+// because Viper's Unmarshal doesn't reconstruct nested maps from BindEnv properly
+func populateProviders(config *Config) {
+	if config.Email.Providers == nil {
+		config.Email.Providers = make(map[string]ProviderConfig)
+	}
+
+	// SMTP provider
+	smtpHost := viper.GetString("email.providers.smtp.host")
+	if smtpHost != "" {
+		config.Email.Providers["smtp"] = ProviderConfig{
+			Host:      smtpHost,
+			Port:      viper.GetInt("email.providers.smtp.port"),
+			Username:  viper.GetString("email.providers.smtp.username"),
+			Password:  viper.GetString("email.providers.smtp.password"),
+			UseTLS:    viper.GetBool("email.providers.smtp.use_tls"),
+			FromEmail: viper.GetString("email.providers.smtp.from_email"),
+			FromName:  viper.GetString("email.providers.smtp.from_name"),
+		}
+	}
+
+	// SendGrid provider
+	sendgridKey := viper.GetString("email.providers.sendgrid.api_key")
+	if sendgridKey != "" {
+		config.Email.Providers["sendgrid"] = ProviderConfig{
+			APIKey:    sendgridKey,
+			FromEmail: viper.GetString("email.providers.sendgrid.from_email"),
+			FromName:  viper.GetString("email.providers.sendgrid.from_name"),
+		}
+	}
+
+	// SES provider
+	sesRegion := viper.GetString("email.providers.ses.region")
+	if sesRegion != "" {
+		config.Email.Providers["ses"] = ProviderConfig{
+			Region:    sesRegion,
+			AccessKey: viper.GetString("email.providers.ses.access_key"),
+			SecretKey: viper.GetString("email.providers.ses.secret_key"),
+			FromEmail: viper.GetString("email.providers.ses.from_email"),
+			FromName:  viper.GetString("email.providers.ses.from_name"),
+		}
+	}
 }
 
 // setDefaults sets default values for configuration

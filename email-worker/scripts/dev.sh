@@ -70,6 +70,6 @@ fi
 echo "Installing dependencies..."
 go mod tidy
 
-# Run the service
-echo "Starting email-worker on HTTP port ${HTTP_PORT:-8085}, gRPC port ${GRPC_PORT:-50061}..."
-go run main.go
+# Run the service with hot reload
+echo "Starting email-worker on HTTP port ${HTTP_PORT:-8085}, gRPC port ${GRPC_PORT:-50061} (air hot reload)..."
+air

@@ -21,6 +21,6 @@ fi
 echo "📦 Installing dependencies..."
 go mod tidy
 
-# Run the service
-echo "✅ Starting event-service on port ${GRPC_PORT:-50053}..."
-go run main.go
+# Run the service with hot reload
+echo "✅ Starting event-service on port ${GRPC_PORT:-50053} (air hot reload)..."
+air

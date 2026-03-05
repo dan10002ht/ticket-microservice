@@ -21,6 +21,6 @@ fi
 echo "📦 Installing dependencies..."
 go mod tidy
 
-# Run the service
-echo "✅ Starting realtime-service on HTTP:${HTTP_PORT:-3003} gRPC:${GRPC_PORT:-50057}..."
-go run main.go
+# Run the service with hot reload
+echo "✅ Starting realtime-service on HTTP:${HTTP_PORT:-3003} gRPC:${GRPC_PORT:-50057} (air hot reload)..."
+air
