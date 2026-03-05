@@ -15,7 +15,7 @@ const columns: Column<AuthUser>[] = [
     header: "User",
     render: (user) => (
       <AvatarWithName
-        name={`${user.first_name} ${user.last_name}`.trim()}
+        name={`${user.firstName} ${user.lastName}`.trim()}
         email={user.email}
         size="sm"
       />
@@ -29,14 +29,14 @@ const columns: Column<AuthUser>[] = [
     ),
   },
   {
-    key: "is_active",
+    key: "isActive",
     header: "Status",
     render: (user) => (
       <StatusBadge
         status={
-          user.is_active === false
+          user.isActive === false
             ? "inactive"
-            : user.is_verified
+            : user.isVerified
               ? "active"
               : "pending"
         }
@@ -55,8 +55,8 @@ export default function AdminUsersPage() {
     const q = search.toLowerCase();
     return users.filter(
       (u) =>
-        u.first_name.toLowerCase().includes(q) ||
-        u.last_name.toLowerCase().includes(q) ||
+        u.firstName.toLowerCase().includes(q) ||
+        u.lastName.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q)
     );
   }, [users, search]);

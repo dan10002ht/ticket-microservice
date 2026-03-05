@@ -2,6 +2,7 @@ import type { EventFilters } from "../types/event";
 import type { BookingFilters } from "../types/booking";
 import type { TicketFilters } from "../types/ticket";
 import type { PaymentFilters } from "../types/payment";
+import type { InvoiceFilters } from "../types/invoice";
 import type { PaginationParams } from "../types/common";
 
 export const queryKeys = {
@@ -76,5 +77,23 @@ export const queryKeys = {
       [...queryKeys.users.all, "admin", filters] as const,
     adminDetail: (id: string) =>
       [...queryKeys.users.all, "admin", id] as const,
+  },
+  invoices: {
+    all: ["invoices"] as const,
+    lists: () => [...queryKeys.invoices.all, "list"] as const,
+    list: (filters?: InvoiceFilters & PaginationParams) =>
+      [...queryKeys.invoices.lists(), filters] as const,
+    detail: (id: string) =>
+      [...queryKeys.invoices.all, "detail", id] as const,
+  },
+
+  checkins: {
+    all: ["checkins"] as const,
+    event: (eventId: string) =>
+      [...queryKeys.checkins.all, "event", eventId] as const,
+    stats: (eventId: string) =>
+      [...queryKeys.checkins.all, "stats", eventId] as const,
+    detail: (id: string) =>
+      [...queryKeys.checkins.all, "detail", id] as const,
   },
 } as const;

@@ -36,8 +36,7 @@ export interface ForgotPasswordRequest {
 
 export interface ResetPasswordRequest {
   token: string;
-  new_password: string;
-  confirm_password: string;
+  password: string;
 }
 
 export interface SendVerificationEmailRequest {
@@ -64,24 +63,25 @@ export interface BatchCheckPermissionsRequest {
 }
 
 // ── Response types ──
+// Note: Gateway toCamelCase transforms all response keys to camelCase
 
 export interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  auth_type: "email" | "oauth";
-  is_new_user?: boolean;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  authType: "email" | "oauth";
+  isNewUser?: boolean;
 }
 
 export interface AuthUser {
   id: string;
   email: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   phone?: string;
   role?: string;
-  is_active?: boolean;
-  is_verified?: boolean;
+  isActive?: boolean;
+  isVerified?: boolean;
 }
 
 export interface ValidateTokenResponse {
@@ -92,9 +92,9 @@ export interface ValidateTokenResponse {
 export interface EmailVerificationResponse {
   success: boolean;
   message: string;
-  user_id?: string;
-  user_email?: string;
-  expires_at?: string;
+  userId?: string;
+  userEmail?: string;
+  expiresAt?: string;
 }
 
 export interface PasswordResetResponse {

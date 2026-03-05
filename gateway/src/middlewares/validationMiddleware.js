@@ -337,19 +337,13 @@ export const validateForgotPassword = [
  */
 export const validateResetPassword = [
   body('token').notEmpty().withMessage('Reset token is required'),
-  body('new_password')
+  body('password')
     .isLength({ min: 8 })
-    .withMessage('New password must be at least 8 characters long')
+    .withMessage('Password must be at least 8 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
     .withMessage(
-      'New password must contain at least one uppercase letter, one lowercase letter, and one number'
+      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
     ),
-  body('confirm_password').custom((value, { req }) => {
-    if (value !== req.body.new_password) {
-      throw new Error('Password confirmation does not match password');
-    }
-    return true;
-  }),
 ];
 
 /**

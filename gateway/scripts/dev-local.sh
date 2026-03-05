@@ -114,7 +114,10 @@ if [ -d "protos" ]; then
     yarn grpc:generate
 fi
 
-# Create .env file for local development
+# Create .env file only if it doesn't exist
+if [ -f ".env" ]; then
+    echo "✅ .env file already exists, skipping creation"
+else
 echo "📝 Creating .env file for local development..."
 cat > .env << EOF
 # Server Configuration
@@ -125,8 +128,8 @@ NODE_ENV=development
 REDIS_URL=redis://localhost:56379
 
 # JWT Configuration
-JWT_SECRET=dev_jwt_secret
-JWT_REFRESH_SECRET=dev_refresh_secret
+JWT_SECRET=dev_jwt_secret_key_change_in_production
+JWT_REFRESH_SECRET=dev_refresh_secret_key_change_in_production
 JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
 
@@ -170,6 +173,7 @@ LOG_FORMAT=json
 EOF
 
 echo "✅ .env file created"
+fi
 
 echo "🎯 Starting Gateway with hot reload (nodemon)..."
 echo ""

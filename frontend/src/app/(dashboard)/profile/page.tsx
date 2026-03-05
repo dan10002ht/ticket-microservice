@@ -95,7 +95,7 @@ export default function ProfilePage() {
   const displayName = profile
     ? `${profile.firstName} ${profile.lastName}`.trim()
     : user
-      ? `${user.first_name} ${user.last_name}`.trim()
+      ? `${user.firstName} ${user.lastName}`.trim()
       : "User";
 
   const displayEmail = profile?.email || user?.email || "";
@@ -138,7 +138,7 @@ export default function ProfilePage() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Status</span>
                   <span className="font-medium">
-                    {user?.is_verified ? "Verified" : "Unverified"}
+                    {user?.isVerified ? "Verified" : "Unverified"}
                   </span>
                 </div>
               </div>

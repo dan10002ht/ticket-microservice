@@ -47,6 +47,18 @@ export function createRefreshInterceptor(apiClient: AxiosInstance) {
       return Promise.reject(error);
     }
 
+    // Prevent infinite retry — only attempt refresh once per request
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((originalRequest as any)._retried) {
+      clearTokens();
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+      return Promise.reject(error);
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (originalRequest as any)._retried = true;
+
     // Guest user (never authenticated) — just reject, don't redirect
     if (!getAccessToken() && !getRefreshToken()) {
       return Promise.reject(error);
@@ -82,10 +94,10 @@ export function createRefreshInterceptor(apiClient: AxiosInstance) {
         { refresh_token: refreshToken }
       );
 
-      setTokens(data.access_token, data.refresh_token, data.expires_in);
-      processQueue(null, data.access_token);
+      setTokens(data.accessToken, data.refreshToken, data.expiresIn);
+      processQueue(null, data.accessToken);
 
-      originalRequest.headers.Authorization = `Bearer ${data.access_token}`;
+      originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
       return apiClient(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError, null);

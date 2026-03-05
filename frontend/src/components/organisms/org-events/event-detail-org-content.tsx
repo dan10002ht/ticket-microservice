@@ -13,6 +13,7 @@ import {
   Plus,
   Loader2,
   ArrowLeft,
+  ScanLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -151,6 +152,12 @@ export function EventDetailOrgContent({
             <Link href={`/org/events/${event.id}/edit`}>
               <Pencil className="mr-1.5 h-3.5 w-3.5" />
               Edit
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/org/events/${event.id}/checkin`}>
+              <ScanLine className="mr-1.5 h-3.5 w-3.5" />
+              Check-in
             </Link>
           </Button>
           <Button

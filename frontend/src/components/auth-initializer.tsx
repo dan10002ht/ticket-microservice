@@ -17,7 +17,9 @@ export function AuthInitializer() {
     if (isSuccess && data) {
       setUser(data);
       setHydrated(true);
-    } else if (isError) {
+      return;
+    }
+    if (isError) {
       clearUser();
       setHydrated(true);
     }

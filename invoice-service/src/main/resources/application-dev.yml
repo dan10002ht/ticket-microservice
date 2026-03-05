@@ -36,6 +36,7 @@ logging:
     com.ticketing.invoice: INFO
     org.springframework.web: WARN
     org.springframework.kafka: WARN
-    org.apache.kafka: WARN
+    org.apache.kafka: ERROR
+    org.apache.kafka.clients.NetworkClient: ERROR
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN

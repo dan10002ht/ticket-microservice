@@ -9,4 +9,5 @@ logging:
     root: INFO
     com.ticketing.booking: INFO
     org.springframework.kafka: WARN
-    org.apache.kafka: WARN
+    org.apache.kafka: ERROR
+    org.apache.kafka.clients.NetworkClient: ERROR

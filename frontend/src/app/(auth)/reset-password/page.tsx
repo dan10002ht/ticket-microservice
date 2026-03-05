@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import {
   resetPasswordSchema,
@@ -32,12 +32,12 @@ export default function ResetPasswordPage() {
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       token,
-      new_password: "",
-      confirm_password: "",
+      password: "",
+      confirmPassword: "",
     },
   });
 
-  const newPassword = watch("new_password");
+  const newPassword = watch("password");
 
   const getPasswordStrength = (
     pwd: string
@@ -61,7 +61,8 @@ export default function ResetPasswordPage() {
 
   const onSubmit = async (data: ResetPasswordInput) => {
     try {
-      await resetMutation.mutateAsync(data);
+      const { confirmPassword: _, ...payload } = data;
+      await resetMutation.mutateAsync(payload);
       setSuccess(true);
     } catch (err: unknown) {
       const apiError = err as ApiError;
@@ -132,21 +133,20 @@ export default function ResetPasswordPage() {
         <input type="hidden" {...register("token")} />
 
         <div className="space-y-2">
-          <Label htmlFor="new_password">New password</Label>
-          <Input
-            id="new_password"
-            type="password"
+          <Label htmlFor="password">New password</Label>
+          <PasswordInput
+            id="password"
             placeholder="Min 8 characters"
             autoComplete="new-password"
             autoFocus
-            {...register("new_password")}
+            {...register("password")}
           />
-          {errors.new_password && (
+          {errors.password && (
             <p className="text-xs text-destructive">
-              {errors.new_password.message}
+              {errors.password.message}
             </p>
           )}
-          {newPassword && !errors.new_password && (
+          {newPassword && !errors.password && (
             <div className="space-y-1">
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
@@ -160,17 +160,16 @@ export default function ResetPasswordPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="confirm_password">Confirm password</Label>
-          <Input
-            id="confirm_password"
-            type="password"
+          <Label htmlFor="confirmPassword">Confirm password</Label>
+          <PasswordInput
+            id="confirmPassword"
             placeholder="Confirm your new password"
             autoComplete="new-password"
-            {...register("confirm_password")}
+            {...register("confirmPassword")}
           />
-          {errors.confirm_password && (
+          {errors.confirmPassword && (
             <p className="text-xs text-destructive">
-              {errors.confirm_password.message}
+              {errors.confirmPassword.message}
             </p>
           )}
         </div>

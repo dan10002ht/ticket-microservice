@@ -105,6 +105,19 @@ export const API_ENDPOINTS = {
     adminCreate: "/users/admin",
   },
 
+  invoices: {
+    list: "/invoices",
+    detail: (id: string) => `/invoices/${id}`,
+    pdf: (id: string) => `/invoices/${id}/pdf`,
+  },
+
+  checkins: {
+    checkin: (eventId: string) => `/checkins/${eventId}/checkin`,
+    event: (eventId: string) => `/checkins/event/${eventId}`,
+    stats: (eventId: string) => `/checkins/event/${eventId}/stats`,
+    detail: (id: string) => `/checkins/${id}`,
+  },
+
   health: {
     check: "/health",
     ready: "/health/ready",

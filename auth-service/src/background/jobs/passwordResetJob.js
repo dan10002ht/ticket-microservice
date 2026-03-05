@@ -30,7 +30,7 @@ export async function handlePasswordResetJob(jobData) {
 
     // Generate secure reset token
     const resetToken = generateSecureToken();
-    const tokenHash = resetToken.hash;
+    const tokenHash = resetToken.tokenHash;
 
     // Store token in Redis with user data
     const tokenData = {
@@ -42,7 +42,7 @@ export async function handlePasswordResetJob(jobData) {
     await setPasswordResetToken(tokenHash, tokenData);
 
     // Create reset password URL
-    const forgotPasswordUrl = `${process.env.FRONTEND_URL || 'http://localhost:53000'}/reset-password?token=${resetToken.token}`;
+    const forgotPasswordUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken.token}`;
 
     // Enqueue email job to send reset email
     await backgroundService.enqueueJob(EMAIL_RESET_PASSWORD_JOB, {

@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCancelBooking } from "@/lib/api/queries";
+import { InvoiceSection } from "@/components/molecules/invoice-section";
 import { showToast } from "@/lib/toast";
 import type { Booking } from "@/lib/api/types/booking";
 import type { Payment } from "@/lib/api/types/payment";
@@ -198,6 +199,9 @@ export function BookingDetailContent({
             </div>
           </>
         )}
+
+        {/* Invoice */}
+        <InvoiceSection bookingId={booking.id} />
       </div>
 
       {/* Actions */}

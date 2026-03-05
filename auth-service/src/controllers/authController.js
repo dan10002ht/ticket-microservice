@@ -430,9 +430,9 @@ export async function forgotPassword(call, callback) {
  */
 export async function resetPassword(call, callback) {
   try {
-    const { token, new_password } = call.request;
+    const { token, password } = call.request;
 
-    if (!token || !new_password) {
+    if (!token || !password) {
       return callback(
         getGrpcErrorResponse(
           createAuthError(ERROR_CODES.MISSING_REQUIRED_FIELD, 'Token and new password are required')
@@ -440,7 +440,7 @@ export async function resetPassword(call, callback) {
       );
     }
 
-    const result = await passwordResetService.resetPassword(token, new_password);
+    const result = await passwordResetService.resetPassword(token, password);
 
     callback(null, {
       success: true,

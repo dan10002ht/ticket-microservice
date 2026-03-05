@@ -39,7 +39,7 @@ export function Navbar({ className }: NavbarProps) {
   const logoutMutation = useLogout();
 
   const displayName = user
-    ? `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.email || "User"
+    ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email || "User"
     : "User";
 
   const initials = displayName
