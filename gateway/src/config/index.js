@@ -32,12 +32,12 @@ const config = {
   // Redis Configuration
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
-    port: process.env.REDIS_PORT || 6379,
+    port: process.env.REDIS_PORT || 50379,
     password: process.env.REDIS_PASSWORD,
     database: process.env.REDIS_DATABASE || 0,
     url:
       process.env.REDIS_URL ||
-      `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 6379}`,
+      `redis://${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || 50379}`,
   },
 
   // JWT Configuration

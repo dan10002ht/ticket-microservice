@@ -91,12 +91,12 @@ run_integration_tests() {
         print_status "Starting test dependencies..."
         
         # Start Redis for testing
-        docker run -d --name redis-test -p 6379:6379 redis:7-alpine
+        docker run -d --name redis-test -p 50379:6379 redis:7-alpine
         sleep 2
-        
+
         # Start PostgreSQL for testing
         docker run -d --name postgres-test \
-            -p 5432:5432 \
+            -p 50433:5432 \
             -e POSTGRES_DB=email_worker_test \
             -e POSTGRES_USER=postgres \
             -e POSTGRES_PASSWORD=password \

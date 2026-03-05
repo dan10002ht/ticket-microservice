@@ -10,7 +10,7 @@ export interface RegisterRequest {
   password: string;
   first_name: string;
   last_name: string;
-  role?: "user" | "organization";
+  role?: "individual" | "organization";
   organization?: { name: string };
 }
 

@@ -220,14 +220,14 @@ REFRESH_TOKEN_EXPIRY=604800
 
 # Database
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=50432
 DB_NAME=auth_service
 DB_USER=postgres
 DB_PASSWORD=postgres
 
 # Redis (session storage)
 REDIS_HOST=localhost
-REDIS_PORT=6379
+REDIS_PORT=50379
 ```
 
 ## Security Features

@@ -87,7 +87,7 @@ export function EventDetailOrgContent({
   if (error || !event) {
     return (
       <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
-        {error?.error || "Event not found."}
+        {error?.error?.message || "Event not found."}
       </div>
     );
   }

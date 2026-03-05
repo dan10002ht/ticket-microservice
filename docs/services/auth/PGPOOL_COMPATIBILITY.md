@@ -97,7 +97,7 @@ await userRepository.transaction(async (trx) => {
 ```bash
 # PgPool-II endpoints
 PGPOOL_AUTH_HOST=pgpool-auth
-PGPOOL_AUTH_PORT=5432
+PGPOOL_AUTH_PORT=50432
 
 # Database credentials
 DB_NAME=booking_system_auth
@@ -163,7 +163,7 @@ console.log(health); // { pgpool: true, timestamp: '...' }
 docker logs pgpool-auth
 
 # Check database connections
-docker exec pgpool-auth psql -h localhost -p 5432 -U postgres -d booking_system_auth -c "SELECT 1"
+docker exec pgpool-auth psql -h localhost -p 50432 -U postgres -d booking_system_auth -c "SELECT 1"
 ```
 
 ## Performance Benefits

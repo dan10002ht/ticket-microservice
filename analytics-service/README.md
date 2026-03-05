@@ -266,7 +266,7 @@ SERVER_PORT=8084
 SPRING_PROFILES_ACTIVE=production
 
 # Database Configuration
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/analytics_service_db
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:50433/analytics_service_db
 SPRING_DATASOURCE_USERNAME=analytics_service_user
 SPRING_DATASOURCE_PASSWORD=analytics_service_password
 SPRING_JPA_HIBERNATE_DDL_AUTO=validate

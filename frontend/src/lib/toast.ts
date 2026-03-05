@@ -50,7 +50,7 @@ showToast.apiError = (
   error: ApiError,
   fallbackMessage = "Something went wrong. Please try again."
 ): ValidationDetail[] => {
-  const details = parseValidationDetails(error.details);
+  const details = parseValidationDetails(error.error?.details);
 
   if (details.length > 0) {
     const firstMsg = details[0].msg;
@@ -61,7 +61,7 @@ showToast.apiError = (
 
     toast.error(firstMsg, { description });
   } else {
-    toast.error(error.error || fallbackMessage);
+    toast.error(error.error?.message || fallbackMessage);
   }
 
   return details;

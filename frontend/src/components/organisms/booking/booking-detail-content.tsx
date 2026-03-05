@@ -81,7 +81,7 @@ export function BookingDetailContent({
   if (error || !booking) {
     return (
       <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
-        {error?.error || "Booking not found."}
+        {error?.error?.message || "Booking not found."}
       </div>
     );
   }

@@ -223,19 +223,19 @@ GRPC_PORT=50053
 SPRING_PROFILES_ACTIVE=production
 
 # Database Configuration
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/booking_db
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:50433/booking_db
 SPRING_DATASOURCE_USERNAME=booking_user
 SPRING_DATASOURCE_PASSWORD=booking_password
 SPRING_JPA_HIBERNATE_DDL_AUTO=validate
 
 # Redis Configuration
 REDIS_HOST=localhost
-REDIS_PORT=6379
+REDIS_PORT=50379
 REDIS_PASSWORD=your_redis_password
 REDIS_DATABASE=0
 
 # Kafka Configuration
-KAFKA_BOOTSTRAP_SERVERS=localhost:9092
+KAFKA_BOOTSTRAP_SERVERS=localhost:50092
 KAFKA_TOPIC_BOOKING_EVENTS=booking-events
 KAFKA_TOPIC_PAYMENT_EVENTS=payment-events
 KAFKA_GROUP_ID=booking-service

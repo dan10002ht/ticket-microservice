@@ -204,8 +204,8 @@ Location: `shared-lib/protos/user.proto`
 
 ```bash
 # HTTP health check
-curl http://localhost:9092/health
-curl http://localhost:9092/ready
+curl http://localhost:9192/health
+curl http://localhost:9192/ready
 
 # gRPC health check
 grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check
@@ -213,7 +213,7 @@ grpcurl -plaintext localhost:50052 grpc.health.v1.Health/Check
 
 ## Metrics
 
-Prometheus metrics available at `http://localhost:9092/metrics`
+Prometheus metrics available at `http://localhost:9192/metrics`
 
 | Metric | Type | Description |
 |--------|------|-------------|

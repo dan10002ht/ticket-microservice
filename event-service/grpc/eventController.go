@@ -17,12 +17,23 @@ func NewEventController(service *services.EventService) *EventController {
 }
 
 func (c *EventController) CreateEvent(ctx context.Context, req *eventpb.CreateEventRequest) (*eventpb.CreateEventResponse, error) {
+	canvasConfig := req.CanvasConfig
+	if canvasConfig == "" {
+		canvasConfig = "{}"
+	}
+
 	event := &models.Event{
-		Name:          req.Name,
-		Description:   req.Description,
-		StartDate:     req.StartDate,
-		EndDate:       req.EndDate,
-		VenueCapacity: int(req.MaxCapacity),
+		OrganizationID: req.CreatedBy,
+		Name:           req.Name,
+		Description:    req.Description,
+		StartDate:      req.StartDate,
+		EndDate:        req.EndDate,
+		VenueName:      req.VenueName,
+		VenueAddress:   req.VenueAddress,
+		VenueCity:      req.VenueCity,
+		VenueCountry:   req.VenueCountry,
+		VenueCapacity:  int(req.MaxCapacity),
+		CanvasConfig:   canvasConfig,
 	}
 	err := c.service.CreateEvent(ctx, event)
 	if err != nil {
@@ -30,14 +41,20 @@ func (c *EventController) CreateEvent(ctx context.Context, req *eventpb.CreateEv
 	}
 	return &eventpb.CreateEventResponse{
 		Event: &eventpb.Event{
-			Id:            event.PublicID,
-			Name:          event.Name,
-			Description:   event.Description,
-			StartDate:     event.StartDate,
-			EndDate:       event.EndDate,
-			VenueCapacity: int32(event.VenueCapacity),
-			CreatedAt:     event.CreatedAt,
-			UpdatedAt:     event.UpdatedAt,
+			Id:             event.PublicID,
+			OrganizationId: event.OrganizationID,
+			Name:           event.Name,
+			Description:    event.Description,
+			StartDate:      event.StartDate,
+			EndDate:        event.EndDate,
+			VenueName:      event.VenueName,
+			VenueAddress:   event.VenueAddress,
+			VenueCity:      event.VenueCity,
+			VenueCountry:   event.VenueCountry,
+			VenueCapacity:  int32(event.VenueCapacity),
+			CanvasConfig:   event.CanvasConfig,
+			CreatedAt:      event.CreatedAt,
+			UpdatedAt:      event.UpdatedAt,
 		},
 	}, nil
 }
@@ -67,11 +84,12 @@ func (c *EventController) GetEvent(ctx context.Context, req *eventpb.GetEventReq
 
 func (c *EventController) UpdateEvent(ctx context.Context, req *eventpb.UpdateEventRequest) (*eventpb.UpdateEventResponse, error) {
 	event := &models.Event{
-		PublicID:    req.Id,
-		Name:        req.Name,
-		Description: req.Description,
-		StartDate:   req.StartDate,
-		EndDate:     req.EndDate,
+		PublicID:      req.Id,
+		Name:          req.Name,
+		Description:   req.Description,
+		StartDate:     req.StartDate,
+		EndDate:       req.EndDate,
+		VenueCapacity: int(req.MaxCapacity),
 	}
 	err := c.service.UpdateEvent(ctx, event)
 	if err != nil {
@@ -79,13 +97,20 @@ func (c *EventController) UpdateEvent(ctx context.Context, req *eventpb.UpdateEv
 	}
 	return &eventpb.UpdateEventResponse{
 		Event: &eventpb.Event{
-			Id:          event.PublicID,
-			Name:        event.Name,
-			Description: event.Description,
-			StartDate:   event.StartDate,
-			EndDate:     event.EndDate,
-			CreatedAt:   event.CreatedAt,
-			UpdatedAt:   event.UpdatedAt,
+			Id:             event.PublicID,
+			OrganizationId: event.OrganizationID,
+			Name:           event.Name,
+			Description:    event.Description,
+			StartDate:      event.StartDate,
+			EndDate:        event.EndDate,
+			VenueName:      event.VenueName,
+			VenueAddress:   event.VenueAddress,
+			VenueCity:      event.VenueCity,
+			VenueCountry:   event.VenueCountry,
+			VenueCapacity:  int32(event.VenueCapacity),
+			CanvasConfig:   event.CanvasConfig,
+			CreatedAt:      event.CreatedAt,
+			UpdatedAt:      event.UpdatedAt,
 		},
 	}, nil
 }

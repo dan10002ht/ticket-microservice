@@ -28,7 +28,7 @@ export function useMe() {
     queryKey: queryKeys.auth.user(),
     queryFn: async () => {
       const token = getAccessToken();
-      if (!token) throw { error: "No access token", statusCode: 401 } as ApiError;
+      if (!token) throw { error: { code: "UNAUTHENTICATED", message: "No access token" }, statusCode: 401 } as ApiError;
 
       const { data } = await apiClient.post<ValidateTokenResponse>(
         API_ENDPOINTS.auth.validate,
@@ -38,7 +38,7 @@ export function useMe() {
       );
 
       if (!data.valid || !data.user) {
-        throw { error: "Invalid token", statusCode: 401 } as ApiError;
+        throw { error: { code: "INVALID_TOKEN", message: "Invalid token" }, statusCode: 401 } as ApiError;
       }
       return data.user;
     },

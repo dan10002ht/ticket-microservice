@@ -3,9 +3,13 @@ package com.ticketing.booking.grpc;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
 
 import net.devh.boot.grpc.server.service.GrpcService;
 
+import com.ticketing.booking.entity.Booking;
 import com.ticketing.booking.exception.BookingException;
 import com.ticketing.booking.exception.BookingLockException;
 import com.ticketing.booking.exception.BookingNotFoundException;
@@ -198,6 +202,68 @@ public class BookingGrpcService extends BookingServiceImplBase {
             responseObserver.onError(Status.INTERNAL
                     .withDescription("Failed to cancel booking: " + e.getMessage())
                     .withCause(e)
+                    .asRuntimeException());
+        }
+    }
+
+    @Override
+    public void getUserBookings(GetUserBookingsRequest request,
+            StreamObserver<GetUserBookingsResponse> responseObserver) {
+        try {
+            int page = request.getPage() > 0 ? request.getPage() : 1;
+            int limit = request.getLimit() > 0 ? request.getLimit() : 20;
+
+            Page<Booking> bookingsPage = bookingService.getUserBookings(
+                    request.getUserId(), request.getStatus(), page, limit);
+
+            List<com.ticketing.booking.grpc.Booking> protoBookings = bookingsPage.getContent().stream()
+                    .map(b -> BookingMapperUtil.toProto(bookingMapper, b))
+                    .collect(Collectors.toList());
+
+            var response = GetUserBookingsResponse.newBuilder()
+                    .setSuccess(true)
+                    .addAllBookings(protoBookings)
+                    .setTotal((int) bookingsPage.getTotalElements())
+                    .setPage(page)
+                    .setLimit(limit)
+                    .build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            log.error("Failed to get user bookings for user: {}", request.getUserId(), e);
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Failed to get user bookings: " + e.getMessage())
+                    .asRuntimeException());
+        }
+    }
+
+    @Override
+    public void listBookings(ListBookingsRequest request,
+            StreamObserver<ListBookingsResponse> responseObserver) {
+        try {
+            int page = request.getPage() > 0 ? request.getPage() : 1;
+            int limit = request.getLimit() > 0 ? request.getLimit() : 20;
+
+            Page<Booking> bookingsPage = bookingService.listBookings(
+                    request.getStatus(), request.getEventId(), page, limit);
+
+            List<com.ticketing.booking.grpc.Booking> protoBookings = bookingsPage.getContent().stream()
+                    .map(b -> BookingMapperUtil.toProto(bookingMapper, b))
+                    .collect(Collectors.toList());
+
+            var response = ListBookingsResponse.newBuilder()
+                    .setSuccess(true)
+                    .addAllBookings(protoBookings)
+                    .setTotal((int) bookingsPage.getTotalElements())
+                    .setPage(page)
+                    .setLimit(limit)
+                    .build();
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            log.error("Failed to list bookings", e);
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Failed to list bookings: " + e.getMessage())
                     .asRuntimeException());
         }
     }

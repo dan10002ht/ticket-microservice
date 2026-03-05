@@ -310,7 +310,7 @@ SERVER_PORT=8089
 SPRING_PROFILES_ACTIVE=production
 
 # Database Configuration
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/rate_limiter_db
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:50433/rate_limiter_db
 SPRING_DATASOURCE_USERNAME=rate_limiter_user
 SPRING_DATASOURCE_PASSWORD=rate_limiter_password
 SPRING_JPA_HIBERNATE_DDL_AUTO=validate

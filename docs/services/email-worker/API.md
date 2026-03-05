@@ -407,9 +407,9 @@ defer span.End()
 | `METRICS_PORT` | Metrics server port | `2112`      |
 | `LOG_LEVEL`    | Logging level       | `info`      |
 | `DB_HOST`      | Database host       | `localhost` |
-| `DB_PORT`      | Database port       | `5432`      |
+| `DB_PORT`      | Database port       | `50433`     |
 | `REDIS_HOST`   | Redis host          | `localhost` |
-| `REDIS_PORT`   | Redis port          | `6379`      |
+| `REDIS_PORT`   | Redis port          | `50379`     |
 
 ### Configuration File
 

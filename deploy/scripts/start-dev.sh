@@ -26,10 +26,10 @@ print_header() {
 
 print_connection_info() {
     echo -e "${YELLOW}Connection Information:${NC}"
-    echo "  Auth DB:    localhost:5432 (booking_system_auth)"
-    echo "  Main DB:    localhost:5433 (booking_system)"
-    echo "  Redis:      localhost:6379"
-    echo "  Kafka:      localhost:9092"
+    echo "  Auth DB:    localhost:50432 (booking_system_auth)"
+    echo "  Main DB:    localhost:50433 (booking_system)"
+    echo "  Redis:      localhost:50379"
+    echo "  Kafka:      localhost:50092"
     echo ""
     echo -e "${YELLOW}Database Credentials:${NC}"
     echo "  User:       booking_user"

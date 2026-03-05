@@ -52,11 +52,7 @@ export async function registerWithEmail(call, callback) {
     callback(null, response);
   } catch (error) {
     console.error('Email registration error:', error);
-    console.error('Error stack:', error.stack);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -97,10 +93,7 @@ export async function registerWithOAuth(call, callback) {
     });
   } catch (error) {
     console.error('OAuth registration error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -137,10 +130,7 @@ export async function login(call, callback) {
     });
   } catch (error) {
     console.error('Login error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -171,10 +161,7 @@ export async function enhancedLogin(call, callback) {
     callback(null, result);
   } catch (error) {
     console.error('Enhanced login error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -221,17 +208,11 @@ export async function registerDevice(call, callback) {
       });
     } catch (error) {
       logger.error('Device registration error:', error);
-      callback({
-        code: 13,
-        message: 'Device registration failed',
-      });
+      callback(getGrpcErrorResponse(error));
     }
   } catch (error) {
     console.error('Register device error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -311,10 +292,7 @@ export async function enhancedLogout(call, callback) {
     }
   } catch (error) {
     console.error('Enhanced logout error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -346,10 +324,7 @@ export async function logout(call, callback) {
     });
   } catch (error) {
     console.error('Logout error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -374,10 +349,7 @@ export async function refreshToken(call, callback) {
     });
   } catch (error) {
     console.error('Refresh token error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -400,10 +372,7 @@ export async function validateToken(call, callback) {
     });
   } catch (error) {
     console.error('Validate token error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -426,10 +395,7 @@ export async function changePassword(call, callback) {
     });
   } catch (error) {
     console.error('Change password error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -506,10 +472,7 @@ export async function getUserProfile(call, callback) {
     });
   } catch (error) {
     console.error('Get user profile error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -556,10 +519,7 @@ export async function updateUserProfile(call, callback) {
     });
   } catch (error) {
     console.error('Update user profile error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -583,10 +543,7 @@ export async function getUserSessions(call, callback) {
     });
   } catch (error) {
     console.error('Get user sessions error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -611,10 +568,7 @@ export async function getUsers(call, callback) {
     });
   } catch (error) {
     console.error('Get users error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -644,10 +598,7 @@ export async function searchUsers(call, callback) {
     });
   } catch (error) {
     console.error('Search users error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -671,10 +622,7 @@ export async function updateUserStatus(call, callback) {
     });
   } catch (error) {
     console.error('Update user status error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 
@@ -693,10 +641,7 @@ export async function health(call, callback) {
     });
   } catch (error) {
     console.error('Health check error:', error);
-    callback({
-      code: 13,
-      message: error.message,
-    });
+    callback(getGrpcErrorResponse(error));
   }
 }
 

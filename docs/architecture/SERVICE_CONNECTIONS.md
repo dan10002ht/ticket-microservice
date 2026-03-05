@@ -83,9 +83,9 @@ Invoice Flow:
 Infrastructure:
 ┌──────────────┐  ┌──────────────────────┐  ┌─────────────┐
 │  PostgreSQL  │  │        Redis         │  │    Kafka    │
-│ auth  :5432  │  │ cache   :6379        │  │    :9092    │
-│ main  :5433  │  │ queue   :6380        │  └─────────────┘
-└──────────────┘  │ pubsub  :6381        │
+│ auth :50432  │  │ cache  :50379        │  │   :50092    │
+│ main :50433  │  │ queue  :50380        │  └─────────────┘
+└──────────────┘  │ pubsub :50381        │
                   └──────────────────────┘
 ```
 
@@ -135,7 +135,7 @@ Infrastructure:
 | Frontend → Realtime        | WebSocket     | Real-time updates          |
 | Booking Worker → Realtime  | gRPC :50057   | Push booking notifications |
 | Payment Service → Realtime | gRPC :50057   | Push payment status        |
-| Internal (scaling)         | Redis Pub/Sub | Multi-instance sync :6381  |
+| Internal (scaling)         | Redis Pub/Sub | Multi-instance sync :50381 |
 
 ## Proto Definitions
 
@@ -206,7 +206,7 @@ service InvoiceService {
 
 ```
 1. User selects seats → Gateway :53000
-2. Gateway → Booking Worker :50056 (add to Redis queue :6380)
+2. Gateway → Booking Worker :50056 (add to Redis queue :50380)
 3. Booking Worker processes queue
 4. Booking Worker → Booking Service :50058 (CreateBooking)
 5. Booking Service executes Saga:
@@ -232,7 +232,7 @@ service InvoiceService {
 ### 3. Invoice Generation Flow
 
 ```
-1. Payment Service publishes PAYMENT_CAPTURED → Kafka :9092 (payment-events)
+1. Payment Service publishes PAYMENT_CAPTURED → Kafka :50092 (payment-events)
 2. Invoice Service consumes event
 3. Invoice Service generates invoice (idempotent — skips if already exists)
 4. Invoice Service → DB (INSERT invoice + invoice_items)
@@ -246,7 +246,7 @@ service InvoiceService {
 2. Service → Realtime Service :50057 (gRPC)
 3. Realtime Service finds user's WebSocket connection
 4. Realtime Service → Frontend (WebSocket message)
-5. Multi-instance sync: Redis Pub/Sub :6381
+5. Multi-instance sync: Redis Pub/Sub :50381
 ```
 
 ## Environment Configuration
@@ -337,7 +337,7 @@ Each service on `postgres-main` owns its own PostgreSQL schema:
 | Payment Service | `payment` | Flyway `schemas: payment`            |
 | Invoice Service | `invoice` | Flyway `schemas: invoice`            |
 
-Auth Service uses a **dedicated** `postgres-auth` instance (`:5432` host, `:5432` container).
+Auth Service uses a **dedicated** `postgres-auth` instance (`:50432` host, `:5432` container).
 
 ## gRPC TLS Configuration
 
@@ -429,11 +429,11 @@ grpcurl -plaintext -d '{"user_id":"test"}' localhost:50052 user.UserService/GetP
 grpcurl -plaintext localhost:50057 realtime.RealtimeService/GetConnectionStats
 
 # Check Kafka topics
-kafka-topics.sh --list --bootstrap-server localhost:9092
+kafka-topics.sh --list --bootstrap-server localhost:50092
 
 # Check Redis instances
-redis-cli -p 6379 ping   # redis-cache
-redis-cli -p 6380 ping   # redis-queue
-redis-cli -p 6381 ping   # redis-pubsub
-redis-cli -p 6380 keys "booking-queue:*"
+redis-cli -p 50379 ping   # redis-cache
+redis-cli -p 50380 ping   # redis-queue
+redis-cli -p 50381 ping   # redis-pubsub
+redis-cli -p 50380 keys "booking-queue:*"
 ```

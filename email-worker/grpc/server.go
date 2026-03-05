@@ -15,7 +15,7 @@ import (
 	"booking-system/email-worker/config"
 	"booking-system/email-worker/models"
 	"booking-system/email-worker/processor"
-	"booking-system/email-worker/protos"
+	"booking-system/email-worker/internal/protos"
 	"booking-system/email-worker/services"
 )
 

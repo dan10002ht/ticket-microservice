@@ -41,8 +41,8 @@ export async function handlePasswordResetJob(jobData) {
 
     await setPasswordResetToken(tokenHash, tokenData);
 
-    // Create forgot password URL
-    const forgotPasswordUrl = `${process.env.FRONTEND_URL || 'http://localhost:53000'}/forgot-password?user_id=${userId}&token=${resetToken.token}`;
+    // Create reset password URL
+    const forgotPasswordUrl = `${process.env.FRONTEND_URL || 'http://localhost:53000'}/reset-password?token=${resetToken.token}`;
 
     // Enqueue email job to send reset email
     await backgroundService.enqueueJob(EMAIL_RESET_PASSWORD_JOB, {

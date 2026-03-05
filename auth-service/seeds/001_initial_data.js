@@ -397,7 +397,7 @@ exports.seed = async function(knex) {
  * @param { import("knex").Knex } knex
  * @returns { Promise<void> }
  */
-export.down = async function(knex) {
+exports.down = async function(knex) {
   await knex('organization_members').del();
   await knex('organization_roles').del();
   await knex('user_roles').del();

@@ -26,8 +26,8 @@ sed -i 's/DB_SLAVE_USER=booking_user/DB_SLAVE_USER=booking_user/' .env
 sed -i 's/DB_SLAVE_PASSWORD=booking_pass/DB_SLAVE_PASSWORD=booking_pass/' .env
 
 # Redis and Kafka
-sed -i 's/REDIS_PORT=6379/REDIS_PORT=56379/' .env
-sed -i 's/KAFKA_BROKERS=localhost:9092/KAFKA_BROKERS=localhost:59092/' .env
+sed -i 's/REDIS_PORT=6379/REDIS_PORT=50379/' .env
+sed -i 's/KAFKA_BROKERS=localhost:9092/KAFKA_BROKERS=localhost:50092/' .env
 
 echo "✅ .env file created successfully!"
 echo "📁 Location: email-worker/.env"

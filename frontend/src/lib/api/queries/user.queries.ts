@@ -17,7 +17,20 @@ export function useProfile() {
     queryKey: queryKeys.users.profile(),
     queryFn: async () => {
       const { data } = await apiClient.get(API_ENDPOINTS.users.profile);
-      return data;
+      // Gateway returns { profile: { ... } } with camelCase keys
+      const p = data?.profile ?? data;
+      return {
+        id: p.userId ?? p.id ?? "",
+        email: p.email ?? "",
+        firstName: p.firstName ?? "",
+        lastName: p.lastName ?? "",
+        phone: p.phone ?? "",
+        dateOfBirth: p.dateOfBirth ?? "",
+        avatarUrl: p.avatarUrl ?? "",
+        preferences: p.preferences ?? {},
+        createdAt: p.createdAt ?? "",
+        updatedAt: p.updatedAt ?? "",
+      };
     },
   });
 }
@@ -38,6 +51,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation<UserProfile, ApiError, UserProfileUpdateRequest>({
     mutationFn: async (input) => {
+      // Send camelCase — gateway auto-transforms to snake_case for gRPC
       const { data } = await apiClient.put(API_ENDPOINTS.users.profile, input);
       return data;
     },

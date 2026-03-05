@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
 import { useLogin } from "@/lib/api/queries";
 import { showToast } from "@/lib/toast";
+import type { ApiError } from "@/lib/api/types/common";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,8 +33,11 @@ export default function LoginPage() {
       showToast.success("Signed in successfully!");
       const callbackUrl = searchParams.get("callbackUrl") || "/";
       router.push(callbackUrl);
-    } catch {
-      // Error toast is handled by the API error interceptor
+    } catch (err: unknown) {
+      const apiError = err as ApiError;
+      showToast.error(
+        apiError?.error?.message || "Login failed. Please try again."
+      );
     }
   };
 
@@ -66,6 +70,7 @@ export default function LoginPage() {
             <Label htmlFor="password">Password</Label>
             <Link
               href="/forgot-password"
+              tabIndex={-1}
               className="text-xs text-muted-foreground hover:text-primary"
             >
               Forgot password?

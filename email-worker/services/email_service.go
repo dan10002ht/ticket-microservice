@@ -215,13 +215,32 @@ func (s *EmailService) UpdateJobStatus(ctx context.Context, jobID, status string
 
 // ProcessEmailJob processes an email job
 func (s *EmailService) ProcessEmailJob(ctx context.Context, job *models.EmailJob) error {
+	// Resolve internal DB ID from PublicID if not set (jobs from Redis queue only have PublicID)
+	if job.ID == 0 && job.PublicID != uuid.Nil {
+		dbJob, err := s.jobRepo.GetByPublicID(ctx, job.PublicID)
+		if err != nil {
+			fmt.Printf("Warning: Could not resolve job DB ID from public ID %s: %v\n", job.PublicID.String(), err)
+		} else {
+			job.ID = dbJob.ID
+		}
+	}
+
 	// Update job status to processing
 	job.Status = models.JobStatusProcessing
 	job.ProcessedAt = &time.Time{}
 	*job.ProcessedAt = time.Now()
 
-	if err := s.jobRepo.UpdateStatus(ctx, job.ID, string(job.Status)); err != nil {
-		return fmt.Errorf("failed to update job status: %w", err)
+	if job.ID > 0 {
+		if err := s.jobRepo.UpdateStatus(ctx, job.ID, string(job.Status)); err != nil {
+			return fmt.Errorf("failed to update job status: %w", err)
+		}
+	}
+
+	// Helper to update status only if we have a valid DB ID
+	updateStatus := func(status string) {
+		if job.ID > 0 {
+			s.jobRepo.UpdateStatus(ctx, job.ID, status)
+		}
 	}
 
 	// Get template
@@ -229,7 +248,7 @@ func (s *EmailService) ProcessEmailJob(ctx context.Context, job *models.EmailJob
 	if err != nil {
 		job.Status = models.JobStatusFailed
 		job.ErrorMessage = fmt.Sprintf("Template not found: %v", err)
-		s.jobRepo.UpdateStatus(ctx, job.ID, string(job.Status))
+		updateStatus(string(job.Status))
 		return fmt.Errorf("failed to get template: %w", err)
 	}
 
@@ -238,32 +257,32 @@ func (s *EmailService) ProcessEmailJob(ctx context.Context, job *models.EmailJob
 	if err != nil {
 		job.Status = models.JobStatusFailed
 		job.ErrorMessage = fmt.Sprintf("Template rendering failed: %v", err)
-		s.jobRepo.UpdateStatus(ctx, job.ID, string(job.Status))
+		updateStatus(string(job.Status))
 		return fmt.Errorf("failed to render template: %w", err)
 	}
 
-	fmt.Println("htmlBody", htmlBody)
-	// Send email if provider is available
-	if s.emailProvider != nil {
-		_, err := s.emailProvider.Send(ctx, &providers.EmailRequest{
-			To:          job.To,
-			CC:          job.CC,
-			BCC:         job.BCC,
-			Subject:     subject,
-			HTMLContent: htmlBody,
-			TextContent: textBody,
-		})
-		if err != nil {
-			job.Status = models.JobStatusFailed
-			job.ErrorMessage = fmt.Sprintf("Email sending failed: %v", err)
-			job.RetryCount++
-			s.jobRepo.UpdateStatus(ctx, job.ID, string(job.Status))
-			return fmt.Errorf("failed to send email: %w", err)
-		}
-	} else {
-		// Email provider not available, mark as completed but log warning
-		// This allows the service to continue running even without email capability
+	// Send email via provider
+	if s.emailProvider == nil {
+		job.Status = models.JobStatusFailed
 		job.ErrorMessage = "Email provider not configured - email not sent"
+		updateStatus(string(job.Status))
+		return fmt.Errorf("email provider not configured")
+	}
+
+	_, err = s.emailProvider.Send(ctx, &providers.EmailRequest{
+		To:          job.To,
+		CC:          job.CC,
+		BCC:         job.BCC,
+		Subject:     subject,
+		HTMLContent: htmlBody,
+		TextContent: textBody,
+	})
+	if err != nil {
+		job.Status = models.JobStatusFailed
+		job.ErrorMessage = fmt.Sprintf("Email sending failed: %v", err)
+		job.RetryCount++
+		updateStatus(string(job.Status))
+		return fmt.Errorf("failed to send email: %w", err)
 	}
 
 	// Update job status to completed
@@ -271,9 +290,7 @@ func (s *EmailService) ProcessEmailJob(ctx context.Context, job *models.EmailJob
 	job.SentAt = &time.Time{}
 	*job.SentAt = time.Now()
 
-	if err := s.jobRepo.UpdateStatus(ctx, job.ID, string(job.Status)); err != nil {
-		return fmt.Errorf("failed to update job status: %w", err)
-	}
+	updateStatus(string(job.Status))
 
 	return nil
 }

@@ -61,7 +61,7 @@ message RegisterWithEmailRequest {
   string first_name = 4;
   string last_name = 5;
   string phone = 6;
-  string role = 7; // "user", "organization", "admin"
+  string role = 7; // "individual", "organization", "admin"
   OrganizationData organization = 8;
   string ip_address = 9;
   string user_agent = 10;

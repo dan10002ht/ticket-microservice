@@ -1,9 +1,10 @@
 /** Generic API response wrapper */
 export interface ApiResponse<T> {
-  success?: boolean;
-  data?: T;
-  message?: string;
-  correlationId?: string;
+  data: T;
+  meta?: {
+    correlationId?: string;
+    timestamp?: string;
+  };
 }
 
 /** Normalized paginated response (backend formats vary — normalize in query hooks) */
@@ -23,12 +24,17 @@ export interface PaginationParams {
 
 /** Typed API error matching gateway error shape */
 export interface ApiError {
-  error: string;
-  correlationId?: string;
-  code?: string;
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+  meta?: {
+    correlationId?: string;
+    timestamp?: string;
+  };
+  /** HTTP status code (set by error interceptor) */
   statusCode?: number;
-  timestamp?: string;
-  details?: unknown;
 }
 
 /** Sort direction */

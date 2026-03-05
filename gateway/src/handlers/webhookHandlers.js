@@ -35,9 +35,11 @@ const processPaymentWebhook = async (req, res) => {
   });
 
   res.status(200).json({
-    success: response.success,
-    message: response.message,
-    correlationId: req.correlationId,
+    data: {
+      success: response.success,
+      message: response.message,
+    },
+    meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
   });
 };
 

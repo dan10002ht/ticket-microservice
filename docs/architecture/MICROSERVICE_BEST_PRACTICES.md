@@ -349,14 +349,14 @@ NODE_ENV=production
 
 # Database configuration
 DB_HOST=postgres-service
-DB_PORT=5432
+DB_PORT=50432
 DB_NAME=booking_system_auth
 DB_USER=postgres
 DB_PASSWORD=secure_password
 
 # Redis configuration
 REDIS_HOST=redis-service
-REDIS_PORT=6379
+REDIS_PORT=50379
 REDIS_PASSWORD=redis_password
 
 # Service-specific settings

@@ -5,7 +5,7 @@ import { sendSuccessResponse, createSimpleHandler } from '../utils/responseHandl
  * Get all events
  */
 const getAllEvents = async (req, res) => {
-  const result = await grpcClients.eventService.getEvents({});
+  const result = await grpcClients.eventService.ListEvents({});
   sendSuccessResponse(res, 200, result, req.correlationId);
 };
 
@@ -21,7 +21,10 @@ const getEventById = async (req, res) => {
  * Create new event
  */
 const createNewEvent = async (req, res) => {
-  const result = await grpcClients.eventService.createEvent(req.body);
+  const result = await grpcClients.eventService.createEvent({
+    ...req.body,
+    created_by: req.user.id,
+  });
   sendSuccessResponse(res, 201, result, req.correlationId);
 };
 

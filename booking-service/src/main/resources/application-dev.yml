@@ -7,4 +7,6 @@ spring:
 logging:
   level:
     root: INFO
-    com.ticketing.booking: DEBUG
+    com.ticketing.booking: INFO
+    org.springframework.kafka: WARN
+    org.apache.kafka: WARN

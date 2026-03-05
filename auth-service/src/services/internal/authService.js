@@ -34,6 +34,7 @@ import {
 } from '../../const/background.js';
 import { authAttempts } from '../../metrics/authMetrics.js';
 import { revokeUserTokensIssuedBefore } from '../redis/redisService.js';
+import { AuthError, ERROR_CODES } from '../../utils/errorCodes.js';
 // import * as auditService from './auditService.js'; // TODO: Implement audit service
 
 // Get repository instances from factory
@@ -73,14 +74,14 @@ export async function registerWithEmail(registerData) {
     const { ip_address, user_agent, role: currentRole, ...userData } = registerData;
     const validation = validateRegistration(userData);
     if (!validation.isValid) {
-      throw new Error(validation.errors.join(', '));
+      throw new AuthError(ERROR_CODES.INVALID_ARGUMENT, validation.errors.join(', '));
     }
 
     const sanitizedData = sanitizeUserInput(userData);
 
     const existingUser = await userRepository.findByEmail(sanitizedData.email);
     if (existingUser) {
-      throw new Error('Email is already in use');
+      throw new AuthError(ERROR_CODES.EMAIL_ALREADY_EXISTS, 'Email is already in use');
     }
 
     const newUser = await userRepository.createUser({
@@ -93,7 +94,7 @@ export async function registerWithEmail(registerData) {
     const role = await roleRepository.findByName(roleName);
 
     if (!role) {
-      throw new Error(`Invalid role: ${roleName}`);
+      throw new AuthError(ERROR_CODES.INVALID_ARGUMENT, `Invalid role: ${roleName}`);
     }
 
     await userRoleRepository.assignRoleToUser(newUser.id, role.id);
@@ -173,7 +174,8 @@ export async function registerWithEmail(registerData) {
     };
   } catch (error) {
     authAttempts.inc({ method: 'register', status: 'failed', user_type: 'user' });
-    throw new Error(`Email registration failed: ${error.message}`);
+    if (error instanceof AuthError) throw error;
+    throw new AuthError(ERROR_CODES.INTERNAL_ERROR, `Email registration failed: ${error.message}`);
   }
 }
 
@@ -188,7 +190,7 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
     const oauthUserInfo = await oauthService.verifyOAuthToken(provider, oauthData.token);
 
     if (!oauthUserInfo) {
-      throw new Error(`Invalid ${provider} token`);
+      throw new AuthError(ERROR_CODES.INVALID_TOKEN, `Invalid ${provider} token`);
     }
 
     // Check if OAuth account already exists
@@ -202,7 +204,7 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
       const existingUser = await userRepository.findById(existingOAuthAccount.user_id);
 
       if (!existingUser || !existingUser.is_active) {
-        throw new Error('Account is locked or not activated');
+        throw new AuthError(ERROR_CODES.ACCOUNT_DISABLED, 'Account is locked or not activated');
       }
 
       // Update OAuth tokens
@@ -416,7 +418,8 @@ export async function registerWithOAuth(provider, oauthData, sessionData = {}) {
     };
   } catch (error) {
     authAttempts.inc({ method: 'register', status: 'failed', user_type: 'user' });
-    throw new Error(`OAuth registration failed: ${error.message}`);
+    if (error instanceof AuthError) throw error;
+    throw new AuthError(ERROR_CODES.INTERNAL_ERROR, `OAuth registration failed: ${error.message}`);
   }
 }
 
@@ -436,11 +439,11 @@ export async function login(email, password, sessionData = {}) {
 
     const user = await userRepository.verifyCredentials(email, password);
     if (!user) {
-      throw new Error('Invalid email or password');
+      throw new AuthError(ERROR_CODES.INVALID_CREDENTIALS);
     }
 
     if (!user.is_active) {
-      throw new Error('Account is locked or not activated');
+      throw new AuthError(ERROR_CODES.ACCOUNT_DISABLED, 'Account is locked or not activated');
     }
 
     await userRepository.updateLastLogin(user.public_id);
@@ -490,8 +493,8 @@ export async function login(email, password, sessionData = {}) {
     };
   } catch (error) {
     authAttempts.inc({ method: 'login', status: 'failed', user_type: 'user' });
-    console.log('error', error.message);
-    throw new Error(`Login failed: ${error.message}`);
+    if (error instanceof AuthError) throw error;
+    throw new AuthError(ERROR_CODES.INTERNAL_ERROR, `Login failed: ${error.message}`);
   }
 }
 
@@ -558,7 +561,8 @@ export async function logout(userId, sessionId = null, requestInfo = {}) {
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    throw new Error(`Logout failed: ${error.message}`);
+    if (error instanceof AuthError) throw error;
+    throw new AuthError(ERROR_CODES.INTERNAL_ERROR, `Logout failed: ${error.message}`);
   }
 }
 
@@ -570,7 +574,7 @@ export async function logout(userId, sessionId = null, requestInfo = {}) {
 export async function generateTokensForUser(userId) {
   const user = await userRepository.findById(userId);
   if (!user) {
-    throw new Error('User does not exist');
+    throw new AuthError(ERROR_CODES.USER_NOT_FOUND, 'User does not exist');
   }
 
   // Get user with roles for token generation
@@ -598,12 +602,12 @@ export async function refreshToken(refreshToken) {
     const tokenRecord = await refreshTokenRepository.findRefreshTokenByHash(refreshToken);
 
     if (!tokenRecord || tokenRecord.is_revoked || tokenRecord.expires_at < new Date()) {
-      throw new Error('Invalid refresh token');
+      throw new AuthError(ERROR_CODES.INVALID_REFRESH_TOKEN);
     }
 
     const user = await userRepository.findByPublicId(decoded.userId);
     if (!user || !user.is_active) {
-      throw new Error('Invalid user');
+      throw new AuthError(ERROR_CODES.UNAUTHORIZED, 'Invalid user');
     }
 
     // Generate new tokens
@@ -642,7 +646,8 @@ export async function refreshToken(refreshToken) {
       refresh_token: tokens.refreshToken,
     };
   } catch (error) {
-    throw new Error(`Refresh token failed: ${error.message}`);
+    if (error instanceof AuthError) throw error;
+    throw new AuthError(ERROR_CODES.INVALID_REFRESH_TOKEN, `Refresh token failed: ${error.message}`);
   }
 }
 
@@ -662,7 +667,7 @@ export async function verifyToken(token) {
     // Check if user exists and is active
     const user = await userRepository.findByPublicId(decoded.userId);
     if (!user || !user.is_active) {
-      throw new Error('Invalid user');
+      throw new AuthError(ERROR_CODES.UNAUTHORIZED, 'Invalid user');
     }
 
     // Get user with roles
@@ -684,7 +689,8 @@ export async function verifyToken(token) {
 
     return validationData;
   } catch (error) {
-    throw new Error(`Invalid token: ${error.message}`);
+    if (error instanceof AuthError) throw error;
+    throw new AuthError(ERROR_CODES.INVALID_TOKEN, `Invalid token: ${error.message}`);
   }
 }
 
@@ -698,13 +704,13 @@ export async function changePassword(userId, currentPassword, newPassword) {
     // Validate password change
     const validation = validatePasswordChange(currentPassword, newPassword);
     if (!validation.isValid) {
-      throw new Error(validation.errors.join(', '));
+      throw new AuthError(ERROR_CODES.INVALID_ARGUMENT, validation.errors.join(', '));
     }
 
     // Verify current password
     const isValidPassword = await userRepository.verifyPassword(userId, currentPassword);
     if (!isValidPassword) {
-      throw new Error('Current password is incorrect');
+      throw new AuthError(ERROR_CODES.INVALID_CREDENTIALS, 'Current password is incorrect');
     }
 
     // Update password
@@ -718,7 +724,8 @@ export async function changePassword(userId, currentPassword, newPassword) {
 
     return { message: 'Password changed successfully' };
   } catch (error) {
-    throw new Error(`Password change failed: ${error.message}`);
+    if (error instanceof AuthError) throw error;
+    throw new AuthError(ERROR_CODES.INTERNAL_ERROR, `Password change failed: ${error.message}`);
   }
 }
 

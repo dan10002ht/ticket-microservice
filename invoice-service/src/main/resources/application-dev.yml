@@ -33,8 +33,9 @@ kafka:
 logging:
   level:
     root: INFO
-    com.ticketing.invoice: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.kafka: INFO
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.ticketing.invoice: INFO
+    org.springframework.web: WARN
+    org.springframework.kafka: WARN
+    org.apache.kafka: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN

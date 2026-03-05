@@ -83,7 +83,7 @@ export function BookingFlowContent({
   if (error || !event) {
     return (
       <div className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
-        {error?.error || "Failed to load event details. Please try again."}
+        {error?.error?.message || "Failed to load event details. Please try again."}
       </div>
     );
   }

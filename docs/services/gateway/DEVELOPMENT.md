@@ -89,7 +89,7 @@ PORT=3000
 NODE_ENV=development
 
 # Redis
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://localhost:50379
 
 # JWT
 JWT_SECRET=dev_jwt_secret

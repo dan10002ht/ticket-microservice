@@ -30,8 +30,10 @@ payment:
 logging:
   level:
     root: INFO
-    com.ticketing.payment: DEBUG
-    org.springframework.web: DEBUG
-    org.springframework.security: DEBUG
+    com.ticketing.payment: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.springframework.kafka: WARN
+    org.apache.kafka: WARN
     org.hibernate.SQL: WARN
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN

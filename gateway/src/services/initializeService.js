@@ -8,6 +8,7 @@ import {
   loggingMiddleware,
   rateLimitMiddleware,
 } from '../middlewares/index.js';
+import { toSnakeCase } from '../utils/caseTransform.js';
 import { initializeSwagger } from './swaggerService.js';
 import { initializeMetrics } from './metricsService.js';
 import { initializeRoutes } from './routeService.js';
@@ -25,6 +26,15 @@ export const initializeGateway = (app) => {
   securityMiddleware(app);
   compressionMiddleware(app);
   bodyParsingMiddleware(app);
+
+  // Transform incoming camelCase request bodies to snake_case for gRPC services
+  app.use((req, _res, next) => {
+    if (req.body && typeof req.body === 'object' && !Array.isArray(req.body)) {
+      req.body = toSnakeCase(req.body);
+    }
+    next();
+  });
+
   loggingMiddleware(app);
 
   // Bind request-scoped context (correlationId flows into gRPC metadata automatically)

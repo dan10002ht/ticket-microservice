@@ -1,6 +1,15 @@
 import { validationResult } from 'express-validator';
 import logger from './logger.js';
 import { getErrorMapping } from './errorMapping.js';
+import { toCamelCase } from './caseTransform.js';
+
+/**
+ * Build meta object for responses
+ */
+const buildMeta = (correlationId) => ({
+  correlationId,
+  timestamp: new Date().toISOString(),
+});
 
 /**
  * Handle validation errors
@@ -12,10 +21,12 @@ export const handleValidation = (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({
-      error: 'Validation Error',
-      code: 'VALIDATION_ERROR',
-      details: errors.array(),
-      correlationId: req.correlationId,
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Validation failed',
+        details: errors.array(),
+      },
+      meta: buildMeta(req.correlationId),
     });
     return false;
   }
@@ -23,7 +34,14 @@ export const handleValidation = (req, res) => {
 };
 
 /**
- * Send success response
+ * Send success response (HTTP 2xx)
+ *
+ * Format:
+ * {
+ *   data: { ... },
+ *   meta: { correlationId, timestamp }
+ * }
+ *
  * @param {Object} res - Express response object
  * @param {number} statusCode - HTTP status code
  * @param {Object} data - Response data
@@ -31,42 +49,48 @@ export const handleValidation = (req, res) => {
  */
 export const sendSuccessResponse = (res, statusCode, data, correlationId) => {
   res.status(statusCode).json({
-    ...data,
-    correlationId,
+    data: toCamelCase(data),
+    meta: buildMeta(correlationId),
   });
 };
 
 /**
- * Send error response
+ * Send error response (HTTP 4xx/5xx)
+ *
+ * Format:
+ * {
+ *   error: { code, message, details? },
+ *   meta: { correlationId, timestamp }
+ * }
+ *
  * @param {Object} res - Express response object
  * @param {number} statusCode - HTTP status code
- * @param {string} error - Error message
+ * @param {string} message - Error message
  * @param {string} correlationId - Correlation ID
- * @param {Object} details - Additional error details
  * @param {string} code - Error code
+ * @param {*} details - Additional error details
  */
 export const sendErrorResponse = (
   res,
   statusCode,
-  error,
+  message,
   correlationId,
-  details = null,
-  code = null
+  code = 'UNKNOWN_ERROR',
+  details = null
 ) => {
-  const response = {
-    error,
-    correlationId,
+  const errorObj = {
+    code,
+    message,
   };
 
-  if (code) {
-    response.code = code;
-  }
-
   if (details) {
-    response.details = details;
+    errorObj.details = details;
   }
 
-  res.status(statusCode).json(response);
+  res.status(statusCode).json({
+    error: errorObj,
+    meta: buildMeta(correlationId),
+  });
 };
 
 /**
@@ -108,23 +132,16 @@ export const handleGrpcError = (
   // Handle specific error messages for auth service
   if (serviceName.toLowerCase() === 'auth') {
     if (errorMessage.includes('PIN code has expired')) {
-      return sendErrorResponse(res, 410, errorMessage, correlationId, null, 'PIN_CODE_EXPIRED');
+      return sendErrorResponse(res, 410, errorMessage, correlationId, 'PIN_CODE_EXPIRED');
     }
     if (errorMessage.includes('Email is already verified')) {
-      return sendErrorResponse(
-        res,
-        409,
-        errorMessage,
-        correlationId,
-        null,
-        'EMAIL_ALREADY_VERIFIED'
-      );
+      return sendErrorResponse(res, 409, errorMessage, correlationId, 'EMAIL_ALREADY_VERIFIED');
     }
     if (errorMessage.includes('User not found')) {
-      return sendErrorResponse(res, 404, errorMessage, correlationId, null, 'USER_NOT_FOUND');
+      return sendErrorResponse(res, 404, errorMessage, correlationId, 'USER_NOT_FOUND');
     }
     if (errorMessage.includes('Invalid PIN code')) {
-      return sendErrorResponse(res, 400, errorMessage, correlationId, null, 'INVALID_PIN_CODE');
+      return sendErrorResponse(res, 400, errorMessage, correlationId, 'INVALID_PIN_CODE');
     }
   }
 
@@ -139,7 +156,6 @@ export const handleGrpcError = (
     errorInfo.status,
     errorMessage || errorInfo.message,
     correlationId,
-    null,
     errorInfo.code
   );
 };

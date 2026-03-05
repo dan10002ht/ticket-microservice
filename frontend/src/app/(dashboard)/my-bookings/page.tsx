@@ -113,7 +113,7 @@ export default function MyBookingsPage() {
 
       {error && (
         <div className="mt-4 rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error.error || "Failed to load bookings."}
+          {error.error?.message || "Failed to load bookings."}
         </div>
       )}
 

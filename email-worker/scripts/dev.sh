@@ -17,16 +17,18 @@ else
 # Email Worker Environment Variables
 
 # Kafka Configuration
-KAFKA_BROKERS=localhost:9092
+KAFKA_BROKERS=localhost:50092
 KAFKA_TOPIC=email-notifications
 KAFKA_GROUP_ID=email-worker-group
 
 # SMTP Configuration
 SMTP_HOST=localhost
 SMTP_PORT=1025
-SMTP_USER=
+SMTP_USERNAME=
 SMTP_PASSWORD=
-SMTP_FROM=noreply@ticketing.local
+SMTP_FROM_EMAIL=noreply@ticketing.local
+SMTP_FROM_NAME=Booking System
+EMAIL_PROVIDER=smtp
 
 # gRPC Configuration
 GRPC_PORT=50061
@@ -36,13 +38,13 @@ HTTP_PORT=8085
 
 # Redis Configuration
 REDIS_HOST=localhost
-REDIS_PORT=6379
+REDIS_PORT=50379
 REDIS_PASSWORD=
 REDIS_DB=0
 
 # Database Configuration
 DB_HOST=localhost
-DB_PORT=5433
+DB_PORT=50433
 DB_NAME=booking_system
 DB_USER=booking_user
 DB_PASSWORD=booking_pass

@@ -20,7 +20,7 @@ HC_NC='\033[0m'
 # --- Infrastructure services ---
 INFRA_NAMES=("postgres-auth" "postgres-main" "redis" "kafka" "zookeeper")
 INFRA_PORTS=("50432" "50433" "50379" "50092" "50181")
-INFRA_CONTAINERS=("dev-postgres-auth" "dev-postgres-main" "dev-redis" "dev-kafka" "dev-zookeeper")
+INFRA_CONTAINERS=("dev-postgres-auth" "dev-postgres-main" "dev-redis-cache" "dev-kafka" "dev-zookeeper")
 
 # --- Application services ---
 APP_NAMES=("auth" "user" "event" "ticket" "payment" "realtime" "booking" "booking-worker" "checkin" "invoice" "email-worker" "gateway")

@@ -51,13 +51,13 @@
 
 | Service      | Host Port | Container Port | Notes                         |
 |--------------|-----------|----------------|-------------------------------|
-| postgres-auth | 5432     | 5432           | Auth DB only                  |
-| postgres-main | 5433     | 5432           | All other services (shared)   |
-| redis-cache   | 6379     | 6379           | Session, rate limiting, cache |
-| redis-queue   | 6380     | 6379           | Booking queue — noeviction!   |
-| redis-pubsub  | 6381     | 6379           | WebSocket pub/sub             |
-| kafka         | 9092     | 9092           | Event streaming               |
-| zookeeper     | 2181     | 2181           | Kafka coordination            |
+| postgres-auth | 50432    | 5432           | Auth DB only                  |
+| postgres-main | 50433    | 5432           | All other services (shared)   |
+| redis-cache   | 50379    | 6379           | Session, rate limiting, cache |
+| redis-queue   | 50380    | 6379           | Booking queue — noeviction!   |
+| redis-pubsub  | 50381    | 6379           | WebSocket pub/sub             |
+| kafka         | 50092    | 9092           | Event streaming               |
+| zookeeper     | 50181    | 2181           | Kafka coordination            |
 | prometheus    | 9090     | 9090           | Metrics collection            |
 | grafana       | 3001     | 3000           | Dashboards (admin/admin)      |
 

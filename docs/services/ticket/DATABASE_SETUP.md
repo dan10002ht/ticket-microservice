@@ -200,7 +200,7 @@ tail -f logs/database.log
 
 ```bash
 # Connect to database
-psql -h localhost -p 5432 -U postgres -d booking_system_ticket
+psql -h localhost -p 50433 -U postgres -d booking_system_ticket
 
 # Run migrations manually
 go run main.go migrate
@@ -257,7 +257,7 @@ go test -cover ./...
 
    ```bash
    # Check database status
-   pg_isready -h localhost -p 5432
+   pg_isready -h localhost -p 50433
 
    # Check connection string
    echo $DATABASE_URL

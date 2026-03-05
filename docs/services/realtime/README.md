@@ -129,7 +129,7 @@ WS_ALLOW_ANONYMOUS=true
 
 # Redis
 REDIS_HOST=localhost
-REDIS_PORT=6379
+REDIS_PORT=50379
 REDIS_PASSWORD=
 REDIS_DB=0
 REDIS_POOL_SIZE=100
@@ -158,7 +158,7 @@ LOG_FORMAT=json
 
 ```bash
 # 1. Start Redis
-docker run -d -p 6379:6379 redis:7-alpine
+docker run -d -p 50379:6379 redis:7-alpine
 
 # 2. Generate proto files
 ./scripts/generate-proto.sh

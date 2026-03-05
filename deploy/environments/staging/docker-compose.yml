@@ -11,12 +11,12 @@ services:
     image: haproxy:2.8-alpine
     container_name: staging-haproxy
     ports:
-      # Auth DB: Write (5432), Read (5433)
-      - "${AUTH_DB_WRITE_PORT:-5432}:5432"
-      - "${AUTH_DB_READ_PORT:-5433}:5433"
-      # Main DB: Write (5434), Read (5435)
-      - "${MAIN_DB_WRITE_PORT:-5434}:5434"
-      - "${MAIN_DB_READ_PORT:-5435}:5435"
+      # Auth DB: Write (50432), Read (50433)
+      - "${AUTH_DB_WRITE_PORT:-50432}:5432"
+      - "${AUTH_DB_READ_PORT:-50433}:5433"
+      # Main DB: Write (50434), Read (50435)
+      - "${MAIN_DB_WRITE_PORT:-50434}:5434"
+      - "${MAIN_DB_READ_PORT:-50435}:5435"
       # Stats page
       - "${HAPROXY_STATS_PORT:-8404}:8404"
     volumes:
@@ -193,7 +193,7 @@ services:
     image: redis:7-alpine
     container_name: staging-redis
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      - "${REDIS_PORT:-50379}:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -216,7 +216,7 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "${ZOOKEEPER_PORT:-2181}:2181"
+      - "${ZOOKEEPER_PORT:-50181}:2181"
     networks:
       - booking-net
     restart: unless-stopped
@@ -227,11 +227,11 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "${KAFKA_PORT:-9092}:9092"
+      - "${KAFKA_PORT:-50092}:9092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:50092,PLAINTEXT_INTERNAL://kafka:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1

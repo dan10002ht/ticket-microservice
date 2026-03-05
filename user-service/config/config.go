@@ -75,7 +75,7 @@ func LoadConfig() *Config {
 		},
 		Metrics: MetricsConfig{
 			Enabled: getEnvAsBool("METRICS_ENABLED", true),
-			Port:    getEnv("METRICS_PORT", "9092"),
+			Port:    getEnv("METRICS_PORT", "9192"),
 		},
 		Logging: LoggingConfig{
 			Level:  getEnv("LOG_LEVEL", "info"),

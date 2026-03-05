@@ -125,8 +125,8 @@ cp env.example .env
 
 ```bash
 # Using Docker
-docker run -d --name redis -p 6379:6379 redis:7-alpine
-docker run -d --name postgres -p 5432:5432 -e POSTGRES_DB=email_worker -e POSTGRES_PASSWORD=password postgres:15
+docker run -d --name redis -p 50379:6379 redis:7-alpine
+docker run -d --name postgres -p 50432:5432 -e POSTGRES_DB=email_worker -e POSTGRES_PASSWORD=password postgres:15
 ```
 
 ### Master-Slave Database Setup
@@ -136,7 +136,7 @@ For production environments, it's recommended to use a master-slave database con
 ```bash
 # Master database
 docker run -d --name postgres-master \
-  -p 5432:5432 \
+  -p 50432:5432 \
   -e POSTGRES_DB=booking_system \
   -e POSTGRES_USER=booking_user \
   -e POSTGRES_PASSWORD=booking_pass \
@@ -144,7 +144,7 @@ docker run -d --name postgres-master \
 
 # Slave database
 docker run -d --name postgres-slave \
-  -p 5433:5432 \
+  -p 50433:5432 \
   -e POSTGRES_DB=booking_system \
   -e POSTGRES_USER=booking_user \
   -e POSTGRES_PASSWORD=booking_pass \
@@ -155,13 +155,13 @@ docker run -d --name postgres-slave \
 
 ```bash
 DB_MASTER_HOST=localhost
-DB_MASTER_PORT=5432
+DB_MASTER_PORT=50432
 DB_MASTER_NAME=booking_system
 DB_MASTER_USER=booking_user
 DB_MASTER_PASSWORD=booking_pass
 
 DB_SLAVE_HOST=localhost
-DB_SLAVE_PORT=5433
+DB_SLAVE_PORT=50433
 DB_SLAVE_NAME=booking_system
 DB_SLAVE_USER=booking_user
 DB_SLAVE_PASSWORD=booking_pass
@@ -244,7 +244,7 @@ Create `config.yaml`:
 queue:
   redis:
     host: localhost
-    port: 6379
+    port: 50379
     password: ""
     db: 0
   queue_name: email-jobs
@@ -254,12 +254,12 @@ queue:
 database:
   # Master-slave configuration (recommended)
   master_host: localhost
-  master_port: 5432
+  master_port: 50432
   master_name: booking_system
   master_user: postgres
   master_password: password
   slave_host: localhost
-  slave_port: 5433
+  slave_port: 50433
   slave_name: booking_system
   slave_user: postgres
   slave_password: password
@@ -270,7 +270,7 @@ database:
 
   # Legacy single database configuration (for backward compatibility)
   # host: localhost
-  # port: 5432
+  # port: 50432
   # name: email_worker
   # user: postgres
   # password: password
@@ -403,7 +403,7 @@ func main() {
     }
 
     // Send to queue (fast)
-    queueClient := queue.NewRedisClient("localhost:6379", "", 0)
+    queueClient := queue.NewRedisClient("localhost:50379", "", 0)
     err := queueClient.Publish("email-jobs", emailJob)
     if err != nil {
         log.Fatal(err)
@@ -562,7 +562,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "50379:6379"
     volumes:
       - redis_data:/data
 

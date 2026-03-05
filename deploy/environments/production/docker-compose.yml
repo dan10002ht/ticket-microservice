@@ -303,7 +303,7 @@ services:
     image: redis:7-alpine
     container_name: prod-redis-cache
     ports:
-      - "${REDIS_CACHE_PORT:-6379}:6379"
+      - "${REDIS_CACHE_PORT:-50379}:6379"
     volumes:
       - redis_cache_data:/data
     networks:
@@ -323,7 +323,7 @@ services:
     image: redis:7-alpine
     container_name: prod-redis-queue
     ports:
-      - "${REDIS_QUEUE_PORT:-6380}:6379"
+      - "${REDIS_QUEUE_PORT:-50380}:6379"
     volumes:
       - redis_queue_data:/data
     networks:
@@ -342,7 +342,7 @@ services:
     image: redis:7-alpine
     container_name: prod-redis-pubsub
     ports:
-      - "${REDIS_PUBSUB_PORT:-6381}:6379"
+      - "${REDIS_PUBSUB_PORT:-50381}:6379"
     volumes:
       - redis_pubsub_data:/data
     networks:
@@ -378,11 +378,11 @@ services:
     depends_on:
       - zookeeper
     ports:
-      - "${KAFKA_PORT:-9092}:9092"
+      - "${KAFKA_PORT:-50092}:9092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:50092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1

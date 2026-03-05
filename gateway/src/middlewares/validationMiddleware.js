@@ -28,8 +28,8 @@ export const validateRegistration = [
   body('phone').optional().isMobilePhone().withMessage('Please provide a valid phone number'),
   body('role')
     .optional()
-    .isIn(['user', 'organization', 'admin'])
-    .withMessage('Role must be one of: user, organization, admin'),
+    .isIn(['individual', 'organization', 'admin'])
+    .withMessage('Role must be one of: individual, organization, admin'),
 ];
 
 /**
@@ -127,22 +127,29 @@ export const validatePayment = [
  * Validation middleware for event creation
  */
 export const validateEvent = [
-  body('title')
+  body('name')
     .notEmpty()
-    .withMessage('Event title is required')
+    .withMessage('Event name is required')
     .trim()
-    .isLength({ min: 5, max: 100 })
-    .withMessage('Event title must be between 5 and 100 characters'),
+    .isLength({ min: 2, max: 255 })
+    .withMessage('Event name must be between 2 and 255 characters'),
   body('description')
-    .notEmpty()
-    .withMessage('Event description is required')
+    .optional()
     .trim()
-    .isLength({ min: 10, max: 1000 })
-    .withMessage('Event description must be between 10 and 1000 characters'),
-  body('date').isISO8601().withMessage('Invalid event date format'),
-  body('venue').notEmpty().withMessage('Event venue is required').trim(),
-  body('capacity').isInt({ min: 1 }).withMessage('Event capacity must be at least 1'),
-  body('price').isFloat({ min: 0 }).withMessage('Event price must be non-negative'),
+    .isLength({ max: 5000 })
+    .withMessage('Event description must not exceed 5000 characters'),
+  body('start_date').isISO8601().withMessage('Invalid start date format'),
+  body('end_date').optional().isISO8601().withMessage('Invalid end date format'),
+  body('venue_name')
+    .notEmpty()
+    .withMessage('Venue name is required')
+    .trim()
+    .isLength({ min: 2, max: 255 })
+    .withMessage('Venue name must be between 2 and 255 characters'),
+  body('venue_address').optional().trim().isLength({ max: 500 }),
+  body('venue_city').optional().trim().isLength({ max: 100 }),
+  body('venue_country').optional().trim().isLength({ max: 100 }),
+  body('venue_capacity').optional().isInt({ min: 1 }).withMessage('Venue capacity must be at least 1'),
 ];
 
 /**

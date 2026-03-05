@@ -17,9 +17,9 @@ import {
   SheetTrigger,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SearchDialog } from "@/components/molecules/search-dialog";
 import { ThemeToggle } from "@/components/molecules/theme-toggle";
-import { AvatarWithName } from "@/components/molecules/avatar-with-name";
 import { useAuthStore } from "@/stores";
 import { useLogout } from "@/lib/api/queries";
 import { cn } from "@/lib/utils";
@@ -39,14 +39,21 @@ export function Navbar({ className }: NavbarProps) {
   const logoutMutation = useLogout();
 
   const displayName = user
-    ? `${user.first_name} ${user.last_name}`.trim()
-    : "";
+    ? `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.email || "User"
+    : "User";
+
+  const initials = displayName
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "U";
 
   return (
     <header
       className={cn(
         "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-        className
+        className,
       )}
     >
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -85,12 +92,22 @@ export function Navbar({ className }: NavbarProps) {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="hidden gap-2 px-2 md:inline-flex"
+                      size="icon"
+                      className="hidden md:inline-flex"
                     >
-                      <AvatarWithName name={displayName} size="sm" />
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                      </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
+                    <div className="px-2 py-1.5">
+                      <p className="text-sm font-medium">{displayName}</p>
+                      {user?.email && (
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      )}
+                    </div>
+                    <DropdownMenuSeparator />
                     {user?.role === "organization" && (
                       <DropdownMenuItem asChild>
                         <Link
@@ -102,7 +119,8 @@ export function Navbar({ className }: NavbarProps) {
                         </Link>
                       </DropdownMenuItem>
                     )}
-                    {(user?.role === "admin" || user?.role === "super_admin") && (
+                    {(user?.role === "admin" ||
+                      user?.role === "super_admin") && (
                       <DropdownMenuItem asChild>
                         <Link
                           href="/admin/dashboard"
@@ -118,14 +136,11 @@ export function Navbar({ className }: NavbarProps) {
                         href="/my-bookings"
                         className="flex items-center gap-2"
                       >
-                        My Bookings
+                        Bookings
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link
-                        href="/profile"
-                        className="flex items-center gap-2"
-                      >
+                      <Link href="/profile" className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         Profile
                       </Link>
@@ -162,9 +177,9 @@ export function Navbar({ className }: NavbarProps) {
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-72">
+            <SheetContent side="right" className="w-72 px-6 pt-12">
               <SheetTitle className="sr-only">Navigation menu</SheetTitle>
-              <div className="flex flex-col gap-4 pt-8">
+              <div className="flex flex-col gap-4">
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
@@ -185,7 +200,8 @@ export function Navbar({ className }: NavbarProps) {
                         Organizer Dashboard
                       </Link>
                     )}
-                    {(user?.role === "admin" || user?.role === "super_admin") && (
+                    {(user?.role === "admin" ||
+                      user?.role === "super_admin") && (
                       <Link
                         href="/admin/dashboard"
                         className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
@@ -197,7 +213,7 @@ export function Navbar({ className }: NavbarProps) {
                       href="/my-bookings"
                       className="text-sm font-medium transition-colors hover:text-primary"
                     >
-                      My Bookings
+                      Bookings
                     </Link>
                     <Link
                       href="/profile"
@@ -213,9 +229,7 @@ export function Navbar({ className }: NavbarProps) {
                         disabled={logoutMutation.isPending}
                       >
                         <LogOut className="mr-2 h-4 w-4" />
-                        {logoutMutation.isPending
-                          ? "Logging out..."
-                          : "Logout"}
+                        {logoutMutation.isPending ? "Logging out..." : "Logout"}
                       </Button>
                     </div>
                   </>

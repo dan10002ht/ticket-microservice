@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/molecules/page-header";
 import { useCreateEvent } from "@/lib/api/queries";
+import type { ApiError } from "@/lib/api/types/common";
 import {
   createEventSchema,
   type CreateEventInput,
@@ -60,7 +61,7 @@ export default function CreateEventPage() {
       router.push("/org/events");
     } catch (err: unknown) {
       const message =
-        (err as { error?: string })?.error || "Failed to create event.";
+        (err as ApiError)?.error?.message || "Failed to create event.";
       toast.error(message);
     }
   };

@@ -455,14 +455,14 @@ Tạo file env.example với các biến môi trường:
 # env.example
 # Database
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=50433
 DB_NAME=email_worker
 DB_USER=postgres
 DB_PASSWORD=password
 
 # Redis
 REDIS_HOST=localhost
-REDIS_PORT=6379
+REDIS_PORT=50379
 REDIS_PASSWORD=
 REDIS_DB=0
 

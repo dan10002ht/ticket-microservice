@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 import {
@@ -25,6 +26,14 @@ const labelMap: Record<string, string> = {
   "my-bookings": "My Bookings",
   "my-tickets": "My Tickets",
   profile: "Profile",
+  create: "Create",
+  edit: "Edit",
+};
+
+// Root sections that should link to their dashboard instead of themselves
+const rootRedirects: Record<string, string> = {
+  org: "/org/dashboard",
+  admin: "/admin/dashboard",
 };
 
 interface BreadcrumbsProps {
@@ -34,9 +43,7 @@ interface BreadcrumbsProps {
 export function Breadcrumbs({ className }: BreadcrumbsProps) {
   const pathname = usePathname();
 
-  const segments = pathname
-    .split("/")
-    .filter(Boolean);
+  const segments = pathname.split("/").filter(Boolean);
 
   if (segments.length === 0) return null;
 
@@ -44,18 +51,23 @@ export function Breadcrumbs({ className }: BreadcrumbsProps) {
     <Breadcrumb className={cn(className)}>
       <BreadcrumbList>
         {segments.map((segment, index) => {
-          const href = "/" + segments.slice(0, index + 1).join("/");
-          const label = labelMap[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1);
+          const rawHref = "/" + segments.slice(0, index + 1).join("/");
+          const href = rootRedirects[segment] && index === 0 ? rootRedirects[segment] : rawHref;
+          const label =
+            labelMap[segment] ??
+            segment.charAt(0).toUpperCase() + segment.slice(1);
           const isLast = index === segments.length - 1;
 
           return (
-            <Fragment key={href}>
+            <Fragment key={rawHref}>
               {index > 0 && <BreadcrumbSeparator />}
               <BreadcrumbItem>
                 {isLast ? (
                   <BreadcrumbPage>{label}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink href={href}>{label}</BreadcrumbLink>
+                  <BreadcrumbLink asChild>
+                    <Link href={href}>{label}</Link>
+                  </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
             </Fragment>

@@ -5,7 +5,7 @@ const config = {
     client: 'postgresql',
     connection: {
       host: process.env.DB_MASTER_HOST || 'localhost',
-      port: process.env.DB_MASTER_PORT || 5432,
+      port: process.env.DB_MASTER_PORT || 50432,
       database: process.env.DB_MASTER_NAME || 'booking_system_auth',
       user: process.env.DB_MASTER_USER || 'booking_user',
       password: process.env.DB_MASTER_PASSWORD || 'booking_pass',
@@ -18,7 +18,7 @@ const config = {
     // Slave connection cho read operations
     readConnection: {
       host: process.env.DB_SLAVE_HOST || 'localhost',
-      port: process.env.DB_SLAVE_PORT || 55433,
+      port: process.env.DB_SLAVE_PORT || 50432,
       database: process.env.DB_SLAVE_NAME || 'booking_system_auth',
       user: process.env.DB_SLAVE_USER || 'booking_user',
       password: process.env.DB_SLAVE_PASSWORD || 'booking_pass',
@@ -34,7 +34,7 @@ const config = {
     client: 'postgresql',
     connection: {
       host: process.env.TEST_DB_HOST || 'localhost',
-      port: process.env.TEST_DB_PORT || 5432,
+      port: process.env.TEST_DB_PORT || 50432,
       database: process.env.TEST_DB_NAME || 'booking_system_auth_test',
       user: process.env.TEST_DB_USER || 'booking_user',
       password: process.env.TEST_DB_PASSWORD || 'booking_pass',
@@ -50,7 +50,7 @@ const config = {
     client: 'postgresql',
     connection: {
       host: process.env.DB_MASTER_HOST,
-      port: process.env.DB_MASTER_PORT || 5432,
+      port: process.env.DB_MASTER_PORT || 50432,
       database: process.env.DB_MASTER_NAME,
       user: process.env.DB_MASTER_USER,
       password: process.env.DB_MASTER_PASSWORD,

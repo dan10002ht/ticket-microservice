@@ -5,6 +5,10 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import org.redisson.api.RLock;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -91,6 +95,30 @@ public class BookingService {
                 .paymentStatus(totalAmount.compareTo(BigDecimal.ZERO) > 0 ? PaymentStatus.PENDING
                         : PaymentStatus.NOT_REQUIRED)
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Booking> getUserBookings(String userId, String status, int page, int limit) {
+        Pageable pageable = PageRequest.of(Math.max(0, page - 1), limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+        if (StringUtils.hasText(status)) {
+            return bookingRepository.findByUserIdAndStatus(userId, BookingStatus.valueOf(status.toUpperCase()), pageable);
+        }
+        return bookingRepository.findByUserId(userId, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Booking> listBookings(String status, String eventId, int page, int limit) {
+        Pageable pageable = PageRequest.of(Math.max(0, page - 1), limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+        if (StringUtils.hasText(eventId) && StringUtils.hasText(status)) {
+            return bookingRepository.findByEventIdAndStatus(eventId, BookingStatus.valueOf(status.toUpperCase()), pageable);
+        }
+        if (StringUtils.hasText(eventId)) {
+            return bookingRepository.findByEventId(eventId, pageable);
+        }
+        if (StringUtils.hasText(status)) {
+            return bookingRepository.findByStatus(BookingStatus.valueOf(status.toUpperCase()), pageable);
+        }
+        return bookingRepository.findAll(pageable);
     }
 
     private void validate(BookingCreateCommand command) {

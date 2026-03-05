@@ -369,7 +369,7 @@ booking:lock:                # Missing identifier
 # Redis Configuration
 redis:
   host: ${REDIS_HOST:localhost}
-  port: ${REDIS_PORT:6379}
+  port: ${REDIS_PORT:50379}
   password: ${REDIS_PASSWORD:}
   database: ${REDIS_DATABASE:0}
 
@@ -387,7 +387,7 @@ booking:
 ```bash
 # Redis
 REDIS_HOST=localhost
-REDIS_PORT=6379
+REDIS_PORT=50379
 REDIS_PASSWORD=
 REDIS_DATABASE=0
 

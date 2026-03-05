@@ -26,7 +26,7 @@ class BackgroundService {
     this.config = {
       redis: {
         host: process.env.REDIS_HOST || 'localhost',
-        port: process.env.REDIS_PORT || 6379,
+        port: process.env.REDIS_PORT || 50379,
         password: process.env.REDIS_PASSWORD,
         db: process.env.REDIS_BG_DB || 6,
         retryDelayOnFailover: 100,

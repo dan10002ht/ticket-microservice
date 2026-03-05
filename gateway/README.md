@@ -679,7 +679,7 @@ const AUTH_ERROR_MAPPING = {
 
 ```bash
 # Check service health
-curl http://gateway:3000/health/detailed
+curl http://gateway:53000/health/detailed
 
 # Test gRPC connectivity
 grpcurl -plaintext auth-service:50051 list
@@ -688,7 +688,7 @@ grpcurl -plaintext auth-service:50051 list
 redis-cli ping
 
 # Monitor gRPC metrics
-curl http://gateway:3000/metrics
+curl http://gateway:53000/metrics
 
 # View logs
 docker logs gateway-service

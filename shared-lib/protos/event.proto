@@ -133,6 +133,12 @@ message CreateEventRequest {
   string tags = 14; // JSON string
   string metadata = 15; // JSON string
   string created_by = 16;
+  // Embedded venue info
+  string venue_name = 17;
+  string venue_address = 18;
+  string venue_city = 19;
+  string venue_country = 20;
+  string canvas_config = 21;
 }
 
 message CreateEventResponse {

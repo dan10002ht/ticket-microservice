@@ -51,8 +51,8 @@ print_connection_info() {
     echo "  Grafana:        http://localhost:3001"
     echo ""
     echo -e "${CYAN}Other Services:${NC}"
-    echo "  Redis:          localhost:6379"
-    echo "  Kafka:          localhost:9092"
+    echo "  Redis:          localhost:50379"
+    echo "  Kafka:          localhost:50092"
 }
 
 check_replication_status() {

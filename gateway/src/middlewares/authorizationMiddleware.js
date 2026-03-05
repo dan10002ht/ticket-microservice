@@ -16,9 +16,8 @@ const requirePermission = (permissions) => {
     try {
       if (!req.user || !req.user.id) {
         return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'Authentication required',
-          correlationId: req.correlationId,
+          error: { code: 'UNAUTHENTICATED', message: 'Authentication required' },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
@@ -43,10 +42,8 @@ const requirePermission = (permissions) => {
         });
 
         return res.status(403).json({
-          error: 'Forbidden',
-          message: 'Insufficient permissions',
-          requiredPermissions: permissionList,
-          correlationId: req.correlationId,
+          error: { code: 'FORBIDDEN', message: 'Insufficient permissions', details: { requiredPermissions: permissionList } },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
@@ -66,9 +63,8 @@ const requirePermission = (permissions) => {
       });
 
       return res.status(500).json({
-        error: 'Internal Server Error',
-        message: 'Authorization check failed',
-        correlationId: req.correlationId,
+        error: { code: 'INTERNAL_ERROR', message: 'Authorization check failed' },
+        meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
       });
     }
   };
@@ -85,9 +81,8 @@ const requireResourcePermission = (permission, resourceExtractor) => {
     try {
       if (!req.user || !req.user.id) {
         return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'Authentication required',
-          correlationId: req.correlationId,
+          error: { code: 'UNAUTHENTICATED', message: 'Authentication required' },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
@@ -95,9 +90,8 @@ const requireResourcePermission = (permission, resourceExtractor) => {
       const resourceInfo = resourceExtractor(req);
       if (!resourceInfo || !resourceInfo.type || !resourceInfo.id) {
         return res.status(400).json({
-          error: 'Bad Request',
-          message: 'Invalid resource information',
-          correlationId: req.correlationId,
+          error: { code: 'INVALID_ARGUMENT', message: 'Invalid resource information' },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
@@ -119,11 +113,8 @@ const requireResourcePermission = (permission, resourceExtractor) => {
         });
 
         return res.status(403).json({
-          error: 'Forbidden',
-          message: 'Insufficient permissions for this resource',
-          resourceType: resourceInfo.type,
-          resourceId: resourceInfo.id,
-          correlationId: req.correlationId,
+          error: { code: 'FORBIDDEN', message: 'Insufficient permissions for this resource', details: { resourceType: resourceInfo.type, resourceId: resourceInfo.id } },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
@@ -145,9 +136,8 @@ const requireResourcePermission = (permission, resourceExtractor) => {
       });
 
       return res.status(500).json({
-        error: 'Internal Server Error',
-        message: 'Resource authorization check failed',
-        correlationId: req.correlationId,
+        error: { code: 'INTERNAL_ERROR', message: 'Resource authorization check failed' },
+        meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
       });
     }
   };
@@ -163,9 +153,8 @@ const requireRole = (roles) => {
     try {
       if (!req.user || !req.user.id) {
         return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'Authentication required',
-          correlationId: req.correlationId,
+          error: { code: 'UNAUTHENTICATED', message: 'Authentication required' },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
@@ -181,11 +170,8 @@ const requireRole = (roles) => {
         });
 
         return res.status(403).json({
-          error: 'Forbidden',
-          message: 'Insufficient role permissions',
-          requiredRoles: roles,
-          userRoles,
-          correlationId: req.correlationId,
+          error: { code: 'FORBIDDEN', message: 'Insufficient role permissions', details: { requiredRoles: roles, userRoles } },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
@@ -206,9 +192,8 @@ const requireRole = (roles) => {
       });
 
       return res.status(500).json({
-        error: 'Internal Server Error',
-        message: 'Role authorization check failed',
-        correlationId: req.correlationId,
+        error: { code: 'INTERNAL_ERROR', message: 'Role authorization check failed' },
+        meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
       });
     }
   };
@@ -224,9 +209,8 @@ const requireAllPermissions = (permissions) => {
     try {
       if (!req.user || !req.user.id) {
         return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'Authentication required',
-          correlationId: req.correlationId,
+          error: { code: 'UNAUTHENTICATED', message: 'Authentication required' },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
@@ -242,10 +226,8 @@ const requireAllPermissions = (permissions) => {
         });
 
         return res.status(403).json({
-          error: 'Forbidden',
-          message: 'Missing required permissions',
-          missingPermissions,
-          correlationId: req.correlationId,
+          error: { code: 'FORBIDDEN', message: 'Missing required permissions', details: { missingPermissions } },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
@@ -265,9 +247,8 @@ const requireAllPermissions = (permissions) => {
       });
 
       return res.status(500).json({
-        error: 'Internal Server Error',
-        message: 'Authorization check failed',
-        correlationId: req.correlationId,
+        error: { code: 'INTERNAL_ERROR', message: 'Authorization check failed' },
+        meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
       });
     }
   };
@@ -283,18 +264,16 @@ const requireOwnership = (ownerExtractor) => {
     try {
       if (!req.user || !req.user.id) {
         return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'Authentication required',
-          correlationId: req.correlationId,
+          error: { code: 'UNAUTHENTICATED', message: 'Authentication required' },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
       const ownerId = ownerExtractor(req);
       if (!ownerId) {
         return res.status(400).json({
-          error: 'Bad Request',
-          message: 'Could not determine resource owner',
-          correlationId: req.correlationId,
+          error: { code: 'INVALID_ARGUMENT', message: 'Could not determine resource owner' },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
@@ -306,9 +285,8 @@ const requireOwnership = (ownerExtractor) => {
         });
 
         return res.status(403).json({
-          error: 'Forbidden',
-          message: 'You can only access your own resources',
-          correlationId: req.correlationId,
+          error: { code: 'FORBIDDEN', message: 'You can only access your own resources' },
+          meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
         });
       }
 
@@ -327,9 +305,8 @@ const requireOwnership = (ownerExtractor) => {
       });
 
       return res.status(500).json({
-        error: 'Internal Server Error',
-        message: 'Ownership check failed',
-        correlationId: req.correlationId,
+        error: { code: 'INTERNAL_ERROR', message: 'Ownership check failed' },
+        meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
       });
     }
   };

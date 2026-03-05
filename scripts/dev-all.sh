@@ -345,7 +345,6 @@ ENVEOF
     yarn dev > >(prefix_log "auth" "$(get_log_color auth)" | tee -a "$LOG_DIR/auth-service.log") 2>&1 &
     AUTH_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "auth-service" 50051 "port" 30
 }
 
 start_user_service() {
@@ -366,7 +365,6 @@ start_user_service() {
     fi
     USER_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "user-service" 50052 "grpc" 30
 }
 
 start_event_service() {
@@ -386,7 +384,6 @@ start_event_service() {
     fi
     EVENT_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "event-service" 50053 "port" 30
 }
 
 start_booking_service() {
@@ -402,7 +399,6 @@ start_booking_service() {
     mvn spring-boot:run -Dspring-boot.run.profiles=dev > >(prefix_log "booking" "$(get_log_color booking)" | tee -a "$LOG_DIR/booking-service.log") 2>&1 &
     BOOKING_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "booking-service" 8084 "spring" 60 "http://localhost:8084/actuator/health"
 }
 
 start_payment_service() {
@@ -418,7 +414,6 @@ start_payment_service() {
     mvn spring-boot:run -Dspring-boot.run.profiles=dev > >(prefix_log "payment" "$(get_log_color payment)" | tee -a "$LOG_DIR/payment-service.log") 2>&1 &
     PAYMENT_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "payment-service" 50062 "port" 60
 }
 
 start_realtime_service() {
@@ -439,7 +434,6 @@ start_realtime_service() {
     fi
     REALTIME_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "realtime-service" 3003 "http" 30 "http://localhost:3003/health"
 }
 
 start_ticket_service() {
@@ -459,7 +453,6 @@ start_ticket_service() {
     fi
     TICKET_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "ticket-service" 50054 "port" 30
 }
 
 start_booking_worker() {
@@ -480,7 +473,6 @@ start_booking_worker() {
     fi
     BOOKING_WORKER_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "booking-worker" 50056 "port" 30
 }
 
 start_email_worker() {
@@ -501,7 +493,6 @@ start_email_worker() {
     fi
     EMAIL_WORKER_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "email-worker" 50061 "port" 30
 }
 
 start_checkin_service() {
@@ -522,7 +513,6 @@ start_checkin_service() {
     fi
     CHECKIN_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "checkin-service" 50059 "port" 30
 }
 
 start_invoice_service() {
@@ -538,7 +528,6 @@ start_invoice_service() {
     mvn spring-boot:run -Dspring-boot.run.profiles=dev > >(prefix_log "invoice" "$(get_log_color invoice)" | tee -a "$LOG_DIR/invoice-service.log") 2>&1 &
     INVOICE_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "invoice-service" 8083 "spring" 60 "http://localhost:8083/actuator/health"
 }
 
 start_gateway() {
@@ -554,7 +543,6 @@ start_gateway() {
     yarn dev > >(prefix_log "gateway" "$(get_log_color gateway)" | tee -a "$LOG_DIR/gateway.log") 2>&1 &
     GATEWAY_PID=$!
     cd "$PROJECT_DIR"
-    wait_for_healthy "gateway" 53000 "http" 30 "http://localhost:53000/health"
 }
 
 # Cleanup function (Bash 3 compatible)
@@ -674,24 +662,61 @@ fi
 # Start services
 echo ""
 echo -e "${CYAN}════════════════════════════════════════════════${NC}"
-echo -e "${CYAN}  Starting Application Services${NC}"
+echo -e "${CYAN}  Starting Application Services (Concurrent)${NC}"
 echo -e "${CYAN}════════════════════════════════════════════════${NC}"
 
 # Disable set -e for app services - one service failing should NOT stop the rest
 set +e
 
+# Phase 1: Launch ALL services quickly (each start_* just spawns a background process, no health check)
+echo ""
+echo -e "${CYAN}Launching all services concurrently...${NC}"
+
 should_start_service "auth" && start_auth_service
 should_start_service "user" && start_user_service
 should_start_service "event" && start_event_service
-should_start_service "booking" && start_booking_service
-should_start_service "payment" && start_payment_service
-should_start_service "realtime" && start_realtime_service
 should_start_service "ticket" && start_ticket_service
 should_start_service "booking-worker" && start_booking_worker
 should_start_service "checkin" && start_checkin_service
-should_start_service "invoice" && start_invoice_service
 should_start_service "email-worker" && start_email_worker
+should_start_service "realtime" && start_realtime_service
+should_start_service "booking" && start_booking_service
+should_start_service "payment" && start_payment_service
+should_start_service "invoice" && start_invoice_service
 should_start_service "gateway" && start_gateway
+
+echo ""
+echo -e "${GREEN}  All services launched${NC}"
+
+# Phase 2: Wait for all services to be healthy (parallel health checks)
+echo ""
+echo -e "${CYAN}Waiting for services to become healthy (parallel)...${NC}"
+
+HEALTH_PIDS=""
+
+run_health_check() {
+    local name=$1 port=$2 type=$3 timeout=$4 url=$5
+    wait_for_healthy "$name" "$port" "$type" "$timeout" "$url" &
+    HEALTH_PIDS="$HEALTH_PIDS $!"
+}
+
+[ -n "$AUTH_PID" ]           && run_health_check "auth-service" 50051 "port" 30
+[ -n "$USER_PID" ]           && run_health_check "user-service" 50052 "grpc" 30
+[ -n "$EVENT_PID" ]          && run_health_check "event-service" 50053 "port" 30
+[ -n "$TICKET_PID" ]         && run_health_check "ticket-service" 50054 "port" 30
+[ -n "$BOOKING_WORKER_PID" ] && run_health_check "booking-worker" 50056 "port" 30
+[ -n "$CHECKIN_PID" ]        && run_health_check "checkin-service" 50059 "port" 30
+[ -n "$EMAIL_WORKER_PID" ]   && run_health_check "email-worker" 50061 "port" 30
+[ -n "$REALTIME_PID" ]       && run_health_check "realtime-service" 3003 "http" 30 "http://localhost:3003/health"
+[ -n "$BOOKING_PID" ]        && run_health_check "booking-service" 8084 "spring" 90 "http://localhost:8084/actuator/health"
+[ -n "$PAYMENT_PID" ]        && run_health_check "payment-service" 50062 "port" 90
+[ -n "$INVOICE_PID" ]        && run_health_check "invoice-service" 8083 "spring" 90 "http://localhost:8083/actuator/health"
+[ -n "$GATEWAY_PID" ]        && run_health_check "gateway" 53000 "http" 60 "http://localhost:53000/health"
+
+# Wait for all health checks to finish
+for pid in $HEALTH_PIDS; do
+    wait "$pid" 2>/dev/null || true
+done
 
 set -e
 

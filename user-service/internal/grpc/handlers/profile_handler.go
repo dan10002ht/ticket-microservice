@@ -29,7 +29,7 @@ func NewProfileHandler(profileService *service.ProfileService, addressService *s
 	}
 }
 
-// GetProfile retrieves a user profile
+// GetProfile retrieves a user profile, auto-creating an empty one if not found
 func (h *ProfileHandler) GetProfile(ctx context.Context, req *pb.GetProfileRequest) (*pb.GetProfileResponse, error) {
 	userID, err := uuid.Parse(req.GetUserId())
 	if err != nil {
@@ -39,9 +39,17 @@ func (h *ProfileHandler) GetProfile(ctx context.Context, req *pb.GetProfileReque
 	profile, err := h.profileService.GetProfile(ctx, userID)
 	if err != nil {
 		if err == repository.ErrProfileNotFound {
-			return nil, status.Errorf(codes.NotFound, "profile not found")
+			// Auto-create an empty profile for the user (registered via auth-service)
+			input := model.CreateProfileInput{
+				UserID: userID,
+			}
+			profile, err = h.profileService.CreateProfile(ctx, input)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "failed to auto-create profile: %v", err)
+			}
+		} else {
+			return nil, status.Errorf(codes.Internal, "failed to get profile: %v", err)
 		}
-		return nil, status.Errorf(codes.Internal, "failed to get profile: %v", err)
 	}
 
 	return &pb.GetProfileResponse{

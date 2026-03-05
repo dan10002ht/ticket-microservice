@@ -197,7 +197,7 @@ docker build -t user-service .
 ### Run
 
 ```bash
-docker run -p 50052:50052 -p 9092:9092 \
+docker run -p 50052:50052 -p 9192:9192 \
   -e DB_HOST=host.docker.internal \
   -e DB_PASSWORD=postgres \
   user-service

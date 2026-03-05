@@ -23,7 +23,7 @@ const config = {
   },
   database: {
     host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 5432,
+    port: process.env.DB_PORT || 50432,
     name: process.env.DB_NAME || 'booking_system_auth',
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
@@ -49,7 +49,7 @@ const config = {
   },
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
-    port: process.env.REDIS_PORT || 6379,
+    port: process.env.REDIS_PORT || 50379,
     password: process.env.REDIS_PASSWORD,
   },
   logging: {

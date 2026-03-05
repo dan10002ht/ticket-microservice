@@ -112,8 +112,8 @@ router.get(
   authorizationMiddleware.requirePermission('auth.hello.view'),
   (req, res) => {
     res.json({
-      message: 'Hello Protected World',
-      user: req.user,
+      data: { message: 'Hello Protected World', user: req.user },
+      meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
     });
   }
 );
@@ -124,8 +124,8 @@ router.get(
   authorizationMiddleware.requireRole(['admin', 'super_admin']),
   (req, res) => {
     res.json({
-      message: 'Hello Admin World',
-      user: req.user,
+      data: { message: 'Hello Admin World', user: req.user },
+      meta: { correlationId: req.correlationId, timestamp: new Date().toISOString() },
     });
   }
 );

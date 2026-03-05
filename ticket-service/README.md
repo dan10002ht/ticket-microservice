@@ -250,11 +250,11 @@ GRPC_PORT=50052
 NODE_ENV=production
 
 # Database Configuration
-DATABASE_URL=postgresql://user:password@localhost:5432/ticket_db
+DATABASE_URL=postgresql://user:password@localhost:50433/ticket_db
 DATABASE_SSL=true
 
 # Redis Configuration
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://localhost:50379
 REDIS_PASSWORD=your_redis_password
 REDIS_DATABASE=2
 

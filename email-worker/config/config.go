@@ -151,7 +151,7 @@ func setDefaults() {
 	viper.SetDefault("redis.pool_size", 10)
 
 	// Kafka defaults
-	viper.SetDefault("kafka.brokers", []string{"localhost:9092"})
+	viper.SetDefault("kafka.brokers", []string{"localhost:50092"})
 	viper.SetDefault("kafka.group_id", "email-worker")
 	viper.SetDefault("kafka.topic_email_jobs", "email-jobs")
 	viper.SetDefault("kafka.topic_email_events", "email-events")
@@ -215,6 +215,23 @@ func bindEnvVars() {
 	viper.BindEnv("email.default_provider", "EMAIL_PROVIDER")
 	viper.BindEnv("email.providers.sendgrid.api_key", "EMAIL_API_KEY")
 	viper.BindEnv("email.providers.sendgrid.from_email", "EMAIL_FROM")
+	viper.BindEnv("email.providers.sendgrid.from_name", "EMAIL_FROM_NAME")
+
+	// SMTP settings
+	viper.BindEnv("email.providers.smtp.host", "SMTP_HOST")
+	viper.BindEnv("email.providers.smtp.port", "SMTP_PORT")
+	viper.BindEnv("email.providers.smtp.username", "SMTP_USERNAME")
+	viper.BindEnv("email.providers.smtp.password", "SMTP_PASSWORD")
+	viper.BindEnv("email.providers.smtp.use_tls", "SMTP_TLS")
+	viper.BindEnv("email.providers.smtp.from_email", "SMTP_FROM_EMAIL")
+	viper.BindEnv("email.providers.smtp.from_name", "SMTP_FROM_NAME")
+
+	// AWS SES settings
+	viper.BindEnv("email.providers.ses.region", "AWS_REGION")
+	viper.BindEnv("email.providers.ses.access_key", "AWS_ACCESS_KEY_ID")
+	viper.BindEnv("email.providers.ses.secret_key", "AWS_SECRET_ACCESS_KEY")
+	viper.BindEnv("email.providers.ses.from_email", "SES_FROM_EMAIL")
+	viper.BindEnv("email.providers.ses.from_name", "SES_FROM_NAME")
 
 	// Worker settings
 	viper.BindEnv("worker.worker_count", "WORKER_COUNT")

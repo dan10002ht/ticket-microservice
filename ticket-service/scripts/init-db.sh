@@ -2,8 +2,6 @@
 
 # Database initialization script for Ticket Service
 
-set -e
-
 echo "🚀 Initializing Ticket Service Database..."
 
 # Load environment variables
@@ -11,9 +9,15 @@ if [ -f .env ]; then
     export $(cat .env | grep -v '^#' | xargs)
 fi
 
+# Skip if psql is not installed (database is managed by docker-compose migrations)
+if ! command -v psql &> /dev/null; then
+    echo "⚠️  psql not found. Skipping DB init (handled by docker-compose migrations)."
+    exit 0
+fi
+
 # Default values
 DB_HOST=${DB_HOST:-localhost}
-DB_PORT=${DB_PORT:-5433}
+DB_PORT=${DB_PORT:-50433}
 DB_NAME=${DB_NAME:-booking_system}
 DB_USER=${DB_USER:-booking_user}
 DB_PASSWORD=${DB_PASSWORD:-booking_pass}

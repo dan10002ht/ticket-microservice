@@ -168,9 +168,9 @@ rpc Register(RegisterRequest) returns (RegisterResponse);
 
 ```bash
 # Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/auth_db
-DATABASE_MASTER_URL=postgresql://user:pass@localhost:5432/auth_db_master
-DATABASE_SLAVE_URL=postgresql://user:pass@localhost:5432/auth_db_slave
+DATABASE_URL=postgresql://user:pass@localhost:50432/auth_db
+DATABASE_MASTER_URL=postgresql://user:pass@localhost:50432/auth_db_master
+DATABASE_SLAVE_URL=postgresql://user:pass@localhost:50432/auth_db_slave
 
 # JWT
 JWT_SECRET=your_jwt_secret

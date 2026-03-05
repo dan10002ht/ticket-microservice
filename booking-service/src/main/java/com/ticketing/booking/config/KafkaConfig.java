@@ -24,7 +24,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 @Configuration
 public class KafkaConfig {
 
-    @Value("${kafka.bootstrapServers:localhost:9092}")
+    @Value("${kafka.bootstrapServers:localhost:50092}")
     private String bootstrapServers;
 
     @Value("${kafka.consumer.group-id:booking-service}")

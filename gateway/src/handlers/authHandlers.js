@@ -16,6 +16,22 @@ const registerUserWithEmail = async (req, res) => {
   };
 
   const result = await grpcClients.authService.registerWithEmail(requestData);
+
+  // Auto-create profile in user-service after successful registration
+  try {
+    const user = result.user || {};
+    await grpcClients.userService.CreateProfile({
+      user_id: user.id || user.public_id,
+      first_name: req.body.first_name || '',
+      last_name: req.body.last_name || '',
+      email: req.body.email || '',
+      phone: req.body.phone || '',
+    });
+  } catch (profileErr) {
+    // Log but don't fail registration if profile creation fails
+    console.warn('[register] Failed to auto-create user profile:', profileErr.message);
+  }
+
   sendSuccessResponse(res, 201, result, req.correlationId);
 };
 
@@ -30,6 +46,20 @@ const registerUserWithOAuth = async (req, res) => {
   };
 
   const result = await grpcClients.authService.registerWithOAuth(requestData);
+
+  // Auto-create profile in user-service after successful registration
+  try {
+    const user = result.user || {};
+    await grpcClients.userService.CreateProfile({
+      user_id: user.id || user.public_id,
+      first_name: user.first_name || req.body.first_name || '',
+      last_name: user.last_name || req.body.last_name || '',
+      email: user.email || req.body.email || '',
+    });
+  } catch (profileErr) {
+    console.warn('[register-oauth] Failed to auto-create user profile:', profileErr.message);
+  }
+
   sendSuccessResponse(res, 201, result, req.correlationId);
 };
 

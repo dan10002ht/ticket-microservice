@@ -16,7 +16,7 @@ export default function EventsPage() {
 
       {error && (
         <div className="mt-6 rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error.error || "Failed to load events. Please try again later."}
+          {error.error?.message || "Failed to load events. Please try again later."}
         </div>
       )}
 

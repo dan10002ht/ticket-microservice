@@ -409,10 +409,10 @@ docker-compose -f docker-compose.dev.yml up -d
 
 | Service       | Port(s) | Description                              |
 | ------------- | ------- | ---------------------------------------- |
-| PostgreSQL    | 5432    | Main relational database                 |
-| Redis         | 6379    | Cache, pub/sub, queue, rate limiting     |
-| Zookeeper     | 2181    | Kafka coordination                       |
-| Kafka         | 9092    | Event/message queue for async processing |
+| PostgreSQL    | 50432, 50433 | Auth DB (50432), Main DB (50433)    |
+| Redis         | 50379-50381  | Cache (50379), Queue (50380), PubSub (50381) |
+| Zookeeper     | 50181   | Kafka coordination                       |
+| Kafka         | 50092   | Event/message queue for async processing |
 | Prometheus    | 9090    | Metrics collection                       |
 | Grafana       | 3000    | Metrics dashboard/visualization          |
 | Elasticsearch | 9200    | Centralized log storage                  |

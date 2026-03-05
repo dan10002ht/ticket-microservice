@@ -113,8 +113,8 @@ export const AUTH_ERROR_MAPPING = {
   },
   [GRPC_STATUS_CODES.UNAUTHENTICATED]: {
     status: 401,
-    message: 'Invalid refresh token',
-    code: 'INVALID_REFRESH_TOKEN',
+    message: 'Authentication failed',
+    code: 'UNAUTHENTICATED',
   },
   // Custom mapping for PIN_CODE_EXPIRED (gRPC code 9 but different business meaning)
   PIN_CODE_EXPIRED: {

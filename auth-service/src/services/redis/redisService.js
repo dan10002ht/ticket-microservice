@@ -4,7 +4,7 @@ import logger from '../../utils/logger.js';
 // Redis client configuration
 const redisClient = new Redis({
   host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379,
+  port: process.env.REDIS_PORT || 50379,
   password: process.env.REDIS_PASSWORD,
   db: process.env.REDIS_DB || 0,
   retryDelayOnFailover: 100,

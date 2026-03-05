@@ -42,7 +42,7 @@ export default function RegisterPage() {
       email: "",
       password: "",
       confirmPassword: "",
-      role: "user",
+      role: "individual",
       organization_name: "",
     },
   });
@@ -85,8 +85,8 @@ export default function RegisterPage() {
     } catch (err: unknown) {
       // Map API validation details to form field errors
       const apiErr = err as ApiError;
-      if (apiErr.details && Array.isArray(apiErr.details)) {
-        for (const detail of apiErr.details) {
+      if (apiErr.error?.details && Array.isArray(apiErr.error.details)) {
+        for (const detail of apiErr.error.details) {
           const d = detail as { path: string; msg: string };
           const formField = API_FIELD_MAP[d.path];
           if (formField) {
@@ -94,7 +94,7 @@ export default function RegisterPage() {
           }
         }
       }
-      // Toast is already shown by error interceptor — no double toast
+      showToast.error(apiErr?.error?.message || "Registration failed. Please try again.");
     }
   };
 
@@ -114,10 +114,10 @@ export default function RegisterPage() {
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => setValue("role", "user", { shouldValidate: true })}
+              onClick={() => setValue("role", "individual", { shouldValidate: true })}
               className={cn(
                 "flex flex-col items-center gap-2 rounded-lg border p-4 transition-all",
-                selectedRole === "user"
+                selectedRole === "individual"
                   ? "border-primary bg-primary/5 ring-1 ring-primary"
                   : "hover:border-muted-foreground/50"
               )}

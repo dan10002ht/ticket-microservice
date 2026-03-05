@@ -71,7 +71,7 @@ export function EventDetailContent({
           </div>
           <h3 className="mt-4 text-lg font-semibold">Event not found</h3>
           <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-            {error?.error || "The event you're looking for doesn't exist or has been removed."}
+            {error?.error?.message || "The event you're looking for doesn't exist or has been removed."}
           </p>
           <Button asChild variant="outline" className="mt-4">
             <Link href="/events">

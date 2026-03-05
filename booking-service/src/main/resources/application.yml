@@ -68,7 +68,7 @@ grpc:
 # Redis Configuration
 redis:
   host: ${REDIS_HOST:localhost}
-  port: ${REDIS_PORT:6380}
+  port: ${REDIS_PORT:50380}
   password: ${REDIS_PASSWORD:}
   database: ${REDIS_DATABASE:0}
 
@@ -144,9 +144,11 @@ management:
 logging:
   level:
     root: INFO
-    com.ticketing.booking: DEBUG
+    com.ticketing.booking: INFO
     org.springframework.web: INFO
     org.springframework.security: INFO
+    org.springframework.kafka: WARN
+    org.apache.kafka: WARN
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
   pattern:
