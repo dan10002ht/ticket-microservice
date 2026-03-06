@@ -25,6 +25,8 @@ export {
   usePublishEvent,
   useCreateZone,
   useCreatePricing,
+  useEventSeats,
+  useBulkCreateSeats,
 } from "./event.queries";
 
 // Bookings

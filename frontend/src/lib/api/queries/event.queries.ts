@@ -8,7 +8,9 @@ import type {
   EventUpdateRequest,
   EventFilters,
   EventSeatingZone,
+  EventSeatFull,
   ZoneCreateRequest,
+  BulkSeatCreateRequest,
   Pricing,
   PricingCreateRequest,
   Availability,
@@ -171,6 +173,37 @@ export function useCreatePricing(eventId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.events.pricing(eventId),
+      });
+    },
+  });
+}
+
+export function useEventSeats(eventId: string, filters?: { zone_id?: string }) {
+  return useQuery<EventSeatFull[], ApiError>({
+    queryKey: queryKeys.events.seats(eventId, filters as Record<string, string>),
+    queryFn: async () => {
+      const { data } = await apiClient.get(API_ENDPOINTS.events.seats(eventId), {
+        params: { ...filters, limit: 500 },
+      });
+      return data.seats ?? [];
+    },
+    enabled: !!eventId,
+  });
+}
+
+export function useBulkCreateSeats(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation<{ createdCount: number }, ApiError, BulkSeatCreateRequest>({
+    mutationFn: async (input) => {
+      const { data } = await apiClient.post(
+        API_ENDPOINTS.events.seatsBulk(eventId),
+        input
+      );
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.events.seats(eventId),
       });
     },
   });

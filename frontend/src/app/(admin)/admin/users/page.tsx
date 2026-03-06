@@ -5,9 +5,13 @@ import { PageHeader } from "@/components/molecules/page-header";
 import { StatusBadge } from "@/components/molecules/status-badge";
 import { AvatarWithName } from "@/components/molecules/avatar-with-name";
 import { SearchInput } from "@/components/molecules/search-input";
+import { Pagination } from "@/components/molecules/pagination";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
 import { useAdminUsers } from "@/lib/api/queries";
+import { getTotalPages } from "@/lib/utils";
 import type { AuthUser } from "@/lib/api/types/auth";
+
+const LIMIT = 20;
 
 const columns: Column<AuthUser>[] = [
   {
@@ -46,9 +50,12 @@ const columns: Column<AuthUser>[] = [
 ];
 
 export default function AdminUsersPage() {
-  const { data, isLoading } = useAdminUsers();
-  const users = data?.items ?? [];
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+
+  const { data, isLoading } = useAdminUsers({ page, limit: LIMIT });
+  const users = data?.items ?? [];
+  const totalPages = getTotalPages(data?.total ?? 0, LIMIT);
 
   const filtered = useMemo(() => {
     if (!search) return users;
@@ -84,6 +91,10 @@ export default function AdminUsersPage() {
           emptyMessage="No users found"
           keyExtractor={(u) => u.id}
         />
+      </div>
+
+      <div className="mt-6">
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </>
   );

@@ -21,37 +21,21 @@ Examples: Button, Input, Badge, Avatar, Skeleton, Separator, Label, Checkbox, Sw
 ### Level 2: Molecules — `components/molecules/`
 Combine 2-3 atoms into a single reusable unit. No data fetching. Pure presentation.
 
-| Molecule | Atoms used |
-|----------|-----------|
-| `SearchInput` | Input + Button + Search icon |
-| `FormField` | Label + Input + FormMessage |
-| `StatusBadge` | Badge + variant color logic |
-| `PriceDisplay` | Formatted number + currency text |
-| `CountdownTimer` | Timer logic + text display |
-| `AvatarWithName` | Avatar + text |
-| `EmptyState` | Icon + heading + description + optional Button |
-| `ConfirmDialog` | Dialog + DialogContent + Button pair |
-| `DateRangeSelector` | DatePicker + DatePicker + separator |
-| `PaginationControls` | Button + text + Select |
-| `SortDropdown` | Select + options |
-| `RoleBadge` | Badge + role color mapping |
-| `PasswordInput` | Input + eye toggle Button |
+**Existing molecules** (check before creating duplicates):
+`SearchInput`, `StatusBadge`, `PriceDisplay`, `AvatarWithName`, `EmptyState`, `PageHeader`, `StatsCard`, `NavItem`, `Pagination`, `FilterBar`, `StepIndicator`, `Breadcrumbs`, `SearchDialog`, `ThemeToggle`, `TicketTypeForm`, `TicketTypeCard`, `TicketTypeListItem`, `BookingStepIndicator`, `ReservationTimer`, `OrderSummaryCard`, `InvoiceSection`, `MotionSection/MotionDiv`, `PageTransition`
+
+All molecules exported from `components/molecules/index.ts`.
 
 ### Level 3: Organisms — `components/organisms/`
 Complex UI sections. May contain internal state, but NO direct API calls. Grouped by domain.
 
 ```
 components/organisms/
-├── layout/         # Navbar, Footer, Sidebar, Topbar, MobileMenu
-├── auth/           # LoginForm, RegisterForm, OAuthButtons, PinCodeInput
-├── events/         # EventCard, EventGrid, EventFilterSidebar, EventHero, EventInfoTabs
-├── booking/        # BookingStepIndicator, PricingBreakdown, SelectedSeatsPanel, BookingSummaryCard
-├── seat-map/       # InteractiveSeatMap, ZoneLegend, SeatStatusLegend, ZoomControls
-├── payment/        # StripePaymentForm, PaymentMethodSelector, BillingAddressSelector, OrderSummary
-├── tickets/        # TicketCard, TicketDisplay, QRCodeFull
-├── organization/   # EventWizardStepper, ZoneBuilder, SeatMapEditor, BulkSeatCreator, PricingConfigurator
-├── admin/          # UserTable, BookingTable, PaymentTable, RefundTable, SystemStatsCards
-└── shared/         # DataTable (generic), FilterBar, StatsCard
+├── layout/         # Navbar, AuthNavbar, Footer, OrgSidebar, AdminSidebar, Topbar, MobileBottomTabs
+├── events/         # EventCard, EventDetailContent, EventListingContent (public)
+├── booking/        # BookingDetailContent, BookingFlowContent, TicketSelectionStep, ReviewStep, PaymentStep, ConfirmationStep
+├── org-events/     # EventDetailOrgContent, EventEditForm, ZonePricingStep, EventReviewStep, CheckinForm, EventCheckinStats
+└── shared/         # DataTable (generic)
 ```
 
 ### Level 4: Templates — `components/templates/`

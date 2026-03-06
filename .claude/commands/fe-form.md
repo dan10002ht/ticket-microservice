@@ -122,12 +122,14 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 Check `gateway/src/middlewares/validationMiddleware.js` for field rules:
 - `validateRegistration` - email, password, firstName, lastName
 - `validateLogin` - email, password
-- `validateEvent` - title, description, startDate, endDate, venue, capacity, price
+- `validateEvent` - name, description, start_date, end_date, venue_name, venue_address, venue_city, venue_country, venue_capacity
 - `validateBooking` - eventId, ticketQuantity
 - `validatePayment` - bookingId, paymentMethod, amount
 - `validateTicketCreate` - eventId, ticketTypeId, price
 - `validateUserProfileCreate` - firstName, lastName, email, phone
 - `validateUserAddress` - street, city, state, postalCode, country
+
+**Note:** Gateway auto-converts camelCase (frontend) ↔ snake_case (backend). Use snake_case in zod schemas to match the API.
 
 ## shadcn/ui Form Components
 
@@ -147,8 +149,9 @@ Use these shadcn/ui components for forms:
 - Form components receive `onSubmit` callback and `isLoading` prop
 - Form components do NOT call API directly - parent page handles that via mutation hooks
 - Always provide default values in useForm
-- Use `FormMessage` for field-level errors
-- Use toast for form-level/API errors
+- Use `<Label>` + `<Input>` + inline error `<p>` for simple forms (actual pattern used in this project)
+- Use shadcn/ui `Form`/`FormField` wrapper only for complex forms
+- Use toast (sonner) for form-level/API errors
 - Disable submit button when `isLoading`
 
 ## User Input

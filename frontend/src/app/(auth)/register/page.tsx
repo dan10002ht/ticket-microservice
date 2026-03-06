@@ -81,8 +81,8 @@ export default function RegisterPage() {
           : {}),
       };
       await registerMutation.mutateAsync(registerData);
-      showToast.success("Tạo tài khoản thành công!");
-      router.push(data.role === "organization" ? "/org/dashboard" : "/");
+      showToast.success("Account created! Please verify your email.");
+      router.push("/verify");
     } catch (err: unknown) {
       // Map API validation details to form field errors
       const apiErr = err as ApiError;

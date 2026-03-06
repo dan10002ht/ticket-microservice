@@ -34,8 +34,8 @@ func (s *EventService) ListByOrganizationID(ctx context.Context, organizationID 
 	return s.repo.ListByOrganizationID(ctx, organizationID)
 }
 
-func (s *EventService) List(ctx context.Context, page, limit int32) ([]*models.Event, error) {
-	return s.repo.ListAll(ctx, page, limit)
+func (s *EventService) List(ctx context.Context, page, limit int32, status, eventType, category, startDateFrom, startDateTo string) ([]*models.Event, int, error) {
+	return s.repo.ListAll(ctx, page, limit, status, eventType, category, startDateFrom, startDateTo)
 }
 
 // Advanced search and filtering methods

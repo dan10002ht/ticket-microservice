@@ -5,8 +5,28 @@ import { sendSuccessResponse, createSimpleHandler } from '../utils/responseHandl
  * Get all events
  */
 const getAllEvents = async (req, res) => {
-  const result = await grpcClients.eventService.ListEvents({});
-  sendSuccessResponse(res, 200, result, req.correlationId);
+  const { status, page, limit, event_type, category, start_date_from, start_date_to } = req.query;
+  const pageNum = page ? parseInt(page, 10) : 1;
+  const limitNum = limit ? parseInt(limit, 10) : 20;
+  const result = await grpcClients.eventService.ListEvents({
+    status: status || '',
+    page: pageNum,
+    limit: limitNum,
+    event_type: event_type || '',
+    category: category || '',
+    start_date_from: start_date_from || '',
+    start_date_to: start_date_to || '',
+  });
+  const total = result.total || 0;
+  sendSuccessResponse(res, 200, {
+    events: result.events || [],
+    pagination: {
+      total,
+      page: result.page || pageNum,
+      limit: result.limit || limitNum,
+      totalPages: Math.ceil(total / limitNum) || 1,
+    },
+  }, req.correlationId);
 };
 
 /**

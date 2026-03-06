@@ -90,7 +90,14 @@ export function useRegister() {
   });
 }
 
-/** Logout — clears tokens + store + cache, redirects to login */
+/** Public path prefixes — user can stay on these after logout */
+const PUBLIC_PATH_PREFIXES = ["/events", "/login", "/register"];
+
+function isPublicPath(pathname: string): boolean {
+  return pathname === "/" || PUBLIC_PATH_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+/** Logout — clears tokens + store + cache, stays on public pages or redirects to home */
 export function useLogout() {
   const queryClient = useQueryClient();
   const { clearUser } = useAuthStore();
@@ -104,7 +111,10 @@ export function useLogout() {
       clearUser();
       queryClient.clear();
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        const currentPath = window.location.pathname;
+        if (!isPublicPath(currentPath)) {
+          window.location.href = "/";
+        }
       }
     },
   });

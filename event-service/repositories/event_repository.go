@@ -18,8 +18,8 @@ func NewEventRepository(db *sqlx.DB) *EventRepository {
 }
 
 func (r *EventRepository) Create(ctx context.Context, event *models.Event) error {
-	query := `INSERT INTO events (public_id, organization_id, name, description, start_date, end_date, venue_name, venue_address, venue_city, venue_country, venue_capacity, canvas_config, created_at, updated_at)
-		VALUES (:public_id, :organization_id, :name, :description, :start_date, :end_date, :venue_name, :venue_address, :venue_city, :venue_country, :venue_capacity, :canvas_config, NOW(), NOW())`
+	query := `INSERT INTO events (public_id, organization_id, name, description, start_date, end_date, venue_name, venue_address, venue_city, venue_country, venue_capacity, canvas_config, status, event_type, category, sale_start_date, sale_end_date, min_age, is_featured, images, tags, metadata, created_at, updated_at)
+		VALUES (:public_id, :organization_id, :name, :description, :start_date, :end_date, :venue_name, :venue_address, :venue_city, :venue_country, :venue_capacity, :canvas_config, :status, :event_type, :category, NULLIF(:sale_start_date, '')::timestamptz, NULLIF(:sale_end_date, '')::timestamptz, :min_age, :is_featured, :images, :tags, :metadata, NOW(), NOW())`
 	_, err := r.db.NamedExecContext(ctx, query, event)
 	return err
 }
@@ -35,7 +35,7 @@ func (r *EventRepository) GetByPublicID(ctx context.Context, publicID string) (*
 }
 
 func (r *EventRepository) Update(ctx context.Context, event *models.Event) error {
-	query := `UPDATE events SET name=:name, description=:description, start_date=:start_date, end_date=:end_date, venue_name=:venue_name, venue_address=:venue_address, venue_city=:venue_city, venue_country=:venue_country, venue_capacity=:venue_capacity, canvas_config=:canvas_config, updated_at=NOW() WHERE public_id=:public_id`
+	query := `UPDATE events SET name=:name, description=:description, start_date=:start_date, end_date=:end_date, venue_name=:venue_name, venue_address=:venue_address, venue_city=:venue_city, venue_country=:venue_country, venue_capacity=:venue_capacity, canvas_config=:canvas_config, status=:status, event_type=:event_type, category=:category, sale_start_date=NULLIF(:sale_start_date, '')::timestamptz, sale_end_date=NULLIF(:sale_end_date, '')::timestamptz, min_age=:min_age, is_featured=:is_featured, images=:images, tags=:tags, metadata=:metadata, updated_at=NOW() WHERE public_id=:public_id`
 	_, err := r.db.NamedExecContext(ctx, query, event)
 	return err
 }
@@ -60,8 +60,9 @@ func (r *EventRepository) ListByOrganizationID(ctx context.Context, organization
 	return events, err
 }
 
-func (r *EventRepository) ListAll(ctx context.Context, page, limit int32) ([]*models.Event, error) {
+func (r *EventRepository) ListAll(ctx context.Context, page, limit int32, status, eventType, category, startDateFrom, startDateTo string) ([]*models.Event, int, error) {
 	var events []*models.Event
+	var total int
 	offset := (page - 1) * limit
 	if page <= 0 {
 		offset = 0
@@ -69,9 +70,47 @@ func (r *EventRepository) ListAll(ctx context.Context, page, limit int32) ([]*mo
 	if limit <= 0 {
 		limit = 20
 	}
-	query := `SELECT * FROM events ORDER BY created_at DESC LIMIT $1 OFFSET $2`
-	err := r.db.SelectContext(ctx, &events, query, limit, offset)
-	return events, err
+
+	where := "WHERE 1=1"
+	params := []interface{}{}
+	paramCount := 1
+
+	if status != "" {
+		where += fmt.Sprintf(" AND status = $%d", paramCount)
+		params = append(params, status)
+		paramCount++
+	}
+	if eventType != "" {
+		where += fmt.Sprintf(" AND event_type = $%d", paramCount)
+		params = append(params, eventType)
+		paramCount++
+	}
+	if category != "" {
+		where += fmt.Sprintf(" AND category = $%d", paramCount)
+		params = append(params, category)
+		paramCount++
+	}
+	if startDateFrom != "" {
+		where += fmt.Sprintf(" AND start_date >= $%d", paramCount)
+		params = append(params, startDateFrom)
+		paramCount++
+	}
+	if startDateTo != "" {
+		where += fmt.Sprintf(" AND start_date <= $%d", paramCount)
+		params = append(params, startDateTo)
+		paramCount++
+	}
+
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM events %s", where)
+	err := r.db.GetContext(ctx, &total, countQuery, params...)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	query := fmt.Sprintf("SELECT * FROM events %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d", where, paramCount, paramCount+1)
+	params = append(params, limit, offset)
+	err = r.db.SelectContext(ctx, &events, query, params...)
+	return events, total, err
 }
 
 // Advanced search and filtering methods

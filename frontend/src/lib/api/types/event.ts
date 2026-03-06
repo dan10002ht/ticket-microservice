@@ -13,6 +13,16 @@ export interface Event {
   venue_country?: string;
   venue_capacity?: number;
   canvas_config?: string;
+  status?: EventStatus;
+  event_type?: string;
+  category?: string;
+  sale_start_date?: string;
+  sale_end_date?: string;
+  min_age?: number;
+  is_featured?: boolean;
+  images?: string;
+  tags?: string;
+  metadata?: string;
   zones?: EventSeatingZone[];
   seats?: EventSeat[];
   created_at: string;
@@ -38,6 +48,22 @@ export interface EventSeat {
   seat_number: string;
   row_number?: string;
   coordinates?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventSeatFull {
+  id: string;
+  event_id: string;
+  zone_id: string;
+  seat_number: string;
+  row_number?: string;
+  coordinates?: string;
+  status?: string;
+  pricing_category?: string;
+  base_price?: number;
+  final_price?: number;
+  currency?: string;
   created_at: string;
   updated_at: string;
 }
@@ -74,6 +100,15 @@ export interface EventCreateRequest {
   venue_country?: string;
   venue_capacity?: number;
   canvas_config?: string;
+  event_type?: string;
+  category?: string;
+  sale_start_date?: string;
+  sale_end_date?: string;
+  min_age?: number;
+  is_featured?: boolean;
+  images?: string;
+  tags?: string;
+  metadata?: string;
 }
 
 export interface EventUpdateRequest extends Partial<EventCreateRequest> {
@@ -82,9 +117,12 @@ export interface EventUpdateRequest extends Partial<EventCreateRequest> {
 
 export interface EventFilters {
   category?: string;
+  event_type?: string;
   location?: string;
   date?: string;
   status?: EventStatus;
+  start_date_from?: string;
+  start_date_to?: string;
 }
 
 export interface ZoneCreateRequest {

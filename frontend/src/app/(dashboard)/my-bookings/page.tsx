@@ -1,15 +1,29 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/molecules/page-header";
 import { StatusBadge } from "@/components/molecules/status-badge";
 import { PriceDisplay } from "@/components/molecules/price-display";
+import { Pagination } from "@/components/molecules/pagination";
+import { FilterBar, type FilterSlot } from "@/components/molecules/filter-bar";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
 import { Button } from "@/components/ui/button";
 import { useBookings, useCancelBooking } from "@/lib/api/queries";
 import { showToast } from "@/lib/toast";
-import type { Booking } from "@/lib/api/types/booking";
+import { getTotalPages } from "@/lib/utils";
+import type { Booking, BookingStatus } from "@/lib/api/types/booking";
 import type { ApiError } from "@/lib/api/types/common";
+
+const LIMIT = 10;
+
+const statusOptions = [
+  { value: "pending", label: "Pending" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "cancelled", label: "Cancelled" },
+  { value: "completed", label: "Completed" },
+  { value: "expired", label: "Expired" },
+];
 
 const columns: Column<Booking>[] = [
   {
@@ -66,8 +80,17 @@ const columns: Column<Booking>[] = [
 ];
 
 export default function MyBookingsPage() {
-  const { data, isLoading, error } = useBookings();
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const { data, isLoading, error } = useBookings({
+    status: (statusFilter || undefined) as BookingStatus | undefined,
+    page,
+    limit: LIMIT,
+  });
   const cancelMutation = useCancelBooking();
+
+  const totalPages = getTotalPages(data?.total ?? 0, LIMIT);
 
   const handleCancel = async (id: string) => {
     try {
@@ -104,6 +127,19 @@ export default function MyBookingsPage() {
     },
   ];
 
+  const filterSlots: FilterSlot[] = [
+    {
+      key: "status",
+      placeholder: "Filter by status",
+      options: statusOptions,
+      value: statusFilter,
+      onChange: (v) => {
+        setStatusFilter(v);
+        setPage(1);
+      },
+    },
+  ];
+
   return (
     <>
       <PageHeader
@@ -118,6 +154,10 @@ export default function MyBookingsPage() {
       )}
 
       <div className="mt-6">
+        <FilterBar slots={filterSlots} />
+      </div>
+
+      <div className="mt-6">
         <DataTable
           columns={columnsWithActions}
           data={data?.items ?? []}
@@ -125,6 +165,10 @@ export default function MyBookingsPage() {
           emptyMessage="No bookings yet"
           keyExtractor={(b) => b.id}
         />
+      </div>
+
+      <div className="mt-6">
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </>
   );

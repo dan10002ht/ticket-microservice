@@ -14,6 +14,16 @@ type Event struct {
 	VenueCountry   string `db:"venue_country" json:"venue_country"`
 	VenueCapacity  int    `db:"venue_capacity" json:"venue_capacity"`
 	CanvasConfig   string `db:"canvas_config" json:"canvas_config"`
+	Status         string `db:"status" json:"status"`
+	EventType      string `db:"event_type" json:"event_type"`
+	Category       string `db:"category" json:"category"`
+	SaleStartDate  string `db:"sale_start_date" json:"sale_start_date"`
+	SaleEndDate    string `db:"sale_end_date" json:"sale_end_date"`
+	MinAge         int    `db:"min_age" json:"min_age"`
+	IsFeatured     bool   `db:"is_featured" json:"is_featured"`
+	Images         string `db:"images" json:"images"`
+	Tags           string `db:"tags" json:"tags"`
+	Metadata       string `db:"metadata" json:"metadata"`
 	CreatedAt      string `db:"created_at" json:"created_at"`
 	UpdatedAt      string `db:"updated_at" json:"updated_at"`
 } 

@@ -1,10 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import { PageHeader } from "@/components/molecules/page-header";
 import { StatusBadge } from "@/components/molecules/status-badge";
+import { Pagination } from "@/components/molecules/pagination";
+import { FilterBar, type FilterSlot } from "@/components/molecules/filter-bar";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
 import { useAdminPayments } from "@/lib/api/queries";
-import type { Payment } from "@/lib/api/types/payment";
+import { getTotalPages } from "@/lib/utils";
+import type { Payment, PaymentStatus } from "@/lib/api/types/payment";
+
+const LIMIT = 20;
+
+const statusOptions = [
+  { value: "pending", label: "Pending" },
+  { value: "authorized", label: "Authorized" },
+  { value: "captured", label: "Captured" },
+  { value: "completed", label: "Completed" },
+  { value: "failed", label: "Failed" },
+  { value: "refunded", label: "Refunded" },
+  { value: "cancelled", label: "Cancelled" },
+];
 
 const columns: Column<Payment>[] = [
   {
@@ -47,8 +63,28 @@ const columns: Column<Payment>[] = [
 ];
 
 export default function AdminPaymentsPage() {
-  const { data, isLoading } = useAdminPayments();
-  const payments = data?.items ?? [];
+  const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const { data, isLoading } = useAdminPayments({
+    status: (statusFilter || undefined) as PaymentStatus | undefined,
+    page,
+    limit: LIMIT,
+  });
+  const totalPages = getTotalPages(data?.total ?? 0, LIMIT);
+
+  const filterSlots: FilterSlot[] = [
+    {
+      key: "status",
+      placeholder: "Filter by status",
+      options: statusOptions,
+      value: statusFilter,
+      onChange: (v) => {
+        setStatusFilter(v);
+        setPage(1);
+      },
+    },
+  ];
 
   return (
     <>
@@ -58,13 +94,21 @@ export default function AdminPaymentsPage() {
       />
 
       <div className="mt-6">
+        <FilterBar slots={filterSlots} />
+      </div>
+
+      <div className="mt-6">
         <DataTable
           columns={columns}
-          data={payments}
+          data={data?.items ?? []}
           isLoading={isLoading}
           emptyMessage="No payments found"
           keyExtractor={(p) => p.id}
         />
+      </div>
+
+      <div className="mt-6">
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </>
   );

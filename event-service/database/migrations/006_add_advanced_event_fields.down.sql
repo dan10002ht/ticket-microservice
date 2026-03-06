@@ -1,0 +1,13 @@
+DROP INDEX IF EXISTS idx_events_min_age;
+DROP INDEX IF EXISTS idx_events_is_featured;
+DROP INDEX IF EXISTS idx_events_category;
+DROP INDEX IF EXISTS idx_events_event_type;
+
+ALTER TABLE events DROP COLUMN IF EXISTS metadata;
+ALTER TABLE events DROP COLUMN IF EXISTS tags;
+ALTER TABLE events DROP COLUMN IF EXISTS images;
+ALTER TABLE events DROP COLUMN IF EXISTS is_featured;
+ALTER TABLE events DROP COLUMN IF EXISTS min_age;
+ALTER TABLE events DROP COLUMN IF EXISTS doors_open;
+ALTER TABLE events DROP COLUMN IF EXISTS category;
+ALTER TABLE events DROP COLUMN IF EXISTS event_type;

@@ -91,6 +91,17 @@ message Event {
   repeated EventSeat seats = 14;
   string created_at = 15;
   string updated_at = 16;
+  string status = 17;
+  string event_type = 18;
+  string category = 19;
+  reserved 20; // was doors_open
+  int32 min_age = 21;
+  bool is_featured = 22;
+  string images = 23;    // JSON string
+  string tags = 24;      // JSON string
+  string metadata = 25;  // JSON string
+  string sale_start_date = 26;
+  string sale_end_date = 27;
 }
 
 message EventSeatingZone {
@@ -125,8 +136,8 @@ message CreateEventRequest {
   string category = 6;
   string start_date = 7;
   string end_date = 8;
-  string doors_open = 9;
-  int32 max_capacity = 10;
+  reserved 9; // was doors_open
+  int32 venue_capacity = 10;
   int32 min_age = 11;
   bool is_featured = 12;
   string images = 13; // JSON string
@@ -139,6 +150,8 @@ message CreateEventRequest {
   string venue_city = 19;
   string venue_country = 20;
   string canvas_config = 21;
+  string sale_start_date = 22;
+  string sale_end_date = 23;
 }
 
 message CreateEventResponse {
@@ -164,15 +177,17 @@ message UpdateEventRequest {
   string category = 6;
   string start_date = 7;
   string end_date = 8;
-  string doors_open = 9;
+  reserved 9; // was doors_open
   string status = 10;
-  int32 max_capacity = 11;
+  int32 venue_capacity = 11;
   int32 min_age = 12;
   bool is_featured = 13;
   string images = 14; // JSON string
   string tags = 15; // JSON string
   string metadata = 16; // JSON string
   string updated_by = 17;
+  string sale_start_date = 18;
+  string sale_end_date = 19;
 }
 
 message UpdateEventResponse {

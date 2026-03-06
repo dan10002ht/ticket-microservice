@@ -16,9 +16,9 @@ import {
   ScanLine,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/molecules/status-badge";
 import { TicketTypeForm } from "@/components/molecules/ticket-type-form";
 import { TicketTypeListItem } from "@/components/molecules/ticket-type-list-item";
 import {
@@ -37,16 +37,6 @@ interface EventDetailOrgContentProps {
   isLoading: boolean;
   error: ApiError | null;
 }
-
-const statusVariant: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  published: "default",
-  draft: "secondary",
-  cancelled: "destructive",
-  completed: "outline",
-};
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -125,9 +115,7 @@ export function EventDetailOrgContent({
     }
   };
 
-  const isDraft = !event.created_at || event.description !== undefined; // fallback: always show publish if no status field
-  // Event type doesn't have explicit status field in the current type definition
-  // We'll show publish button always and let the API handle the validation
+  const isPublished = event.status === "published";
 
   return (
     <div className="space-y-6">
@@ -140,7 +128,10 @@ export function EventDetailOrgContent({
             </Link>
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">{event.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold">{event.name}</h1>
+              <StatusBadge status={event.status ?? "draft"} />
+            </div>
             <p className="text-sm text-muted-foreground">
               Created {formatDate(event.created_at)}
             </p>
@@ -160,19 +151,21 @@ export function EventDetailOrgContent({
               Check-in
             </Link>
           </Button>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handlePublish}
-            disabled={publishMutation.isPending}
-          >
-            {publishMutation.isPending ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Send className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            Publish
-          </Button>
+          {!isPublished && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handlePublish}
+              disabled={publishMutation.isPending}
+            >
+              {publishMutation.isPending ? (
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Send className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              Publish
+            </Button>
+          )}
           <Button
             variant={confirmDelete ? "destructive" : "outline"}
             size="sm"

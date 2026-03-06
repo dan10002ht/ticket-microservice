@@ -4,10 +4,12 @@ You are a principal frontend developer. Generate an API client function and TanS
 
 ## Instructions
 
-1. Check the backend API endpoint in `gateway/src/routes/` and `gateway/src/swagger/` to understand the exact request/response shape
-2. Create/update the API client function in `frontend/src/lib/api/`
-3. Create/update the TanStack Query hook in `frontend/src/lib/hooks/`
-4. Add/update TypeScript types in `frontend/src/types/`
+1. Check the backend API endpoint in `gateway/src/routes/` to understand the request/response shape
+2. Add endpoint URL to `frontend/src/lib/api/endpoints.ts`
+3. Add TypeScript types in `frontend/src/lib/api/types/<domain>.ts`
+4. Add query keys in `frontend/src/lib/api/queries/query-keys.ts`
+5. Create TanStack Query hook in `frontend/src/lib/api/queries/<domain>.queries.ts`
+6. Export from `frontend/src/lib/api/queries/index.ts`
 
 ## Backend Gateway
 
@@ -35,62 +37,46 @@ apiClient.interceptors.request.use((config) => {
 });
 ```
 
-```typescript
-// lib/api/events.ts - Per-domain API functions
-import { apiClient } from "./client";
-import type { Event, EventListParams } from "@/types/event";
+**Note:** This project does NOT use a separate `eventsApi` object. API calls are inline in query hooks using `apiClient` + `API_ENDPOINTS`.
 
-export const eventsApi = {
-  list: (params?: EventListParams) =>
-    apiClient.get<Event[]>("/api/events", { params }).then((r) => r.data),
-
-  getById: (eventId: string) =>
-    apiClient.get<Event>(`/api/events/${eventId}`).then((r) => r.data),
-
-  create: (data: CreateEventInput) =>
-    apiClient.post<Event>("/api/events", data).then((r) => r.data),
-};
-```
-
-## TanStack Query Hook Pattern
+## Actual Project Pattern
 
 ```typescript
-// lib/hooks/use-events.ts
+// lib/api/queries/event.queries.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { eventsApi } from "@/lib/api/events";
+import { apiClient } from "../client";
+import { API_ENDPOINTS } from "../endpoints";
+import { queryKeys } from "./query-keys";
+import type { Event } from "../types/event";
+import type { PaginatedResponse, ApiError } from "../types/common";
 
-// Query keys - consistent structure
-export const eventKeys = {
-  all: ["events"] as const,
-  lists: () => [...eventKeys.all, "list"] as const,
-  list: (params?: EventListParams) => [...eventKeys.lists(), params] as const,
-  details: () => [...eventKeys.all, "detail"] as const,
-  detail: (id: string) => [...eventKeys.details(), id] as const,
-};
-
-// Query hook
-export function useEvents(params?: EventListParams) {
-  return useQuery({
-    queryKey: eventKeys.list(params),
-    queryFn: () => eventsApi.list(params),
+export function useEvents(filters?: EventFilters & PaginationParams) {
+  return useQuery<PaginatedResponse<Event>, ApiError>({
+    queryKey: queryKeys.events.list(filters),
+    queryFn: async () => {
+      const { data } = await apiClient.get(API_ENDPOINTS.events.list, {
+        params: filters,
+      });
+      return {
+        items: data.events ?? [],
+        total: data.pagination?.total ?? 0,
+        page: data.pagination?.page ?? 1,
+        limit: data.pagination?.limit ?? 10,
+        totalPages: data.pagination?.totalPages,
+      };
+    },
   });
 }
 
-export function useEvent(eventId: string) {
-  return useQuery({
-    queryKey: eventKeys.detail(eventId),
-    queryFn: () => eventsApi.getById(eventId),
-    enabled: !!eventId,
-  });
-}
-
-// Mutation hook
 export function useCreateEvent() {
   const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: eventsApi.create,
+  return useMutation<Event, ApiError, EventCreateRequest>({
+    mutationFn: async (input) => {
+      const { data } = await apiClient.post(API_ENDPOINTS.events.list, input);
+      return data;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.events.lists() });
     },
   });
 }
@@ -122,17 +108,29 @@ export function useCreateEvent() {
 ["payments", "admin", { page, limit }]
 ```
 
+## Key Files
+
+| File                                  | Purpose                              |
+| ------------------------------------- | ------------------------------------ |
+| `lib/api/client.ts`                   | Axios instance with auth interceptor |
+| `lib/api/endpoints.ts`                | All API endpoint URLs (centralized)  |
+| `lib/api/types/<domain>.ts`           | TypeScript interfaces per domain     |
+| `lib/api/queries/query-keys.ts`       | Centralized query key factory        |
+| `lib/api/queries/<domain>.queries.ts` | TanStack Query hooks per domain      |
+| `lib/api/queries/index.ts`            | Re-exports all hooks                 |
+
 ## API Domains
 
-| Domain | File | Base path |
-|--------|------|-----------|
-| Auth | `lib/api/auth.ts` | `/api/auth` |
-| Users | `lib/api/users.ts` | `/api/users` |
-| Events | `lib/api/events.ts` | `/api/events` |
-| Tickets | `lib/api/tickets.ts` | `/api/tickets` |
-| Bookings | `lib/api/bookings.ts` | `/api/bookings` |
-| Payments | `lib/api/payments.ts` | `/api/payments` |
-| Organizations | `lib/api/organizations.ts` | `/api/organizations` |
+| Domain   | Types file         | Queries file                 | Base path   |
+| -------- | ------------------ | ---------------------------- | ----------- |
+| Auth     | `types/auth.ts`    | `queries/auth.queries.ts`    | `/auth`     |
+| Events   | `types/event.ts`   | `queries/event.queries.ts`   | `/events`   |
+| Tickets  | `types/ticket.ts`  | `queries/ticket.queries.ts`  | `/tickets`  |
+| Bookings | `types/booking.ts` | `queries/booking.queries.ts` | `/bookings` |
+| Payments | `types/payment.ts` | `queries/payment.queries.ts` | `/payments` |
+| Users    | `types/user.ts`    | `queries/user.queries.ts`    | `/users`    |
+| Invoices | `types/invoice.ts` | `queries/invoice.queries.ts` | `/invoices` |
+| Checkins | `types/checkin.ts` | `queries/checkin.queries.ts` | `/checkins` |
 
 ## Rules
 

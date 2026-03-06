@@ -2,10 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, CalendarDays, Search, Ticket, User } from "lucide-react";
+import { Home, CalendarDays, LogIn, Ticket, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores";
 
-const tabs = [
+const publicTabs = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/events", label: "Events", icon: CalendarDays },
+  { href: "/login", label: "Login", icon: LogIn },
+];
+
+const authTabs = [
   { href: "/", label: "Home", icon: Home },
   { href: "/events", label: "Events", icon: CalendarDays },
   { href: "/my-bookings", label: "Bookings", icon: Ticket },
@@ -18,6 +25,9 @@ interface MobileBottomTabsProps {
 
 export function MobileBottomTabs({ className }: MobileBottomTabsProps) {
   const pathname = usePathname();
+  const { isAuthenticated, isHydrated } = useAuthStore();
+
+  const tabs = isHydrated && isAuthenticated ? authTabs : publicTabs;
 
   return (
     <nav

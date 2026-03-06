@@ -4,9 +4,13 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/molecules/page-header";
 import { SearchInput } from "@/components/molecules/search-input";
+import { Pagination } from "@/components/molecules/pagination";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
 import { useEvents } from "@/lib/api/queries";
+import { getTotalPages } from "@/lib/utils";
 import type { Event } from "@/lib/api/types/event";
+
+const LIMIT = 20;
 
 const columns: Column<Event>[] = [
   {
@@ -43,9 +47,12 @@ const columns: Column<Event>[] = [
 ];
 
 export default function AdminEventsPage() {
-  const { data, isLoading } = useEvents();
-  const events = data?.items ?? [];
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+
+  const { data, isLoading } = useEvents({ page, limit: LIMIT });
+  const events = data?.items ?? [];
+  const totalPages = getTotalPages(data?.total ?? 0, LIMIT);
 
   const filtered = useMemo(() => {
     if (!search) return events;
@@ -81,6 +88,10 @@ export default function AdminEventsPage() {
           emptyMessage="No events found"
           keyExtractor={(e) => e.id}
         />
+      </div>
+
+      <div className="mt-6">
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </>
   );

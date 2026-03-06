@@ -1,16 +1,20 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/molecules/page-header";
+import { SearchInput } from "@/components/molecules/search-input";
+import { Pagination } from "@/components/molecules/pagination";
 import { DataTable, type Column } from "@/components/organisms/shared/data-table";
 import { useEvents, useDeleteEvent } from "@/lib/api/queries";
 import { showToast } from "@/lib/toast";
+import { getTotalPages } from "@/lib/utils";
 import type { Event } from "@/lib/api/types/event";
 import type { ApiError } from "@/lib/api/types/common";
+
+const LIMIT = 20;
 
 const columns: Column<Event>[] = [
   {
@@ -47,10 +51,24 @@ const columns: Column<Event>[] = [
 ];
 
 export default function OrgEventsPage() {
-  const { data, isLoading } = useEvents();
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+
+  const { data, isLoading } = useEvents({ page, limit: LIMIT });
   const deleteMutation = useDeleteEvent();
-  const router = useRouter();
+
   const events = data?.items ?? [];
+  const totalPages = getTotalPages(data?.total ?? 0, LIMIT);
+
+  const filtered = useMemo(() => {
+    if (!search) return events;
+    const q = search.toLowerCase();
+    return events.filter(
+      (e) =>
+        e.name.toLowerCase().includes(q) ||
+        e.venue_name.toLowerCase().includes(q)
+    );
+  }, [events, search]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -94,13 +112,25 @@ export default function OrgEventsPage() {
       </PageHeader>
 
       <div className="mt-6">
+        <SearchInput
+          placeholder="Search by event name, venue..."
+          onSearch={setSearch}
+          className="max-w-md"
+        />
+      </div>
+
+      <div className="mt-6">
         <DataTable
           columns={columnsWithActions}
-          data={events}
+          data={filtered}
           isLoading={isLoading}
           emptyMessage="No events yet. Create your first event!"
           keyExtractor={(e) => e.id}
         />
+      </div>
+
+      <div className="mt-6">
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </>
   );
